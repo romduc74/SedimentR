@@ -102,17 +102,18 @@ xrf_noise <- function(df) {
   }
 
   # Assign denoised dataframe to Global Environment
-  assign("df_clean", df_clean, envir = .GlobalEnv)
-  message("Denoised dataframe 'df_clean' has been created in the Global Environment and is ready for further analysis.\n")
+  # assign("df_clean", df_clean, envir = .GlobalEnv)
+  # message("Denoised dataframe 'df_clean' has been created in the Global Environment and is ready for further analysis.\n")
 
   # --- Optional removal of noisy columns (on denoised data) ---
   noisy_vars <- results$variable[results$is_noisy]
 
-  cat("\n")
+
 
   if(length(noisy_vars) > 0){
     message("\nDetected noisy columns: ", paste(noisy_vars, collapse = ", "))
-
+    cat("\n")
+    cat("\n")
     cat("===== Noise Summary by Element =====\n\n")
     for (i in seq_len(nrow(results))) {
       cat(sprintf("%-10s : Noise Score = %.3f, Is Noisy = %s\n",
@@ -151,7 +152,8 @@ xrf_noise <- function(df) {
 
     if(tolower(ans) == "yes"){
       df_clean <- df_clean[, !(names(df_clean) %in% noisy_vars), drop = FALSE]
-      message("\nUpdated denoised dataframe 'df_clean' with noisy columns removed is ready in the Global Environment.")
+      cat("===== Dataframe creation: WARNING =====\n\n")
+      message("\nDataframe 'df_clean' with noisy columns removed is ready in the Global Environment.")
       assign("df_clean", df_clean, envir = .GlobalEnv)
     }
   }
