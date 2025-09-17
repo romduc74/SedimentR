@@ -44,7 +44,7 @@ xrf_noise <- function(df) {
   cat("\nParameters set:\n")
   cat(" - Noise strength = ", noise_strength, "\n")
   cat(" - EEMD iterations = ", ensemble_size, "\n")
-  cat(" - IMFs considered = ", drop_imf, "\n")
+  cat(" - Noise IMFs considered = ", drop_imf, "\n")
   cat(" - Noise threshold = ", noise_threshold, "\n\n")
 
   # --- Depth column selection ---
@@ -137,7 +137,7 @@ xrf_noise <- function(df) {
     "EEMD parameters:\n",
     " - Noise strength            : ", noise_strength, "\n",
     " - EEMD iterations           : ", ensemble_size, "\n",
-    " - IMFs considered           : ", drop_imf, "\n",
+    " - Noise IMFs considered     : ", drop_imf, "\n",
     " - Noise threshold           : ", noise_threshold, "\n\n",
     "Number of noisy variables    : ", sum(results$is_noisy), "\n",
     "Noisy variables detected     : ", paste(results$variable[results$is_noisy], collapse = ", "), "\n",
@@ -172,12 +172,4 @@ xrf_noise <- function(df) {
       message("Summary saved to: ", file_path)
     } else message("No file selected. Summary not saved.")
   }
-
-  # --- Return results ---
-  return(list(
-    results = results,
-    cleaned_data = df_clean,
-    depth_col = depth_col,
-    df_denoised = df_clean
-  ))
 }
