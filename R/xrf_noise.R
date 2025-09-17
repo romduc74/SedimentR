@@ -117,24 +117,17 @@ xrf_noise <- function(df) {
     cleaned_vars <- names(df_clean)
     removed_vars <- setdiff(setdiff(names(df), depth_col), cleaned_vars)
 
-    summary_text <- paste0(
-      "===== XRF Noise Detection Summary =====\n\n",
+    summary_text1 <- paste0(
+      "===== XRF Noise Detection =====\n\n",
       "Number of observations       : ", nrow(df), "\n",
       "Original variables           : ", ncol(df), "\n",
-      "Depth column                 : ", depth_col, "\n\n",
-      "EEMD parameters:\n",
-      " - Noise strength            : ", noise_strength, "\n",
-      " - EEMD iterations           : ", ensemble_size, "\n",
-      " - Noise IMFs considered     : ", drop_imf, "\n",
-      " - Noise threshold           : ", noise_threshold, "\n\n",
       "Number of noisy variables    : ", sum(results$is_noisy), "\n",
       "Noisy variables detected     : ", paste(results$variable[results$is_noisy], collapse = ", "), "\n",
-      "Variables retained           : ", paste(cleaned_vars, collapse = ", "), "\n",
       "======================================\n"
     )
 
     cat("\n")
-    cat(summary_text)
+    cat(summary_text1)
     cat("\n")
 
 
@@ -150,6 +143,31 @@ xrf_noise <- function(df) {
       assign("df_clean", df_clean, envir = .GlobalEnv)
     }
   }
+
+  cat("\n")
+  # --- Prepare summary text ---
+  cleaned_vars <- names(df_clean)
+  removed_vars <- setdiff(setdiff(names(df), depth_col), cleaned_vars)
+
+  summary_text <- paste0(
+    "===== XRF Noise Detection Summary =====\n\n",
+    "Number of observations       : ", nrow(df), "\n",
+    "Original variables           : ", ncol(df), "\n",
+    "Depth column                 : ", depth_col, "\n\n",
+    "EEMD parameters:\n",
+    " - Noise strength            : ", noise_strength, "\n",
+    " - EEMD iterations           : ", ensemble_size, "\n",
+    " - Noise IMFs considered     : ", drop_imf, "\n",
+    " - Noise threshold           : ", noise_threshold, "\n\n",
+    "Number of noisy variables    : ", sum(results$is_noisy), "\n",
+    "Noisy variables detected     : ", paste(results$variable[results$is_noisy], collapse = ", "), "\n",
+    "Variables retained           : ", paste(cleaned_vars, collapse = ", "), "\n",
+    "======================================\n"
+  )
+
+  cat("\n")
+  cat(summary_text)
+  cat("\n")
 
   # --- Export summary ---
   save_summary <- ""
