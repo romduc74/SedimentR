@@ -15,9 +15,11 @@ visual.clust <- function(data) {
     library(pkg, character.only = TRUE)
   }
 
-  safe_readline <- function(prompt_msg) {
-    input <- readline(prompt = prompt_msg)
-    if (tolower(input) == "exit") stop("User has interrupted execution via 'exit'.")
+  # safe_readline avec gestion de valeur par défaut
+  safe_readline <- function(prompt = "", default = NULL) {
+    input <- tryCatch({ readline(prompt) }, error = function(e) { "" })
+    if (tolower(trimws(input)) == "exit") stop("Execution stopped by user with 'exit'.", call. = FALSE)
+    if (input == "" && !is.null(default)) return(default)
     return(input)
   }
 
@@ -28,53 +30,46 @@ visual.clust <- function(data) {
   data$Cluster <- as.numeric(data$Cluster)
   n_clusters <- length(unique(data$Cluster))
 
-  # ---- Boucle principale complète ----
+  # ---- Boucle principale ----
   repeat {
-    # ---- Étape 1 : Sélection de la colonne de profondeur ----
+    # Étape 1 : Sélection de la colonne de profondeur
     repeat {
       cat("\nAvailable columns:\n")
       print(names(data))
       depth_col <- safe_readline("Enter the name of the column representing depth (e.g. depth): ")
-
-      if (depth_col %in% colnames(data)) {
-        break
-      } else {
-        cat("Invalid column name for depth. Please try again.\n")
-      }
+      if (depth_col %in% colnames(data)) break
+      cat("Invalid column name for depth. Please try again.\n")
     }
     cat("\n")
-    # ---- Étape 2 : Sélection des variables ----
+
+    # Étape 2 : Sélection des variables
     repeat {
       cat("\nAvailable columns:\n")
       print(names(data))
       var_input <- safe_readline("Enter the names of the variables to display (comma separated): ")
       variables <- unlist(strsplit(var_input, ",\\s*"))
-
-      if (all(variables %in% names(data))) {
-        break
-      } else {
-        cat("Some variables are not valid. Please try again.\n")
-      }
+      if (all(variables %in% names(data))) break
+      cat("Some variables are not valid. Please try again.\n")
     }
     cat("\n")
-    # ---- Étape 3 : Palette de couleurs ----
-    use_custom <- tolower(safe_readline(prompt = "Would you like to set a custom palette? (yes/no): "))
+
+    # Étape 3 : Palette de couleurs
+    use_custom <- tolower(safe_readline("Would you like to set a custom palette? (yes/no): ", default = "no"))
     cat("\n")
     if (use_custom %in% c("oui", "o", "yes", "y")) {
-      cat("Enter", n_clusters, "colors (by name or hexadecimal, e.g. ‘red’ or '#FF0000')\n")
+      cat("Enter", n_clusters, "colors (by name or hexadecimal, e.g. 'red' or '#FF0000')\n")
       user_colors <- character(n_clusters)
       for (i in seq_len(n_clusters)) {
-        user_colors[i] <- safe_readline(prompt = paste("Color for the cluster", i, ": "))
+        user_colors[i] <- safe_readline(paste("Color for the cluster", i, ": "))
       }
       custom_palette <- user_colors
     } else {
-     # custom_palette <- colorRampPalette(c("#A52A2A", "#FFEFD5"))(n_clusters)
       custom_palette <- colorRampPalette(
         c("#662483", "#f39200", "#f9b233", "#ffda77", "#35163b")
       )(n_clusters)
     }
 
-    # ---- Étape 4 : Préparer les données ----
+    # Étape 4 : Préparer les données
     xrfStrat <- data %>%
       dplyr::select(all_of(c(variables, depth_col, "Cluster"))) %>%
       tidyr::pivot_longer(
@@ -84,10 +79,10 @@ visual.clust <- function(data) {
       ) %>%
       tidyr::drop_na()
 
-    # ---- Étape 5 : Créer le graphique principal ----
+    # Étape 5 : Créer le graphique principal
     main_plot <- xrfStrat %>%
       ggplot(aes(x = peakarea, y = .data[[depth_col]])) +
-      geom_lineh(aes(color = Cluster), size = 0.75) +
+      geom_lineh(aes(color = Cluster), linewidth = 0.75) +
       scale_y_reverse() +
       scale_x_continuous(breaks = scales::pretty_breaks(n = 4)) +
       tidypaleo::facet_geochem_gridh(vars(elements)) +
@@ -96,8 +91,8 @@ visual.clust <- function(data) {
       theme(legend.position = "none") +
       scale_color_gradientn(colors = custom_palette)
 
-    # ---- Étape 6 : Virtual Core ----
-    show_core <- tolower(safe_readline(prompt = "\nShow Virtual Core? (yes/no): "))
+    # Étape 6 : Virtual Core
+    show_core <- tolower(safe_readline("\nShow Virtual Core? (yes/no): ", default = "no"))
     if (show_core %in% c("yes", "y", "oui", "o")) {
       if (!requireNamespace("patchwork", quietly = TRUE)) install.packages("patchwork")
       library(patchwork)
@@ -126,11 +121,33 @@ visual.clust <- function(data) {
       cat("Virtual Core skipped.\n")
     }
 
-    # ---- Étape 7 : Recommencer ? ----
-    rerun <- tolower(safe_readline("\nWould you like to generate another visualization? (yes/no): "))
-    if (rerun %in% c("no", "n")) {
-      cat("End.\n")
-      break
+    # Étape 7 : Export PDF via RStudio
+    save_pdf <- tolower(safe_readline("\nWould you like to export in PDF? (yes/no): ", default = "no"))
+    if (save_pdf %in% c("yes", "y")) {
+      if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
+        file_path <- rstudioapi::selectFile(
+          caption = "Save PDF",
+          label = "Save",
+          existing = FALSE
+        )
+        if (!grepl("\\.pdf$", file_path, ignore.case = TRUE)) {
+          file_path <- paste0(file_path, ".pdf")
+        }
+        if (!requireNamespace("patchwork", quietly = TRUE)) install.packages("patchwork")
+        library(patchwork)
+
+        if (exists("combined_plot")) {
+          ggsave(filename = file_path, plot = combined_plot, device = "pdf", width = 10, height = 8)
+        } else {
+          ggsave(filename = file_path, plot = main_plot, device = "pdf", width = 10, height = 8)
+        }
+        cat("PDF saved as", file_path, "\n")
+      } else {
+        cat("RStudio API not available. Cannot select file interactively.\n")
+      }
     }
+
+    cat("End.\n")
+    break
   }
 }
