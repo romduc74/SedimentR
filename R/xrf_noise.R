@@ -108,8 +108,20 @@ xrf_noise <- function(df) {
   # --- Optional removal of noisy columns (on denoised data) ---
   noisy_vars <- results$variable[results$is_noisy]
 
+  cat("\n")
+
   if(length(noisy_vars) > 0){
     message("\nDetected noisy columns: ", paste(noisy_vars, collapse = ", "))
+
+    cat("===== Noise Summary by Element =====\n\n")
+    for (i in seq_len(nrow(results))) {
+      cat(sprintf("%-10s : Noise Score = %.3f, Is Noisy = %s\n",
+                  results$variable[i],
+                  results$noise_score[i],
+                  results$is_noisy[i]))
+    }
+    cat("\n")
+
 
 
     cat("\n")
