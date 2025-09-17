@@ -10,11 +10,10 @@
 #'   - depth_col: name of the depth column
 #'   - df_denoised: data.frame with denoised XRF data (first IMFs removed)
 #' @export
+#'
 xrf_noise <- function(df) {
-
-  if (!requireNamespace("Rlibeemd", quietly = TRUE)) {
-    stop("The package 'Rlibeemd' is required. Please install it using install.packages('Rlibeemd').")
-  }
+  if (!requireNamespace("Rlibeemd", quietly = TRUE)) install.packages("Rlibeemd")
+  library(Rlibeemd)
 
   cat("\nType 'exit' at any time to quit.\n\n")
 
