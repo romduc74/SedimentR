@@ -8,7 +8,7 @@
 #' @param path Full path to the CSV or Excel file.
 #' @param sheet (optional) Name or index of the Excel sheet. If not specified, the first sheet is used.
 #' @export
-charger <- function(path, sheet = NULL) {
+charger <- function(path, sheet = NULL, sep, fileEncoding) {
   extension <- tools::file_ext(path)
 
   safe_readline <- function(prompt_msg) {
@@ -20,9 +20,9 @@ charger <- function(path, sheet = NULL) {
   # --- Read CSV or Excel ---
   if (extension == "csv") {
     df <- tryCatch({
-      read.csv(path, sep = ",", stringsAsFactors = FALSE, check.names = FALSE)
+      read.csv(path, sep = sep, fileEncoding = fileEncoding, stringsAsFactors = FALSE, check.names = FALSE)
     }, error = function(e) {
-      read.csv(path, sep = ";", stringsAsFactors = FALSE, check.names = FALSE)
+      read.csv(path, sep = sep, fileEncoding = fileEncoding, stringsAsFactors = FALSE, check.names = FALSE)
     })
 
     df[] <- lapply(df, function(col) {
@@ -65,7 +65,7 @@ charger <- function(path, sheet = NULL) {
         "Si/Ca        | Aeolian dust flux, wind strength\n",
         "Ti/Ca        | Variation in terrigenous sediment delivery and marine carbonates\n",
         "Ti/Al        | Aeolian dust, wind strength, aridity, coarse sediment\n",
-        "Ti/K         | Variations in sediment source (\n",
+        "Ti/K         | Variations in sediment source\n",
         "Ti/Fe        | Wind strength, sediment provenance\n",
         "Ti/Rb        | Heavy mineral detection (turbidites)\n",
         "Ti/Sr        | Variation in terrigenous sediment delivery and climate variability\n",
