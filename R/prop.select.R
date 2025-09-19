@@ -96,7 +96,14 @@ prop.select <- function(df_normalized) {
     cat("Regardless of the selection method used, it is advisable to have a cumulative variance of at least 70%.\n\n")
 
     repeat {
-      input <- safe_readline(paste0("Choose the number of components to retain (", n_variance, " or ", n_bstick, "): "))
+      input <- safe_readline(
+        paste0(
+          "Choose the number of components to retain:\n",
+          "  (", n_variance, ") Components from Cumulative variance\n",
+          "  (", n_bstick, ") Components from Broken-stick\n",
+          "Your choice: "
+        )
+      )
       n_dims <- as.integer(input)
       if (!is.na(n_dims) && n_dims >= 1 && n_dims <= n_comp) break
       cat("Please enter a valid integer between 1 and ", n_comp, ".\n")
@@ -234,37 +241,28 @@ prop.select <- function(df_normalized) {
     # }
 
     resume_pca <- paste0(
-      "===== PCA Summary Report =====\n\n",
-      "Analysis performed on ", nrow(df_normalized), " observations and ", ncol(df_normalized), " original variables.\n\n",
-      "Cumulative variance threshold: ", seuil_variance, "\n",
-      "Cumulative variance selected components: ", n_variance, "\n",
-      "Broken-stick selected components: ", n_bstick, "\n",
-      "Selection method used: ", methode_selection, "\n",
-      "User-retained components: ", n_dims, "\n",
-      "Cumulative variance (retained comps): ", round(variance_cumulee[n_dims] * 100, 2), "%\n",
-      "Quantile threshold: ", quantile_thresh, "\n",
-      "Number of variables selected: ", length(vars_selectionnees), "\n",
-      "Selected variables: ", paste(vars_selectionnees, collapse = ", "), "\n"
+      "\n",
+      "==================== PCA SUMMARY ====================\n",
+      sprintf("Observations               : %d", nrow(df_normalized)), "\n",
+      sprintf("Original variables         : %d", ncol(df_normalized)), "\n",
+      "-----------------------------------------------------\n",
+      sprintf("Cumulative variance cutoff : %.2f", seuil_variance), "\n",
+      sprintf("→ Components (cum. var.)   : %d", n_variance), "\n",
+      sprintf("→ Components (broken-stick): %d", n_bstick), "\n",
+      sprintf("Selected method            : %s", methode_selection), "\n",
+      sprintf("Components retained        : %d", n_dims), "\n",
+      sprintf("Cumulative variance (ret.) : %.2f%%", variance_cumulee[n_dims] * 100), "\n",
+      sprintf("Percentile threshold       : %.2f", quantile_thresh), "\n",
+      sprintf("Variables selected         : %d", length(vars_selectionnees)), "\n",
+      "-----------------------------------------------------\n",
+      "Selected variables:\n",
+      paste0("→ ", paste(strwrap(paste(vars_selectionnees, collapse = ", "), width = 70),
+                         collapse = "\n   ")), "\n",
+      "=====================================================\n"
     )
 
-    cat("\n",
-        "==================== PCA SUMMARY ====================\n",
-        sprintf("Observations               : %d", nrow(df_normalized)), "\n",
-        sprintf("Original variables         : %d", ncol(df_normalized)), "\n",
-        "-----------------------------------------------------\n",
-        sprintf("Cumulative variance cutoff : %.2f", seuil_variance), "\n",
-        sprintf("→ Components (cum. var.)   : %d", n_variance), "\n",
-        sprintf("→ Components (broken-stick): %d", n_bstick), "\n",
-        sprintf("Selected method            : %s", methode_selection), "\n",
-        sprintf("Components retained        : %d", n_dims), "\n",
-        sprintf("Cumulative variance (ret.) : %.2f%%", variance_cumulee[n_dims] * 100), "\n",
-        sprintf("Percentile threshold       : %.2f", quantile_thresh), "\n",
-        sprintf("Variables selected         : %d", length(vars_selectionnees)), "\n",
-        "-----------------------------------------------------\n",
-        "Selected variables:\n",
-        paste0("→ ", paste(strwrap(paste(vars_selectionnees, collapse = ", "), width = 70), collapse = "\n   ")), "\n",
-        "=====================================================\n"
-    )
+    # Affichage (identique à resume_pca)
+    cat(resume_pca)
 
     cat("\n")
 
