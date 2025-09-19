@@ -4,7 +4,7 @@
 \alias{charger}
 \title{Load a CSV or Excel (.xlsx) file into a DataFrame with SNR filtering}
 \usage{
-charger(path, sheet = NULL)
+charger(path, sheet = NULL, sep, fileEncoding)
 }
 \arguments{
 \item{path}{Full path to the CSV or Excel file.}
