@@ -61,7 +61,7 @@ prop.select <- function(df_normalized) {
       cat("1) Cumulative variance method (", n_variance, " components)\n")
       cat("2) Broken-stick method (", n_bstick, " components)\n")
       cat("3) Manual choice\n")
-      method_choice <- safe_readline("Enter 1, 2 or 3: ")
+      method_choice <- safe_readline("Enter (1) Cumulative variance, (2) Broken-stick  or (3) Manual: ")
       if (method_choice %in% c("1", "2", "3")) break
       cat("\n")
       cat("Please enter a valid option: 1, 2 or 3.\n")
@@ -76,15 +76,19 @@ prop.select <- function(df_normalized) {
       methode_selection <- "Broken-Stick"
     } else {
       repeat {
+        cat("\n")
         input <- safe_readline(paste0("Enter manually the number of components to retain (1–", n_comp, "): "))
         n_dims <- as.integer(input)
         if (!is.na(n_dims) && n_dims >= 1 && n_dims <= n_comp) break
+        cat("\n")
         cat("Please enter a valid integer between 1 and ", n_comp, ".\n")
       }
       methode_selection <- "Manual Choice"
     }
 
     loadings <- acp$rotation[, 1:n_dims, drop = FALSE]
+
+    cat("\n")
 
     repeat {
       reponse_affichage <- tolower(safe_readline("\nDisplay the loadings of selected components? (yes/no): "))

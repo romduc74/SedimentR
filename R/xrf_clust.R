@@ -29,10 +29,8 @@ xrf_clust <- function(data) {
 
   repeat {
     set.seed(123)
-
-    cat("\n---------------------------------\n")
-    cat("       Clustering Method         \n")
-    cat("---------------------------------\n\n")
+    cat("\n====== Clustering Analysis ======\n\n")
+    cat("\n")
 
     # Choix méthode
     repeat {
