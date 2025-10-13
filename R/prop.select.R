@@ -63,7 +63,9 @@ prop.select <- function(df_normalized) {
       cat("3) Manual choice\n")
       method_choice <- safe_readline("Enter 1, 2 or 3: ")
       if (method_choice %in% c("1", "2", "3")) break
+      cat("\n")
       cat("Please enter a valid option: 1, 2 or 3.\n")
+      cat("\n")
     }
 
     if (method_choice == "1") {
@@ -95,6 +97,8 @@ prop.select <- function(df_normalized) {
         print(loadings[, i, drop = FALSE])
       }
     }
+
+    cat("\n")
 
     repeat {
       input <- safe_readline("Enter a percentile threshold for variable selection (e.g., 0.9): ")
