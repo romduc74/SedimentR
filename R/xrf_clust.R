@@ -283,7 +283,7 @@ xrf_clust <- function(data) {
           y = "Principal Component 2",
           caption = "Ellipses represent 95% confidence regions"
         ) +
-        theme_minimal(base_family = "Arial", base_size = 14) +
+        theme_minimal(base_family = "sans", base_size = 14) +
         theme(
           plot.title = element_text(size = 20, face = "bold", hjust = 0.5, color = "#222222"),
           legend.title = element_text(size = 13, face = "bold", color = "#222222"),

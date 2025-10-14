@@ -104,7 +104,7 @@ visual.clust <- function(data) {
           axis.ticks.x = element_blank(),
           panel.grid = element_blank(),
           legend.position = "right",
-          text = element_text(family = "Arial", face = "bold")
+          text = element_text(family = "sans", face = "bold")
         )
 
       combined_plot <- main_plot + core_plot + patchwork::plot_layout(widths = c(4, 0.5))

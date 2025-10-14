@@ -46,6 +46,8 @@ prop.select <- function(df_normalized) {
     }
     bstick_values <- broken_stick(n_comp)
 
+    cat("\n")
+
     repeat {
       input <- safe_readline("Enter the cumulative variance threshold (e.g. 0.70): ")
       seuil_variance <- as.numeric(input)
@@ -61,6 +63,7 @@ prop.select <- function(df_normalized) {
       cat("1) Cumulative variance method (", n_variance, " components)\n")
       cat("2) Broken-stick method (", n_bstick, " components)\n")
       cat("3) Manual choice\n")
+      cat("\n")
       method_choice <- safe_readline("Enter (1) Cumulative variance, (2) Broken-stick  or (3) Manual: ")
       if (method_choice %in% c("1", "2", "3")) break
       cat("\n")
@@ -170,8 +173,12 @@ prop.select <- function(df_normalized) {
           write.xlsx(results_table, file_path, rowNames = FALSE)
         }
         cat(paste0("\nTable successfully exported to: ", file_path, "\n"))
+        cat("\n")
       } else cat("Export cancelled: No file selected.\n")
+      cat("\n")
     } else cat("Table not exported.\n")
+
+    cat("\n")
 
     resume_pca <- paste0(
       "\n",
@@ -194,6 +201,8 @@ prop.select <- function(df_normalized) {
       "=====================================================\n"
     )
     cat(resume_pca)
+
+    cat("\n")
 
     repeat {
       save_summary <- tolower(safe_readline("Save a summary report (.txt)? (yes/no): "))
@@ -218,6 +227,7 @@ prop.select <- function(df_normalized) {
     repeat {
       cat("\nSelect the dataframe to use as the ORIGINAL data (before CLR):\n")
       print(df_list)
+      cat("\n")
       df_name <- safe_readline("Enter the name of the dataframe: ")
       if (df_name %in% df_list) {
         df_original <- get(df_name, envir = .GlobalEnv)
