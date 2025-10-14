@@ -225,7 +225,7 @@ prop.select <- function(df_normalized) {
     df_list <- df_list[sapply(df_list, function(x) is.data.frame(get(x)))]
 
     repeat {
-      cat("\nSelect the dataframe use in the function (scale_data):\n")
+      cat("\nSelect the dataframe used in the function (scale_data):\n")
       print(df_list)
       cat("\n")
       df_name <- safe_readline("Enter the name of the dataframe: ")
