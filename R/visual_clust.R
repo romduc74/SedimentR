@@ -77,7 +77,7 @@ visual.clust <- function(data) {
       tidypaleo::theme_paleo() +
       scale_color_gradientn(colors = custom_palette)+
       theme(
-        text = element_text(family = "Arial", face = "bold"),
+        text = element_text(family = "sans", face = "bold"),
         axis.text = element_text(size = 11, color = "gray25"),
         axis.title = element_text(size = 13),
         strip.text = element_text(face = "bold", size = 12),
