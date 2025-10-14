@@ -29,36 +29,34 @@ xrf_noise <- function(df) {
   message("EEMD parameters for XRF analysis:\n")
 
   noise_strength <- as.numeric(safe_readline(
-    "1) Noise amplitude to add (noise_strength, recommended 0.2): ", default = "0.2"))
+    "1) Noise amplitude to add (recommended 0.2): ", default = "0.2"))
   cat("\n")
   ensemble_size <- as.integer(safe_readline(
-    "2) Number of EEMD iterations (ensemble_size, recommended 100): ", default = "100"))
+    "2) Number of EEMD iterations (recommended 100): ", default = "100"))
   cat("\n")
   drop_imf <- as.integer(safe_readline(
-    "3) Number of first IMFs considered as noise (1 to 2 (2 recommended)): ", default = "2"))
+    "3) Number of first IMFs considered as noise (recommended 2): ", default = "2"))
   cat("\n")
   noise_threshold <- as.numeric(safe_readline(
-    "4) Threshold for noise proportion to flag a variable (0-1, recommended 0.3): ", default = "0.3"))
+    "4) Threshold for noise proportion to flag a variable (0–1, recommended 0.3): ", default = "0.3"))
 
   cat("\nParameters set:\n")
-  cat(" - Noise strength = ", noise_strength, "\n")
-  cat(" - EEMD iterations = ", ensemble_size, "\n")
-  cat(" - Noise IMFs considered = ", drop_imf, "\n")
-  cat(" - Noise threshold = ", noise_threshold, "\n\n")
+  cat("\n")
+  cat(" → Noise strength = ", noise_strength, "\n")
+  cat(" → EEMD iterations = ", ensemble_size, "\n")
+  cat(" → Noise IMFs considered = ", drop_imf, "\n")
+  cat(" → Noise threshold = ", noise_threshold, "\n\n")
 
   # --- Depth column selection ---
   message("Available columns in the dataset:")
   cat("\n")
-  print(names(df))
-  cat("\n")
+  print(names(df)); cat("\n")
 
   depth_col <- NULL
   while (is.null(depth_col)) {
     choice <- safe_readline("Enter the name of the depth column: ")
-    cat("\n")
     if (choice %in% names(df)) depth_col <- choice else message("Invalid column name. Please try again.")
   }
-  cat("\n")
 
   # --- Noise calculation ---
   results <- data.frame(
@@ -69,52 +67,46 @@ xrf_noise <- function(df) {
     stringsAsFactors = FALSE
   )
 
-  # Dataframe for denoised signals
-  df_clean <- df[depth_col]  # start with depth column
+  df_denoised_total <- df[depth_col]  # all denoised
+  df_clean <- df[depth_col]           # filtered later
 
   for (col in setdiff(names(df), depth_col)) {
     x <- df[[col]]
-    imfs <- Rlibeemd::eemd(x,
-                           noise_strength = noise_strength,
-                           ensemble_size = ensemble_size)
+    imfs <- Rlibeemd::eemd(
+      x,
+      noise_strength = noise_strength,
+      ensemble_size = ensemble_size
+    )
 
     var_total <- sum(apply(imfs, 2, var))
     var_noise <- sum(apply(imfs[, 1:drop_imf, drop = FALSE], 2, var))
     noise_score <- var_noise / var_total
     is_noisy <- noise_score > noise_threshold
 
-    results <- rbind(results,
-                     data.frame(
-                       variable = col,
-                       noise_score = noise_score,
-                       is_noisy = is_noisy,
-                       noise_threshold = noise_threshold,
-                       stringsAsFactors = FALSE
-                     ))
+    results <- rbind(results, data.frame(
+      variable = col,
+      noise_score = noise_score,
+      is_noisy = is_noisy,
+      noise_threshold = noise_threshold,
+      stringsAsFactors = FALSE
+    ))
 
-    # --- Denoise signal by removing first IMFs ---
-    if(ncol(imfs) <= drop_imf){
+    # Denoised signal (remove first IMFs)
+    if (ncol(imfs) <= drop_imf) {
       signal_denoised <- rowSums(imfs)
     } else {
       signal_denoised <- rowSums(imfs[, -(1:drop_imf), drop = FALSE])
     }
+
+    df_denoised_total[[col]] <- signal_denoised
     df_clean[[col]] <- signal_denoised
   }
 
-  # Assign denoised dataframe to Global Environment
-  # assign("df_clean", df_clean, envir = .GlobalEnv)
-  # message("Denoised dataframe 'df_clean' has been created in the Global Environment and is ready for further analysis.\n")
-
-  # --- Optional removal of noisy columns (on denoised data) ---
   noisy_vars <- results$variable[results$is_noisy]
 
-
-
-  if(length(noisy_vars) > 0){
-    message("\nDetected noisy columns: ", paste(noisy_vars, collapse = ", "))
-    cat("\n")
-    cat("\n")
-    cat("===== Noise Summary by Element =====\n\n")
+  # --- Display summary ---
+  if (length(noisy_vars) > 0) {
+    cat("\n===== Noise Summary by Element =====\n\n")
     for (i in seq_len(nrow(results))) {
       cat(sprintf("%-10s : Noise Score = %.3f, Is Noisy = %s\n",
                   results$variable[i],
@@ -123,67 +115,58 @@ xrf_noise <- function(df) {
     }
     cat("\n")
 
-
-
-    cat("\n")
-    # --- Prepare summary text ---
-    cleaned_vars <- names(df_clean)
-    removed_vars <- setdiff(setdiff(names(df), depth_col), cleaned_vars)
-
-    summary_text1 <- paste0(
-      "===== XRF Noise Detection =====\n\n",
-      "Number of observations       : ", nrow(df), "\n",
-      "Original variables           : ", ncol(df), "\n",
-      "Number of noisy variables    : ", sum(results$is_noisy), "\n",
-      "Noisy variables detected     : ", paste(results$variable[results$is_noisy], collapse = ", "), "\n",
-      "======================================\n"
-    )
-
-    cat("\n")
-    cat(summary_text1)
-    cat("\n")
-
-
     ans <- ""
-    while(!(tolower(ans) %in% c("yes", "no"))){
-      ans <- safe_readline("Do you want to remove these columns from the denoised dataset? (yes/no): ")
-      if(!(tolower(ans) %in% c("yes", "no"))) message("Invalid response.")
+    while (!(tolower(ans) %in% c("yes", "no"))) {
+      ans <- safe_readline("Do you want to remove noisy columns from the denoised dataset? (yes/no): ")
+      if (!(tolower(ans) %in% c("yes", "no"))) message("Invalid response.")
     }
 
-    if(tolower(ans) == "yes"){
+    if (tolower(ans) == "yes") {
       df_clean <- df_clean[, !(names(df_clean) %in% noisy_vars), drop = FALSE]
-      cat("===== Dataframe creation: WARNING =====\n\n")
-      message("\nDataframe 'df_clean' with noisy columns removed is ready in the Global Environment.")
-      assign("df_clean", df_clean, envir = .GlobalEnv)
+      cat("\n Noisy columns removed — 'df_clean' created with only analysable variables.\n\n")
+    } else {
+      cat("\n WARNING: No noisy variables were removed.\n")
+      cat("=== These variables may remain non-analysable due to excessive noise content ===\n")
+      cat("\n")
     }
+  } else {
+    cat("\nNo noisy variables detected — all variables retained.\n")
   }
 
-  cat("\n")
-  # --- Prepare summary text ---
-  cleaned_vars <- names(df_clean)
-  removed_vars <- setdiff(setdiff(names(df), depth_col), cleaned_vars)
+  # --- Save both dataframes to Global Environment ---
+  assign("df_clean", df_clean, envir = .GlobalEnv)
+  assign("df_denoised_total", df_denoised_total, envir = .GlobalEnv)
 
+  # --- Summary ---
   summary_text <- paste0(
-    "===== XRF Noise Detection Summary =====\n\n",
+    "===== XRF Noise Detection Summary =====\n",
+    "\n",
     "Number of observations       : ", nrow(df), "\n",
     "Original variables           : ", ncol(df), "\n",
     "Depth column                 : ", depth_col, "\n\n",
     "EEMD parameters:\n",
-    " - Noise strength            : ", noise_strength, "\n",
-    " - EEMD iterations           : ", ensemble_size, "\n",
-    " - Noise IMFs considered     : ", drop_imf, "\n",
-    " - Noise threshold           : ", noise_threshold, "\n\n",
+    " → Noise strength            : ", noise_strength, "\n",
+    " → EEMD iterations           : ", ensemble_size, "\n",
+    " → Noise IMFs considered     : ", drop_imf, "\n",
+    " → Noise threshold           : ", noise_threshold, "\n\n",
     "Number of noisy variables    : ", sum(results$is_noisy), "\n",
     "Noisy variables detected     : ", paste(results$variable[results$is_noisy], collapse = ", "), "\n",
-    "Variables retained           : ", paste(cleaned_vars, collapse = ", "), "\n",
+    "Variables retained (df_clean): ", paste(names(df_clean), collapse = ", "), "\n",
+    "\n",
     "======================================\n"
   )
 
-  cat("\n")
   cat(summary_text)
-  cat("\n")
 
-  # --- Export summary ---
+  cat("\n=== Dataframes created ===\n")
+  cat("\n")
+  cat("→ df_denoised_total: all denoised variables. WARNING: No noisy variables were removed === These variables may remain non-analysable due to excessive noise content === \n")
+  cat("\n")
+  cat("→ df_clean         : denoised dataset after optional removal of noisy variables  === Ready for further analysis === \n")
+  cat("\n")
+  cat("=============================================\n")
+
+  # --- Optional save summary ---
   save_summary <- ""
   while (!(tolower(save_summary) %in% c("yes", "no"))) {
     save_summary <- safe_readline("Do you want to save the summary report (.txt)? (yes/no): ")
@@ -206,4 +189,5 @@ xrf_noise <- function(df) {
       message("Summary saved to: ", file_path)
     } else message("No file selected. Summary not saved.")
   }
+
 }
