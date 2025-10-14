@@ -11,13 +11,15 @@
 
 
 xrf_clust <- function(data) {
+
   # Packages nécessaires
-  required_packages <- c("NbClust", "ggplot2", "writexl", "rstudioapi")
+  required_packages <- c("NbClust", "ggplot2", "writexl", "rstudioapi", "factoextra")
   for (pkg in required_packages) {
     if (!requireNamespace(pkg, quietly = TRUE)) install.packages(pkg)
     library(pkg, character.only = TRUE)
   }
 
+  # Vérifications
   if (!is.data.frame(data) && !is.matrix(data)) stop("The entry must be a dataframe or matrix.")
   if (!all(sapply(data, is.numeric))) stop("All columns must be numeric.")
 
@@ -29,17 +31,7 @@ xrf_clust <- function(data) {
 
   repeat {
     set.seed(123)
-    cat("\n====== Clustering Analysis ======\n\n")
-    cat("\n")
-
-    # Choix méthode
-    repeat {
-      cat("Available clustering methods:\n1. K-means\n2. Hierarchical clustering\n\n")
-      method_choice <- as.integer(safe_readline("Choose a method (1 or 2): "))
-      if (method_choice %in% c(1,2)) break
-      cat("Invalid choice. Please enter 1 or 2.\n\n")
-    }
-    cat("\n")
+    cat("\n====== Clustering Analysis (K-means method) ======\n\n")
 
     # Nombre max clusters
     repeat {
@@ -47,52 +39,10 @@ xrf_clust <- function(data) {
       if (!is.na(max_clusters) && max_clusters>=2) break
       cat("Invalid number. Please enter integer ≥2.\n\n")
     }
-    cat("\n")
 
-    # Distance seulement si hiérarchique
-    chosen_distance <- "euclidean"
-    if(method_choice==2){
-      available_distances <- c("euclidean","maximum","manhattan","canberra","binary","minkowski")
-      repeat {
-        cat("Distances available for NbClust:\n")
-        for(i in seq_along(available_distances)) cat(i,"-",available_distances[i],"\n")
-        cat("\n")
-        distance_choice <- safe_readline("Select a distance (number): ")
-        distance_num <- as.integer(distance_choice)
-        if(!is.na(distance_num) && distance_num>=1 && distance_num<=length(available_distances)){
-          chosen_distance <- available_distances[distance_num]
-          break
-        }
-        if(tolower(distance_choice) %in% available_distances){
-          chosen_distance <- tolower(distance_choice)
-          break
-        }
-        cat("Invalid input. Try again.\n\n")
-      }
-    }
-    cat("\n")
-
-    # Méthode hiérarchique
-    hclust_methods <- c("ward.D","ward.D2","single","complete","average","mcquitty","median","centroid")
-    method_name <- ifelse(method_choice==1,"kmeans",NULL)
-    if(method_choice==2){
-      repeat {
-        cat("Available hierarchical methods:\n")
-        for(i in seq_along(hclust_methods)) cat(i,"-",hclust_methods[i],"\n")
-        cat("\n")
-        hclust_choice <- as.integer(safe_readline("Choose a hierarchical method (number): "))
-        if(!is.na(hclust_choice) && hclust_choice>=1 && hclust_choice<=length(hclust_methods)){
-          method_name <- hclust_methods[hclust_choice]
-          break
-        }
-        cat("Invalid choice. Try again.\n\n")
-      }
-    }
     # Déterminer nombre optimal de clusters
-    cat("\n---------------------------------\n")
-    cat("   Determining Optimal Clusters  \n")
-    cat("---------------------------------\n\n")
-    nb <- NbClust(data, distance=chosen_distance, min.nc=2, max.nc=max_clusters, method=method_name)
+    cat("\n====== Determining Optimal Clusters ======\n\n")
+    nb <- NbClust(data, distance="euclidean", min.nc=2, max.nc=max_clusters, method="kmeans")
     results <- nb$Best.nc[1,]
     freq_table <- sort(table(results), decreasing=TRUE)
     max_freq <- max(freq_table)
@@ -113,20 +63,14 @@ xrf_clust <- function(data) {
 
     cat("\nOptimal number of clusters selected:", optimal_clusters_max,"\n\n")
 
-    # Appliquer clustering
-    if(method_name=="kmeans"){
-      clustering_result <- kmeans(data, centers=optimal_clusters_max, nstart=100)
-    } else {
-      dist_matrix <- dist(data)
-      hc <- hclust(dist_matrix, method=method_name)
-      clusters <- cutree(hc, k=optimal_clusters_max)
-      clustering_result <- list(cluster=clusters)
-    }
+    # Appliquer k-means
+    clustering_result <- kmeans(data, centers=optimal_clusters_max, nstart=100)
 
     # Sélection dataframe cible
-    cat("\n---------------------------------\n")
-    cat("   Select Target Dataframe       \n")
-    cat("---------------------------------\n\n")
+    cat("\n")
+    cat("=== Select the dataframe to which the 'Cluster' column will be added  ===\n")
+    cat("\n")
+
     df_list <- ls(envir=.GlobalEnv)
     df_list <- df_list[sapply(df_list, function(x) is.data.frame(get(x)))]
     repeat {
@@ -149,14 +93,8 @@ xrf_clust <- function(data) {
     if(save_choice %in% c("yes","y")){
       repeat {
         ext_choice <- tolower(safe_readline("Desired extension: csv or xlsx: "))
-        if(!ext_choice %in% c("csv","xlsx")) {
-          cat("Invalid extension. Please type 'csv' or 'xlsx'.\n\n")
-          next
-        }
-        if(!rstudioapi::isAvailable()){
-          cat("Saving requires RStudio.\n\n")
-          break
-        }
+        if(!ext_choice %in% c("csv","xlsx")) { cat("Invalid extension.\n"); next }
+        if(!rstudioapi::isAvailable()){ cat("Saving requires RStudio.\n"); break }
         cat("\nSelect the destination file...\n")
         chemin_save <- rstudioapi::selectFile(
           caption="Save the file",
@@ -165,7 +103,7 @@ xrf_clust <- function(data) {
           filter=if(ext_choice=="csv") list("CSV files"="csv") else list("Excel files"="xlsx"),
           existing=FALSE
         )
-        if(!nzchar(chemin_save)){ cat("Saving cancelled.\n\n"); break }
+        if(!nzchar(chemin_save)){ cat("Saving cancelled.\n"); break }
         if(!grepl(paste0("\\.",ext_choice,"$"), chemin_save, ignore.case=TRUE)) chemin_save <- paste0(chemin_save,".",ext_choice)
         if(ext_choice=="csv") write.csv(selected_df, chemin_save, row.names=FALSE)
         else writexl::write_xlsx(selected_df, path=chemin_save)
@@ -174,21 +112,19 @@ xrf_clust <- function(data) {
       }
     }
 
-    # ---------------- Cluster Drivers Analysis ----------------
-    cat("\n==============================\n")
-    cat("   Cluster Drivers Analysis   \n")
-    cat("==============================\n\n")
+    cat("\n")
 
-    # Profils moyens
+    # ---------------- Cluster Drivers Analysis ----------------
+    cat("=== Cluster Drivers Analysis  ===\n")
+
+    cat("\n=== Optimal number of clusters for your data:", optimal_clusters_max," ===\n")
+    cat("\n=== Variable Importance in Cluster Formation (Ranked by ANOVA F-values) ===\n")
+    cat("\n")
+
     cluster_profiles <- aggregate(data, by=list(Cluster=clustering_result$cluster), mean)
     cluster_profiles_rounded <- cluster_profiles
     cluster_profiles_rounded[,-1] <- round(cluster_profiles[,-1],0)
-    #cat("=== Cluster Profiles (mean values per cluster) ===\n\n")
-    #print(cluster_profiles_rounded)
-    cat("\n")
 
-    # ANOVA F-values
-    cat("=== Variable Importance in Cluster Formation (Ranked by ANOVA F-values) ===\n\n")
     anova_results <- data.frame(Variable=character(), F_value=numeric(), p_value=numeric(), stringsAsFactors=FALSE)
     for(col in colnames(data)){
       model <- aov(data[[col]] ~ as.factor(clustering_result$cluster))
@@ -203,9 +139,8 @@ xrf_clust <- function(data) {
     print(anova_results)
     cat("\n")
 
-    # Profil synthétique (corrigé, variable par variable)
-    cat("=== Cluster Description Profiles ===\n\n")
     vars <- colnames(cluster_profiles)[-1]
+    cat("=== Cluster Description Profiles ===\n\n")
     for(i in 1:nrow(cluster_profiles)){
       profile_text <- c()
       for(v in vars){
@@ -236,16 +171,11 @@ xrf_clust <- function(data) {
         if(nzchar(file_path)){
           if(!grepl("\\.txt$", file_path, ignore.case=TRUE)) file_path <- paste0(file_path,".txt")
           analysis_lines <- c(
-            "\n",
-            "=== Cluster Drivers Analysis === ",
-            "\n",
-            "=== Variable Importance in Cluster Formation (Ranked by ANOVA F-values) ===",
-            "\n",
+            "\n=== Cluster Drivers Analysis ===\n",
+            "Optimal number of clusters:", optimal_clusters_max, "\n",
+            "=== Variable Importance in Cluster Formation (Ranked by ANOVA F-values) ===\n",
             capture.output(print(anova_results)),
-            "",
-            "\n",
-            "=== Cluster Description Profiles ===",
-            "\n"
+            "\n=== Cluster Description Profiles ===\n"
           )
           for(i in 1:nrow(cluster_profiles)){
             profile_text <- c()
@@ -266,9 +196,153 @@ xrf_clust <- function(data) {
       }
     }
 
-    # Relancer ?
-    restart <- safe_readline("\nWould you like to perform another clustering? (yes/no): ")
     cat("\n")
+
+    cat("=== PCA and clusters visualization ===\n")
+
+    cat("\n")
+
+
+    # --- ACP avec choix de palette ---
+    show_acp <- tolower(safe_readline("Would you like to visualize a PCA with the clusters? (yes/no): "))
+    cat("\n")
+    if(show_acp %in% c("yes","y")){
+
+      # Sélection dataframe clusters
+      repeat {
+        df_cluster_name <- safe_readline("Enter the name of the dataframe containing the 'Cluster' column: ")
+        if(exists(df_cluster_name, envir = .GlobalEnv)){
+          df_cluster <- get(df_cluster_name, envir = .GlobalEnv)
+          if("Cluster" %in% colnames(df_cluster)) break
+          cat("The selected dataframe does not contain a 'Cluster' column. Try again.\n")
+        } else cat("Dataframe not found. Try again.\n")
+      }
+
+      cat("\n")
+
+      # Sélection dataframe variables
+      repeat {
+        df_vars_name <- safe_readline("Enter the name of the dataframe wich was used for PCA (in prop.select): ")
+        if(exists(df_vars_name, envir = .GlobalEnv)){
+          df_vars <- get(df_vars_name, envir = .GlobalEnv)
+          if(all(sapply(df_vars, is.numeric))) break
+          cat("The selected dataframe must contain only numeric columns. Try again.\n")
+        } else cat("Dataframe not found. Try again.\n")
+      }
+
+      # Convertir Cluster en facteur
+      df_cluster$Cluster <- as.factor(df_cluster$Cluster)
+
+      # Calcul PCA
+      res.pca <- prcomp(df_vars, scale. = FALSE)
+
+      # Nombre de clusters pour la palette
+      n_clusters <- length(levels(df_cluster$Cluster))
+
+      cat("\n")
+
+      # Choix de palette
+      use_custom <- tolower(safe_readline("Would you like to set a custom palette? (yes/no): "))
+      cat("\n")
+      if(use_custom %in% c("oui","o","yes","y")){
+        cat("Enter", n_clusters, "colors (by name or hex, e.g., 'red' or '#FF0000'):\n")
+        user_colors <- character(n_clusters)
+        for(i in seq_len(n_clusters)){
+          user_colors[i] <- safe_readline(paste("Color for cluster", i, ": "))
+        }
+        palette_finale <- user_colors
+      } else {
+        palette_finale <- colorRampPalette(c("#662483","#f39200","#f9b233","#ffda77","#35163b"))(n_clusters)
+      }
+      cat("\n")
+
+      # Afficher la palette utilisée
+      cat("Palette used:", paste(palette_finale, collapse=", "), "\n\n")
+
+      p <- fviz_pca_biplot(
+        res.pca,
+        geom.ind = "point",            # Show individuals as points
+        pointshape = 16,               # Solid round dots
+        pointsize = 2.25,               # Size of dots
+        alpha.ind = 0.9,               # Slight transparency
+        col.ind = df_cluster$Cluster,  # Color by cluster
+        palette = palette_finale,      # User or default palette
+        addEllipses = TRUE,            # Add confidence ellipses
+        ellipse.level = 0.95,
+        mean.point = FALSE,            # Hide cluster centroids
+        label = "var",                 # Show variable arrows
+        col.var = "gray35",            # Muted arrow color
+        arrowsize = 0.5,
+        repel = TRUE,                  # Avoid label overlap
+        legend.title = "Cluster"
+      ) +
+
+        ggtitle("Cluster structure across PCA projection") +
+        labs(
+          x = "Principal Component 1",
+          y = "Principal Component 2",
+          caption = "Ellipses represent 95% confidence regions"
+        ) +
+        theme_minimal(base_family = "Arial", base_size = 14) +
+        theme(
+          plot.title = element_text(size = 20, face = "bold", hjust = 0.5, color = "#222222"),
+          legend.title = element_text(size = 13, face = "bold", color = "#222222"),
+          legend.text = element_text(size = 11, color = "#444444"),
+          axis.title = element_text(size = 14, face = "bold", color = "#222222"),
+          axis.text = element_text(size = 12, color = "#333333"),
+          panel.grid.major = element_line(color = "gray85", linewidth = 0.4),
+          panel.grid.minor = element_blank(),
+          plot.background = element_rect(fill = "#fcfcfc", color = NA),
+          panel.background = element_rect(fill = "white", color = NA),
+          legend.background = element_rect(fill = "white", color = NA),
+          legend.key = element_rect(fill = "white", color = NA),
+          plot.caption = element_text(size = 10, hjust = 1, color = "#555555")
+        ) +
+        guides(color = guide_legend(
+          override.aes = list(size = 4, alpha = 1),
+          title.position = "top",
+          title.hjust = 0.5
+        ))
+
+      print(p)
+
+      cat("\n")
+
+      # Option export PDF
+      # Export PDF
+      save_pdf <- tolower(safe_readline("Would you like to export the PCA plot as PDF? (yes/no): "))
+      cat("\n")
+      if (save_pdf %in% c("yes","y")) {
+        if (!rstudioapi::isAvailable()) cat("Saving requires RStudio.\n")
+        else {
+          pdf_path <- rstudioapi::selectFile(
+            caption = "Save PCA plot",
+            label = "Save",
+            path = getwd(),
+            filter = list("PDF files" = "pdf"),
+            existing = FALSE
+          )
+          if (nzchar(pdf_path)) {
+            if (!grepl("\\.pdf$", pdf_path, ignore.case = TRUE)) pdf_path <- paste0(pdf_path,".pdf")
+
+            # Demande dimensions à l'utilisateur
+            pdf_width <- as.numeric(safe_readline("Enter desired PDF width (in inches, e.g., 10): "))
+            pdf_height <- as.numeric(safe_readline("Enter desired PDF height (in inches, e.g., 8): "))
+
+            # Crée PDF avec dimensions personnalisées
+            pdf(pdf_path, width = pdf_width, height = pdf_height)
+            print(p)
+            dev.off()
+            cat("PCA plot saved to:", pdf_path, "\n")
+          } else cat("Saving cancelled.\n")
+        }
+      }
+
+    }
+
+    cat("\n")
+
+    restart <- safe_readline("\nWould you like to perform another clustering? (yes/no): ")
     if(tolower(restart) %in% c("no","n")) {
       cat("Clustering finished.\n")
       break
