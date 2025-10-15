@@ -64,7 +64,6 @@ visual.clust <- function(data) {
       cat("All variables selected.\n")
       break
     }
-
     # Option "pca"
     if (tolower(var_input) == "pca") {
       if (exists("variables_cluster", envir = .GlobalEnv)) {
