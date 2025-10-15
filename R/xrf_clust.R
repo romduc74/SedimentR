@@ -359,11 +359,11 @@ xrf_clust <- function(data = NULL) {
       }
     }
 
-    # --- Restart clustering? ---
-    restart <- safe_readline("\nWould you like to perform another clustering? (yes/no): ")
-    if (tolower(restart) %in% c("no", "n")) {
-      cat("Clustering finished.\n")
-      break
-    }
+    # # --- Restart clustering? ---
+    # restart <- safe_readline("\nWould you like to perform another clustering? (yes/no): ")
+    # if (tolower(restart) %in% c("no", "n")) {
+    #   cat("Clustering finished.\n")
+    #   break
+    # }
   }
 }
