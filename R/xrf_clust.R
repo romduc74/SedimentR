@@ -236,13 +236,42 @@ xrf_clust <- function(data = NULL) {
       cat("Palette used:", paste(palette_finale, collapse = ", "), "\n\n")
 
       p <- fviz_pca_biplot(
-        res.pca, geom.ind = "point", pointshape = 16, pointsize = 2.25,
+        res.pca,
+        geom.ind = "point", pointshape = 16, pointsize = 2.25,
         alpha.ind = 0.9, col.ind = df_cluster$Cluster, palette = palette_finale,
-        addEllipses = TRUE, ellipse.level = 0.95, mean.point = FALSE, label = "var",
-        col.var = "gray35", arrowsize = 0.5, repel = TRUE, legend.title = "Cluster"
+        addEllipses = TRUE, ellipse.level = 0.95, mean.point = FALSE,
+        label = "var", col.var = "gray35", arrowsize = 0.5, repel = TRUE,
+        legend.title = "Cluster"
       ) +
         ggtitle("Cluster structure across PCA projection") +
-        theme_minimal(base_family = "sans", base_size = 14)
+        labs(
+          x = "Principal Component 1",
+          y = "Principal Component 2",
+          caption = "Ellipses represent 95% confidence regions"
+        ) +
+        theme_minimal(base_family = "sans", base_size = 14) +
+        theme(
+          plot.title = element_text(size = 20, face = "bold", hjust = 0.5, color = "#222222"),
+          legend.title = element_text(size = 13, face = "bold", color = "#222222"),
+          legend.text = element_text(size = 11, color = "#444444"),
+          axis.title = element_text(size = 14, face = "bold", color = "#222222"),
+          axis.text = element_text(size = 12, color = "#333333"),
+          panel.grid.major = element_line(color = "gray85", linewidth = 0.4),
+          panel.grid.minor = element_blank(),
+          plot.background = element_rect(fill = "#fcfcfc", color = NA),
+          panel.background = element_rect(fill = "white", color = NA),
+          legend.background = element_rect(fill = "white", color = NA),
+          legend.key = element_rect(fill = "white", color = NA),
+          plot.caption = element_text(size = 10, hjust = 1, color = "#555555")
+        ) +
+        guides(
+          color = guide_legend(
+            override.aes = list(size = 4, alpha = 1),
+            title.position = "top",
+            title.hjust = 0.5
+          )
+        )
+
 
       print(p)
 
