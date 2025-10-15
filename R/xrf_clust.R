@@ -256,7 +256,7 @@ xrf_clust <- function(data = NULL) {
           cat("RStudio API not available. Cannot select file interactively.\n")
         } else {
           pdf_path <- rstudioapi::selectFile(
-            caption = "Save cluster visualization",
+            caption = "Save PCA visualization",
             label = "Save",
             path = getwd(),
             filter = list("PDF files" = "pdf"),
@@ -271,13 +271,12 @@ xrf_clust <- function(data = NULL) {
             pdf_width <- as.numeric(safe_readline("Enter desired PDF width (in inches, e.g., 10): "))
             pdf_height <- as.numeric(safe_readline("Enter desired PDF height (in inches, e.g., 8): "))
 
-            # Crée le PDF avec ces dimensions
+            # Crée le PDF avec les dimensions choisies
             pdf(pdf_path, width = pdf_width, height = pdf_height)
-            if (exists("combined_plot")) print(combined_plot)
-            else print(main_plot)
+            print(p)  # <- exporte directement le plot PCA
             dev.off()
 
-            cat("\nCluster visualization saved to:", pdf_path, "\n")
+            cat("\nPCA visualization saved to:", pdf_path, "\n")
           } else {
             cat("Saving cancelled.\n")
           }

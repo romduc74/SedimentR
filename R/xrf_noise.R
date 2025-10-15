@@ -189,7 +189,7 @@ xrf_noise <- function(df) {
       if (!grepl("\\.txt$", file_path)) file_path <- paste0(file_path, ".txt")
       writeLines(summary_text, con = file_path)
       message("Summary saved to: ", file_path)
-    } else message("No file selected. Summary not saved.")
+    }
   }
-
+  else {message("No file selected. Summary not saved.")}
 }

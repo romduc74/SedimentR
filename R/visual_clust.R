@@ -25,16 +25,16 @@ visual.clust <- function(data) {
   data$Cluster <- as.numeric(data$Cluster)
   n_clusters <- length(unique(data$Cluster))
 
-  # repeat {
-  #   # Sélection colonne profondeur
-  #   repeat {
-  #     cat("\nAvailable columns:\n")
-  #     print(names(data))
-  #     cat("\n")
-  #     depth_col <- safe_readline("Enter the name of the column representing depth (e.g. depth): ")
-  #     if (depth_col %in% colnames(data)) break
-  #     cat("Invalid column name for depth. Please try again.\n")
-  #   }
+  repeat {
+    # Sélection colonne profondeur
+    repeat {
+      cat("\nAvailable columns:\n")
+      print(names(data))
+      cat("\n")
+      depth_col <- safe_readline("Enter the name of the column representing depth (e.g. depth): ")
+      if (depth_col %in% colnames(data)) break
+      cat("Invalid column name for depth. Please try again.\n")
+    }
   #
   #   # Sélection variables
   #   repeat {
@@ -83,6 +83,7 @@ visual.clust <- function(data) {
     variables <- unlist(strsplit(var_input, ",\\s*"))
     if (all(variables %in% names(data))) break
     cat("Some variables are not valid. Please try again.\n")
+  }
   }
 
     cat("\n")
