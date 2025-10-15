@@ -343,11 +343,33 @@ xrf_clust <- function(data) {
     cat("\n")
 
     restart <- safe_readline("\nWould you like to perform another clustering? (yes/no): ")
+    cat("\n")
     if(tolower(restart) %in% c("no","n")) {
       cat("Clustering finished.\n")
       break
     }
   }
-
-  return(selected_df)
+  # === Visualisation géochimique optionnelle ===
+  cat("\n")
+  show_geo <- tolower(safe_readline("Would you like to visualize geochemical profiles by cluster? (yes/no): "))
+  cat("\n")
+  if (show_geo %in% c("yes","y","oui","o")) {
+    if (exists("visual.clust")) {
+      repeat {
+        df_visu_name <- safe_readline("Enter the name of the dataframe containing 'Cluster': ")
+        if (exists(df_visu_name, envir = .GlobalEnv)) {
+          df_visu <- get(df_visu_name, envir = .GlobalEnv)
+          if ("Cluster" %in% colnames(df_visu)) {
+            visual.clust(df_visu)
+            break
+          } else {
+            cat("The selected dataframe does not contain a 'Cluster' column. Try again.\n")
+          }
+        } else cat("Dataframe not found. Try again.\n")
+      }
+    } else {
+      cat("The function 'visual.clust()' is not defined in the environment.\n")
+      cat("Please make sure it is loaded before running this option.\n")
+    }
+  }
 }
