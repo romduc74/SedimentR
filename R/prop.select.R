@@ -319,6 +319,6 @@ prop.select <- function(df_normalized=NULL) {
       break
     } else cat("\nRestarting PCA analysis...\n\n")
   }
-
+  assign("variables_cluster", variables_cluster, envir = .GlobalEnv)
   return(invisible(variables_cluster))
 }

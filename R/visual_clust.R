@@ -107,7 +107,7 @@ visual.clust <- function(data) {
           text = element_text(family = "sans", face = "bold")
         )
 
-      combined_plot <- main_plot + core_plot + patchwork::plot_layout(widths = c(4, 0.5))
+      combined_plot <- main_plot + core_plot + patchwork::plot_layout(widths = c(4, 0.25))
       print(combined_plot)
     } else {
       print(main_plot)
@@ -116,18 +116,44 @@ visual.clust <- function(data) {
 
     # Export PDF
     save_pdf <- tolower(safe_readline("\nWould you like to export in PDF? (yes/no): ", default = "no"))
-    if (save_pdf %in% c("yes", "y")) {
-      if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
-        file_path <- rstudioapi::selectFile(caption = "Save PDF", label = "Save", existing = FALSE)
-        if (!grepl("\\.pdf$", file_path, ignore.case = TRUE)) file_path <- paste0(file_path, ".pdf")
-        if (exists("combined_plot")) ggsave(file_path, combined_plot, device = "pdf", width = 10, height = 8)
-        else ggsave(file_path, main_plot, device = "pdf", width = 10, height = 8)
-        cat("PDF saved as", file_path, "\n")
-      } else {
-        cat("RStudio API not available. Cannot select file interactively.\n")
-      }
-    }
 
+    if (save_pdf %in% c("yes", "y")) {
+      if (!requireNamespace("rstudioapi", quietly = TRUE)) install.packages("rstudioapi")
+      library(rstudioapi)
+
+      if (!rstudioapi::isAvailable()) {
+        cat("RStudio API not available. Cannot select file interactively.\n")
+      } else {
+        pdf_path <- rstudioapi::selectFile(
+          caption = "Save cluster visualization",
+          label = "Save",
+          path = getwd(),
+          filter = list("PDF files" = "pdf"),
+          existing = FALSE
+        )
+
+        if (nzchar(pdf_path)) {
+          if (!grepl("\\.pdf$", pdf_path, ignore.case = TRUE))
+            pdf_path <- paste0(pdf_path, ".pdf")
+
+          # Demande des dimensions personnalisées
+          pdf_width <- as.numeric(safe_readline("Enter desired PDF width (in inches, e.g., 10): "))
+          pdf_height <- as.numeric(safe_readline("Enter desired PDF height (in inches, e.g., 8): "))
+
+          # Crée le PDF avec ces dimensions
+          pdf(pdf_path, width = pdf_width, height = pdf_height)
+          if (exists("combined_plot")) print(combined_plot)
+          else print(main_plot)
+          dev.off()
+
+          cat("\nCluster visualization saved to:", pdf_path, "\n")
+        } else {
+          cat("Saving cancelled.\n")
+        }
+      }
+    } else {
+      cat("PDF export skipped.\n")
+    }
     cat("End.\n")
     break
   }

@@ -128,6 +128,7 @@ scale_data <- function(donnees=NULL) {
   # -------------------------------
   repeat {
     save_summary <- tolower(safe_readline("Would you like to save a summary report (.txt)? (yes/no): "))
+    cat("\n")
     if (save_summary %in% c("yes", "no")) break
     cat("Please enter 'yes' or 'no'.\n")
   }
