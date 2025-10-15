@@ -25,27 +25,65 @@ visual.clust <- function(data) {
   data$Cluster <- as.numeric(data$Cluster)
   n_clusters <- length(unique(data$Cluster))
 
+  # repeat {
+  #   # Sélection colonne profondeur
+  #   repeat {
+  #     cat("\nAvailable columns:\n")
+  #     print(names(data))
+  #     cat("\n")
+  #     depth_col <- safe_readline("Enter the name of the column representing depth (e.g. depth): ")
+  #     if (depth_col %in% colnames(data)) break
+  #     cat("Invalid column name for depth. Please try again.\n")
+  #   }
+  #
+  #   # Sélection variables
+  #   repeat {
+  #     cat("\nAvailable columns:\n")
+  #     print(names(data))
+  #     cat("\n")
+  #     var_input <- safe_readline("Enter the names of the variables to display (comma separated): ")
+  #     variables <- unlist(strsplit(var_input, ",\\s*"))
+  #     if (all(variables %in% names(data))) break
+  #     cat("Some variables are not valid. Please try again.\n")
+  #   }
+
   repeat {
-    # Sélection colonne profondeur
-    repeat {
-      cat("\nAvailable columns:\n")
-      print(names(data))
-      cat("\n")
-      depth_col <- safe_readline("Enter the name of the column representing depth (e.g. depth): ")
-      if (depth_col %in% colnames(data)) break
-      cat("Invalid column name for depth. Please try again.\n")
+    cat("\nAvailable columns:\n")
+    print(names(data))
+    cat("\n")
+    cat("You can:\n")
+    cat(" - Enter variable names separated by commas (e.g. Fe, Ti, Ca)\n")
+    cat(" - Type 'all' to use all variables\n")
+    cat(" - Type 'pca' to use variables selected by PCA (from 'variables_cluster')\n\n")
+
+    var_input <- safe_readline("Enter your choice: ")
+
+    # Option "all"
+    if (tolower(var_input) == "all") {
+      variables <- setdiff(names(data), c(depth_col, "Cluster"))
+      cat("All variables selected.\n")
+      break
     }
 
-    # Sélection variables
-    repeat {
-      cat("\nAvailable columns:\n")
-      print(names(data))
-      cat("\n")
-      var_input <- safe_readline("Enter the names of the variables to display (comma separated): ")
-      variables <- unlist(strsplit(var_input, ",\\s*"))
-      if (all(variables %in% names(data))) break
-      cat("Some variables are not valid. Please try again.\n")
+    # Option "pca"
+    if (tolower(var_input) == "pca") {
+      if (exists("variables_cluster", envir = .GlobalEnv)) {
+        vars_pca <- colnames(get("variables_cluster", envir = .GlobalEnv))
+        # Vérifie qu’elles existent dans data
+        variables <- intersect(vars_pca, names(data))
+        cat("Variables selected by PCA loaded from 'variables_cluster'.\n")
+        break
+      } else {
+        cat("No object named 'variables_cluster' found in the global environment.\n")
+        next
+      }
     }
+
+    # Option manuelle
+    variables <- unlist(strsplit(var_input, ",\\s*"))
+    if (all(variables %in% names(data))) break
+    cat("Some variables are not valid. Please try again.\n")
+  }
 
     cat("\n")
 
