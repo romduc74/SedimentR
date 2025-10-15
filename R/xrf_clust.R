@@ -247,18 +247,43 @@ xrf_clust <- function(data = NULL) {
       print(p)
 
       save_pdf <- tolower(safe_readline("Would you like to export the PCA plot as PDF? (yes/no): "))
-      if (save_pdf %in% c("yes", "y") && rstudioapi::isAvailable()) {
-        pdf_path <- rstudioapi::selectFile(
-          caption = "Save PCA plot", label = "Save", path = getwd(),
-          filter = list("PDF files" = "pdf"), existing = FALSE
-        )
-        if (nzchar(pdf_path)) {
-          if (!grepl("\\.pdf$", pdf_path, ignore.case = TRUE)) pdf_path <- paste0(pdf_path, ".pdf")
-          pdf(pdf_path, width = 10, height = 8)
-          print(p)
-          dev.off()
-          cat("PCA plot saved to:", pdf_path, "\n")
-        } else cat("Saving cancelled.\n")
+
+      if (save_pdf %in% c("yes", "y")) {
+        if (!requireNamespace("rstudioapi", quietly = TRUE)) install.packages("rstudioapi")
+        library(rstudioapi)
+
+        if (!rstudioapi::isAvailable()) {
+          cat("RStudio API not available. Cannot select file interactively.\n")
+        } else {
+          pdf_path <- rstudioapi::selectFile(
+            caption = "Save cluster visualization",
+            label = "Save",
+            path = getwd(),
+            filter = list("PDF files" = "pdf"),
+            existing = FALSE
+          )
+
+          if (nzchar(pdf_path)) {
+            if (!grepl("\\.pdf$", pdf_path, ignore.case = TRUE))
+              pdf_path <- paste0(pdf_path, ".pdf")
+
+            # Demande des dimensions personnalisées
+            pdf_width <- as.numeric(safe_readline("Enter desired PDF width (in inches, e.g., 10): "))
+            pdf_height <- as.numeric(safe_readline("Enter desired PDF height (in inches, e.g., 8): "))
+
+            # Crée le PDF avec ces dimensions
+            pdf(pdf_path, width = pdf_width, height = pdf_height)
+            if (exists("combined_plot")) print(combined_plot)
+            else print(main_plot)
+            dev.off()
+
+            cat("\nCluster visualization saved to:", pdf_path, "\n")
+          } else {
+            cat("Saving cancelled.\n")
+          }
+        }
+      } else {
+        cat("PDF export skipped.\n")
       }
     }
 
