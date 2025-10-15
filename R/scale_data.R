@@ -2,7 +2,7 @@
 #' @param donnees Un dataframe contenant les données à normaliser.
 #' @return Un dataframe avec les données normalisées après suppression des colonnes spécifiées.
 #' @export
-scale_data <- function(donnees) {
+scale_data <- function(donnees=NULL) {
 
   if (!requireNamespace("compositions", quietly = TRUE)) install.packages("compositions")
   library(compositions)
@@ -13,6 +13,43 @@ scale_data <- function(donnees) {
     if (tolower(input) == "exit") stop("User has interrupted execution via 'exit'.")
     return(input)
   }
+
+
+
+  repeat {
+    # Check if df_normal is already in cache
+    if ("df_clean_cache" %in% list_cache()) {
+      donnees <- get_cache("df_clean_cache")
+      message("Using cached 'df_clean_cache' dataframe.")
+      break
+    }
+
+    # Otherwise, show data frames available in the global environment
+    df_list <- ls(envir = .GlobalEnv)
+    df_list <- df_list[sapply(df_list, function(x) is.data.frame(get(x, envir = .GlobalEnv)))]
+
+    if (length(df_list) == 0) {
+      stop("No data frames found in the global environment.")
+    }
+
+    cat("\nSelect the denoised dataframe :\n")
+    print(df_list)
+    cat("\n")
+
+    df_name <- readline("Enter the name of the dataframe: ")
+
+    # If a valid dataframe name is entered
+    if (df_name %in% df_list) {
+      donnees <- get(df_name, envir = .GlobalEnv)
+      set_cache("df_clean_cache", donnees)
+      #message("Dataframe cached as 'df_normal' for future use.")
+      break
+    }
+
+    # Otherwise, try again
+    cat("\n Dataframe not found. Try again.\n")
+  }
+
 
   cat("\n====== WARNING ======\n")
   cat("\033[4mIt is advisable to remove depth elements measured at different energies, Incoherent & Coherent and retain the least noisy elements.\033[0m\n\n")
@@ -64,7 +101,7 @@ scale_data <- function(donnees) {
   df_clr <- as.data.frame(df_clr)
 
   df_normalized <- cbind(df_clr, colonnes_log)
-
+  set_cache("df_normalized_cache",df_normalized)
   # -------------------------------
   # Résumé des choix utilisateur
   # -------------------------------
@@ -115,5 +152,5 @@ scale_data <- function(donnees) {
     cat("Summary not saved.\n")
   }
 
-  return(df_normalized)
+  return(invisible(df_normalized))
 }

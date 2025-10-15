@@ -4,7 +4,7 @@
 \alias{scale_data}
 \title{Sélection, normalisation et exportation des choix utilisateurs}
 \usage{
-scale_data(donnees)
+scale_data(donnees = NULL)
 }
 \arguments{
 \item{donnees}{Un dataframe contenant les données à normaliser.}

@@ -137,6 +137,8 @@ xrf_noise <- function(df) {
   assign("df_clean", df_clean, envir = .GlobalEnv)
   assign("df_denoised_total", df_denoised_total, envir = .GlobalEnv)
 
+  set_cache("df_clean_cache",df_clean)
+  set_cache("df_denoised_total_cache",df_denoised_total)
   # --- Summary ---
   summary_text <- paste0(
     "===== XRF Noise Detection Summary =====\n",

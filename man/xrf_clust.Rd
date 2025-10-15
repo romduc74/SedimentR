@@ -5,7 +5,7 @@
 \title{Fonction pour normaliser les données, déterminer le nombre optimal de clusters,
 et ajouter les résultats au dataframe choisi par l'utilisateur}
 \usage{
-xrf_clust(data)
+xrf_clust(data = NULL)
 }
 \arguments{
 \item{data}{Un dataframe contenant les données numériques à analyser}

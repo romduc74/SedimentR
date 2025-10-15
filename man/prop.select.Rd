@@ -4,7 +4,7 @@
 \alias{prop.select}
 \title{Analyse en Composantes Principales (ACP) avec extraction des variables clés}
 \usage{
-prop.select(df_normalized)
+prop.select(df_normalized = NULL)
 }
 \arguments{
 \item{df_normalized}{Un dataframe contenant les données normalisées après sélection.}

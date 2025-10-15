@@ -8,7 +8,7 @@
 #' @return Un dataframe contenant les variables les plus importantes selon les composantes principales retenues.
 #' @export
 
-prop.select <- function(df_normalized) {
+prop.select <- function(df_normalized=NULL) {
   if (!requireNamespace("factoextra", quietly = TRUE)) install.packages("factoextra")
   if (!requireNamespace("ggplot2", quietly = TRUE)) install.packages("ggplot2")
   if (!requireNamespace("rstudioapi", quietly = TRUE)) install.packages("rstudioapi")
@@ -22,6 +22,40 @@ prop.select <- function(df_normalized) {
     input <- readline(prompt = prompt_msg)
     if (tolower(input) == "exit") stop("User has interrupted execution via 'exit'.")
     return(input)
+  }
+
+  repeat {
+    # Check if df_normal is already in cache
+    if ("df_normalized_cache" %in% list_cache()) {
+      df_normalized <- get_cache("df_normalized_cache")
+      message("Using cached 'df_normalized_cache' dataframe.")
+      break
+    }
+
+    # Otherwise, show data frames available in the global environment
+    df_list <- ls(envir = .GlobalEnv)
+    df_list <- df_list[sapply(df_list, function(x) is.data.frame(get(x, envir = .GlobalEnv)))]
+
+    if (length(df_list) == 0) {
+      stop("No data frames found in the global environment.")
+    }
+
+    cat("\nSelect the dataframe with the selected elements:\n")
+    print(df_list)
+    cat("\n")
+
+    df_name <- readline("Enter the name of the dataframe from the exit of the scale_data function: ")
+
+    # If a valid dataframe name is entered
+    if (df_name %in% df_list) {
+      df_normalized <- get(df_name, envir = .GlobalEnv)
+      set_cache("df_normalized_cache", df_normalized)
+      #message("Dataframe cached as 'df_normal' for future use.")
+      break
+    }
+
+    # Otherwise, try again
+    cat("\n Dataframe not found. Try again.\n")
   }
 
   repeat {
@@ -225,19 +259,54 @@ prop.select <- function(df_normalized) {
     df_list <- df_list[sapply(df_list, function(x) is.data.frame(get(x)))]
 
     repeat {
-      cat("\nSelect the dataframe used in the function (scale_data):\n")
-      print(df_list)
-      cat("\n")
-      df_name <- safe_readline("Enter the name of the dataframe: ")
-      if (df_name %in% df_list) {
-        df_original <- get(df_name, envir = .GlobalEnv)
+      # Check if df_normal is already in cache
+      if ("df_clean_cache" %in% list_cache()) {
+        df_original <- get_cache("df_clean_cache")
+        message("Using cached 'df_clean_cache' dataframe.")
         break
       }
-      cat("\nDataframe not found. Try again.\n")
+
+      # Otherwise, show data frames available in the global environment
+      df_list <- ls(envir = .GlobalEnv)
+      df_list <- df_list[sapply(df_list, function(x) is.data.frame(get(x, envir = .GlobalEnv)))]
+
+      if (length(df_list) == 0) {
+        stop("No data frames found in the global environment.")
+      }
+
+      cat("\nSelect the dataframe used in the function scale_data:\n")
+      print(df_list)
+      cat("\n")
+
+      df_name <- readline("Enter the name of the dataframe: ")
+
+      # If a valid dataframe name is entered
+      if (df_name %in% df_list) {
+        df_original <- get(df_name, envir = .GlobalEnv)
+        set_cache("df_clean_cache", df_original)
+        message("Dataframe cached as 'df_normal' for future use.")
+        break
+      }
+
+      # Otherwise, try again
+      cat("\n Dataframe not found. Try again.\n")
     }
+    # repeat {
+    #   cat("\nSelect the dataframe used in the function (scale_data):\n")
+    #   print(df_list)
+    #   cat("\n")
+    #   df_name <- safe_readline("Enter the name of the dataframe: ")
+    #   if (df_name %in% df_list) {
+    #     df_original <- get(df_name, envir = .GlobalEnv)
+    #     break
+    #   }
+    #   cat("\nDataframe not found. Try again.\n")
+    # }
 
     variables_cluster_original <- df_original[, colnames(variables_cluster), drop = FALSE]
     variables_cluster <- as.data.frame(variables_cluster_original)
+
+    set_cache("variables_cluster_cache",variables_cluster)
 
     repeat {
       redo <- tolower(safe_readline("\nRestart PCA with other parameters? (yes/no): "))
@@ -251,5 +320,5 @@ prop.select <- function(df_normalized) {
     } else cat("\nRestarting PCA analysis...\n\n")
   }
 
-  return(variables_cluster)
+  return(invisible(variables_cluster))
 }
