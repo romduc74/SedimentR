@@ -195,4 +195,4 @@ visual.clust <- function(data) {
     cat("End.\n")
     break
   }
-}
+
