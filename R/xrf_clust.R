@@ -322,33 +322,29 @@ xrf_clust <- function(data = NULL) {
     if (show_geo %in% c("yes", "y", "oui", "o")) {
 
       if (exists("visual.clust")) {
-
         repeat {
-
-          #check: is cached df available?
+          # Vérifie cache
           if ("df_denoised_total_cache" %in% list_cache()) {
             df_denoised_total <- get_cache("df_denoised_total_cache")
             message("Using cached 'df_denoised_total_cache' dataframe.")
 
-            # Check if 'Cluster' column exists
             if ("Cluster" %in% colnames(df_denoised_total)) {
               visual.clust(df_denoised_total)
-              break
+              break  # <-- OK ici, car on est dans un repeat
             } else {
               cat("Cached dataframe found but no 'Cluster' column detected.\n")
             }
-
           } else {
             cat("No cached dataframe found under 'df_denoised_total_cache'.\n")
           }
 
-          # Ask user for dataframe manually if cache missing or invalid
+          # Demande à l'utilisateur
           df_visu_name <- safe_readline("Enter the name of the dataframe containing 'Cluster': ")
           if (exists(df_visu_name, envir = .GlobalEnv)) {
             df_visu <- get(df_visu_name, envir = .GlobalEnv)
             if ("Cluster" %in% colnames(df_visu)) {
               visual.clust(df_visu)
-              break
+              break  # <-- OK ici
             } else {
               cat("The selected dataframe does not contain a 'Cluster' column.\n")
             }
@@ -356,10 +352,8 @@ xrf_clust <- function(data = NULL) {
             cat("Dataframe not found in global environment.\n")
           }
 
-          # Let the user retry
           cat("\nTry again.\n")
         }
-
       } else {
         cat("Function 'visual.clust()' not found. Please load it before running this option.\n")
       }
