@@ -193,6 +193,5 @@ visual.clust <- function(data) {
       cat("PDF export skipped.\n")
     }
     cat("End.\n")
-    break
   }
 
