@@ -275,6 +275,7 @@ xrf_clust <- function(data = NULL) {
           #check: is cached df available?
           if ("df_denoised_total_cache" %in% list_cache()) {
             df_denoised_total <- get_cache("df_denoised_total_cache")
+            message("Using cached 'df_denoised_total_cache' dataframe.")
 
             # Check if 'Cluster' column exists
             if ("Cluster" %in% colnames(df_denoised_total)) {
