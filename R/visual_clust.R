@@ -25,7 +25,7 @@ visual.clust <- function(data) {
   data$Cluster <- as.numeric(data$Cluster)
   n_clusters <- length(unique(data$Cluster))
 
-  repeat {
+  #repeat {
     # Sélection colonne profondeur
     repeat {
       cat("\nAvailable columns:\n")
@@ -83,7 +83,7 @@ visual.clust <- function(data) {
     if (all(variables %in% names(data))) break
     cat("Some variables are not valid. Please try again.\n")
   }
-  }
+
 
     cat("\n")
 
