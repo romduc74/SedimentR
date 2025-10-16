@@ -104,15 +104,24 @@ xrf_noise <- function(df) {
 
   noisy_vars <- results$variable[results$is_noisy]
 
+  cat("\n===== Noise Summary by Element =====\n\n")
+  for (i in seq_len(nrow(results))) {
+    cat(sprintf("%-10s : Noise Score = %.3f, Is Noisy = %s\n",
+                results$variable[i],
+                results$noise_score[i],
+                results$is_noisy[i]))
+  }
+  cat("\n")
+
   # --- Display summary ---
   if (length(noisy_vars) > 0) {
-    cat("\n===== Noise Summary by Element =====\n\n")
-    for (i in seq_len(nrow(results))) {
-      cat(sprintf("%-10s : Noise Score = %.3f, Is Noisy = %s\n",
-                  results$variable[i],
-                  results$noise_score[i],
-                  results$is_noisy[i]))
-    }
+    # cat("\n===== Noise Summary by Element =====\n\n")
+    # for (i in seq_len(nrow(results))) {
+    #   cat(sprintf("%-10s : Noise Score = %.3f, Is Noisy = %s\n",
+    #               results$variable[i],
+    #               results$noise_score[i],
+    #               results$is_noisy[i]))
+    # }
     cat("\n")
 
     ans <- ""
