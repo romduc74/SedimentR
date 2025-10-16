@@ -235,6 +235,9 @@ xrf_clust <- function(data = NULL) {
 
       cat("Palette used:", paste(palette_finale, collapse = ", "), "\n\n")
 
+      eig <- (res.pca$sdev)^2 / sum((res.pca$sdev)^2) * 100
+
+      # Création du graphique avec fviz_pca_biplot
       p <- fviz_pca_biplot(
         res.pca,
         geom.ind = "point", pointshape = 16, pointsize = 2.25,
@@ -245,8 +248,8 @@ xrf_clust <- function(data = NULL) {
       ) +
         ggtitle("Cluster structure across PCA projection") +
         labs(
-          x = "Principal Component 1",
-          y = "Principal Component 2",
+          x = paste0("Principal Component 1 (", round(eig[1], 1), "%)"),
+          y = paste0("Principal Component 2 (", round(eig[2], 1), "%)"),
           caption = "Ellipses represent 95% confidence regions"
         ) +
         theme_minimal(base_family = "sans", base_size = 14) +
