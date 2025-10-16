@@ -128,6 +128,7 @@ xrf_clust <- function(data = NULL) {
 
     # --- Optional save dataframe ---
     save_choice <- tolower(safe_readline("Would you like to save this dataframe? (yes/no): "))
+    cat("\n")
     if (save_choice %in% c("yes", "y")) {
       repeat {
         ext_choice <- tolower(safe_readline("Desired extension: csv or xlsx: "))
@@ -197,6 +198,7 @@ xrf_clust <- function(data = NULL) {
     # --- Optional PCA visualization ---
     cat("\n=== PCA and Cluster Visualization ===\n\n")
     show_acp <- tolower(safe_readline("Would you like to visualize a PCA with the clusters? (yes/no): "))
+    cat("\n")
     if (show_acp %in% c("yes", "y")) {
 
       if ("df_denoised_total_cache" %in% list_cache()) {
@@ -223,6 +225,8 @@ xrf_clust <- function(data = NULL) {
       res.pca <- prcomp(df_vars, scale. = FALSE)
       n_clusters <- length(levels(df_cluster$Cluster))
 
+      cat("\n")
+
       use_custom <- tolower(safe_readline("Would you like to set a custom palette? (yes/no): "))
       if (use_custom %in% c("yes", "y")) {
         cat("Enter", n_clusters, "colors (by name or hex):\n")
@@ -232,7 +236,7 @@ xrf_clust <- function(data = NULL) {
       } else {
         palette_finale <- colorRampPalette(c("#662483", "#f39200", "#f9b233", "#ffda77", "#35163b"))(n_clusters)
       }
-
+      cat("\n")
       cat("Palette used:", paste(palette_finale, collapse = ", "), "\n\n")
 
       eig <- (res.pca$sdev)^2 / sum((res.pca$sdev)^2) * 100
@@ -278,7 +282,11 @@ xrf_clust <- function(data = NULL) {
 
       print(p)
 
+      cat("\n")
+
       save_pdf <- tolower(safe_readline("Would you like to export the PCA plot as PDF? (yes/no): "))
+
+      cat("\n")
 
       if (save_pdf %in% c("yes", "y")) {
         if (!requireNamespace("rstudioapi", quietly = TRUE)) install.packages("rstudioapi")
@@ -301,12 +309,15 @@ xrf_clust <- function(data = NULL) {
 
             # Demande des dimensions personnalisées
             pdf_width <- as.numeric(safe_readline("Enter desired PDF width (in inches, e.g., 10): "))
+            cat("\n")
             pdf_height <- as.numeric(safe_readline("Enter desired PDF height (in inches, e.g., 8): "))
 
             # Crée le PDF avec les dimensions choisies
             pdf(pdf_path, width = pdf_width, height = pdf_height)
             print(p)  # <- exporte directement le plot PCA
             dev.off()
+
+            cat("\n")
 
             cat("\nPCA visualization saved to:", pdf_path, "\n")
           } else {
@@ -321,6 +332,7 @@ xrf_clust <- function(data = NULL) {
     # --- Optional geochemical visualization ---
     cat("\n")
     show_geo <- tolower(safe_readline("Would you like to visualize geochemical profiles by cluster? (yes/no): "))
+    cat("\n")
 
     if (show_geo %in% c("yes", "y", "oui", "o")) {
 
