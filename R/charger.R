@@ -126,11 +126,14 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
   # --- Gestion des valeurs manquantes ---
   if (anyNA(df)) {
     cat("\nWARNING: The dataframe contains missing values (NA).\n")
+    cat("\n")
     cat("Available columns:\n")
+    cat("\n")
     print(colnames(df))
     cat("\n")
 
     exclude_response <- tolower(safe_readline("Do you want to exclude any columns from the NA filtering? (yes/no): "))
+    cat("\n")
     excluded_columns <- NULL
     cat("\n")
     if (exclude_response == "yes") {
@@ -141,6 +144,7 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
     }
     cat("\n")
     na_response <- tolower(safe_readline("Do you want to delete rows with NA values? (yes/no): "))
+    cat("\n")
     if (na_response == "yes") {
       df_tmp <- df
       if (!is.null(excluded_columns)) df_tmp <- df[, !(names(df) %in% excluded_columns), drop = FALSE]
