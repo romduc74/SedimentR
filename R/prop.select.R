@@ -240,9 +240,11 @@ prop.select <- function(df_normalized=NULL) {
 
     repeat {
       save_summary <- tolower(safe_readline("Save a summary report (.txt)? (yes/no): "))
+      cat("\n")
       if (save_summary %in% c("yes", "no")) break
       cat("Please enter 'yes' or 'no'.\n")
     }
+    cat("\n")
     if (save_summary == "yes") {
       file_path_summary <- rstudioapi::selectFile(caption = "Save summary", label = "Save", existing = FALSE)
       if (!is.null(file_path_summary) && file_path_summary != "") {
@@ -257,6 +259,8 @@ prop.select <- function(df_normalized=NULL) {
 
     df_list <- ls(envir = .GlobalEnv)
     df_list <- df_list[sapply(df_list, function(x) is.data.frame(get(x)))]
+
+    cat("\n")
 
     repeat {
       # Check if df_normal is already in cache
