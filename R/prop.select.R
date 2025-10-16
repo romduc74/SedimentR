@@ -66,7 +66,7 @@ prop.select <- function(df_normalized=NULL) {
 
     print(fviz_eig(acp, addlabels = TRUE))
     print(fviz_pca_var(acp, col.var = "contrib",
-                       gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+                       gradient.cols = c("#0F6B99", "#FFCC66", "#996136"),
                        repel = TRUE,
                        title = "PCA - Variables"))
 
@@ -94,8 +94,11 @@ prop.select <- function(df_normalized=NULL) {
     # === Sélection de la méthode par l'utilisateur ===
     repeat {
       cat("\nChoose the method to determine number of components:\n")
-      cat("1) Cumulative variance method (", n_variance, " components)\n")
-      cat("2) Broken-stick method (", n_bstick, " components)\n")
+      cat("\n")
+      cat("1) Cumulative variance method (",n_variance, " components)\n")
+      cat("\n")
+      cat("2) Broken-stick method (",n_bstick, " components)\n")
+      cat("\n")
       cat("3) Manual choice\n")
       cat("\n")
       method_choice <- safe_readline("Enter (1) Cumulative variance, (2) Broken-stick  or (3) Manual: ")
@@ -144,6 +147,7 @@ prop.select <- function(df_normalized=NULL) {
     repeat {
       input <- safe_readline("Enter a percentile threshold for variable selection (e.g., 0.9): ")
       quantile_thresh <- as.numeric(input)
+      cat("\n")
       if (!is.na(quantile_thresh) && quantile_thresh > 0 && quantile_thresh < 1) break
       cat("Please enter a valid number between 0 and 1.\n")
     }
