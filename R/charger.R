@@ -122,6 +122,7 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
   } else {
     cat("No log-transformed ratios were created.\n")
   }
+  cat("\n")
 
   # --- Gestion des valeurs manquantes ---
   if (anyNA(df)) {
