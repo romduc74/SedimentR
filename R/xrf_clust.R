@@ -194,7 +194,7 @@ xrf_clust <- function(data = NULL) {
       }
       cat(paste0("Cluster ", cluster_profiles$Cluster[i], " → ", paste(profile_text, collapse = ", "), "\n"))
     }
-
+    cat("\n")
     # --- Optional save cluster drivers analysis ---
     save_drivers <- tolower(safe_readline("Would you like to save the cluster drivers analysis to a text file? (yes/no): "))
     cat("\n")
@@ -428,7 +428,7 @@ xrf_clust <- function(data = NULL) {
     }
     cat("\n")
     # --- End of main loop ---
-    cat("\nClustering finished.\n")
+    cat("Clustering finished.\n")
     break
 
     # # --- Restart clustering? ---
