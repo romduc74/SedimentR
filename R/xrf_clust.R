@@ -373,6 +373,10 @@ xrf_clust <- function(data = NULL) {
         cat("Function 'visual.clust()' not found. Please load it before running this option.\n")
       }
     }
+    cat("\n")
+    # --- End of main loop ---
+    cat("\nClustering finished.\n")
+    break
 
     # # --- Restart clustering? ---
     # restart <- safe_readline("\nWould you like to perform another clustering? (yes/no): ")
