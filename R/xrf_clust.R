@@ -195,6 +195,59 @@ xrf_clust <- function(data = NULL) {
       cat(paste0("Cluster ", cluster_profiles$Cluster[i], " → ", paste(profile_text, collapse = ", "), "\n"))
     }
 
+    # --- Optional save cluster drivers analysis ---
+    save_drivers <- tolower(safe_readline("Would you like to save the cluster drivers analysis to a text file? (yes/no): "))
+    cat("\n")
+    if (save_drivers %in% c("yes", "y")) {
+      if (!rstudioapi::isAvailable()) {
+        cat("Saving requires RStudio.\n\n")
+      } else {
+        repeat {
+          cat("\nSelect the destination file for the cluster analysis...\n")
+          path_txt <- rstudioapi::selectFile(
+            caption = "Save cluster drivers analysis",
+            label = "Save",
+            path = getwd(),
+            filter = list("Text files" = "txt"),
+            existing = FALSE
+          )
+          if (!nzchar(path_txt)) {
+            cat("Saving cancelled.\n");
+            break
+          }
+          if (!grepl("\\.txt$", path_txt, ignore.case = TRUE))
+            path_txt <- paste0(path_txt, ".txt")
+
+          # Prepare lines for file
+          output_lines <- c(
+            "=== Cluster Drivers Analysis ===",
+            paste("Optimal number of clusters for your data:", optimal_clusters_max),
+            "\n=== ANOVA Results ===",
+            capture.output(print(anova_results)),
+            "\n=== Cluster Description Profiles ==="
+          )
+
+          # Add cluster description profiles
+          for (i in 1:nrow(cluster_profiles)) {
+            profile_text <- c()
+            for (v in vars) {
+              val <- cluster_profiles[i, v]
+              q <- quantile(cluster_profiles[[v]], probs = c(0.25, 0.5, 0.75))
+              lvl <- if(val >= q[3]) "very high" else if(val >= q[2]) "high" else if(val >= q[1]) "medium" else "low"
+              profile_text <- c(profile_text, paste(v, lvl, sep=": "))
+            }
+            output_lines <- c(output_lines, paste0("Cluster ", cluster_profiles$Cluster[i], " → ", paste(profile_text, collapse=", ")))
+          }
+
+          # Write to file
+          writeLines(output_lines, con = path_txt)
+          cat("\nCluster drivers analysis saved to:", path_txt, "\n\n")
+          break
+        }
+      }
+    }
+
+
     # --- Optional PCA visualization ---
     cat("\n=== PCA and Cluster Visualization ===\n\n")
     show_acp <- tolower(safe_readline("Would you like to visualize a PCA with the clusters? (yes/no): "))
