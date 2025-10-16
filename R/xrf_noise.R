@@ -139,15 +139,20 @@ xrf_noise <- function(df) {
       cat("\n")
     }
   } else {
-    cat("\nNo noisy variables detected — all variables retained.\n")
+    cat("\n===== No noisy variables detected — all variables retained =====\n")
   }
 
+  cat("\n")
   # --- Save both dataframes to Global Environment ---
   assign("df_clean", df_clean, envir = .GlobalEnv)
+  cat("\n")
   assign("df_denoised_total", df_denoised_total, envir = .GlobalEnv)
+  cat("\n")
 
   set_cache("df_clean_cache",df_clean)
+  cat("\n")
   set_cache("df_denoised_total_cache",df_denoised_total)
+  cat("\n")
   # --- Summary ---
   summary_text <- paste0(
     "===== XRF Noise Detection Summary =====\n",
