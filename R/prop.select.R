@@ -185,6 +185,7 @@ prop.select <- function(df_normalized=NULL) {
 
     repeat {
       export_response <- tolower(safe_readline("\nExport this table? (yes/no): "))
+      cat("\n")
       if (export_response %in% c("yes", "no")) break
       cat("Please type 'yes' or 'no'.\n")
     }
@@ -195,6 +196,7 @@ prop.select <- function(df_normalized=NULL) {
         if (format_choice %in% c("csv", "xlsx")) break
         cat("Please enter 'csv' or 'xlsx'.\n")
       }
+      cat("\n")
       cat("\nSelect file location to save the output.\n\n")
       default_ext <- ifelse(format_choice == "csv", ".csv", ".xlsx")
       file_path <- rstudioapi::selectFile(caption = "Save As", label = "Save", existing = FALSE)
@@ -206,6 +208,7 @@ prop.select <- function(df_normalized=NULL) {
           library(openxlsx)
           write.xlsx(results_table, file_path, rowNames = FALSE)
         }
+        cat("\n")
         cat(paste0("\nTable successfully exported to: ", file_path, "\n"))
         cat("\n")
       } else cat("Export cancelled: No file selected.\n")
