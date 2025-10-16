@@ -146,7 +146,6 @@ sedicore <- function(file_path = NULL, sheet = "data") {
   cat("\n--- Step 5 : Running clustering (K-means method) -----------\n")
   cat("\n")
   xrf_clust()
-  cat("\n\n")
   cat("\n==========================================\n")
 
   cat("\n=== SedimentR workflow completed successfully ===\n")
