@@ -146,6 +146,9 @@ visual.clust <- function(data) {
       #   )
 
       # Résumer chaque bloc pour avoir une seule ligne par bloc
+      core_data <- core_data %>%
+        mutate(Block = cumsum(Cluster != lag(Cluster, default = first(Cluster))))
+
       blocks <- core_data %>%
         group_by(Block, Cluster) %>%
         summarize(
