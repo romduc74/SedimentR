@@ -106,12 +106,23 @@ visual.clust <- function(data) {
       ) %>%
       tidyr::drop_na()
 
+    cat("\n")
+
+    depth_unit <- safe_readline(
+      paste0("Enter the depth unit (default = mm): "),
+      default = "mm"
+    )
+
     main_plot <- xrfStrat %>% ggplot(aes(x = peakarea, y = .data[[depth_col]])) +
       geom_lineh(aes(color = Cluster), linewidth = 0.75) +
       scale_y_reverse() +
       scale_x_continuous(breaks = scales::pretty_breaks(n = 4)) +
       tidypaleo::facet_geochem_gridh(vars(elements)) +
-      labs(x = "Geochemistry", y = "Depth [mm]", color = "Cluster") +
+      labs(
+        x = "Geochemistry",
+        y = paste0("Depth [", depth_unit, "]"),
+        color = "Cluster"
+      ) +
       tidypaleo::theme_paleo() +
       scale_color_gradientn(colors = custom_palette)+
       theme(
