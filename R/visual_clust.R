@@ -131,7 +131,35 @@ visual.clust <- function(data) {
         dplyr::select(all_of(depth_col), Cluster) %>%
         dplyr::distinct()
 
-      core_plot <- ggplot(core_data, aes(x = 1, y = .data[[depth_col]], fill = factor(Cluster))) +
+      # core_plot <- ggplot(core_data, aes(x = 1, y = .data[[depth_col]], fill = factor(Cluster))) +
+      #   geom_tile(width = 1) +
+      #   scale_y_reverse(position = "right") +
+      #   scale_fill_manual(values = custom_palette, name = "Clusters") +
+      #   labs(x = NULL, y = NULL, title = "Virtual Core") +
+      #   tidypaleo::theme_paleo() +
+      #   theme(
+      #     axis.text.x = element_blank(),
+      #     axis.ticks.x = element_blank(),
+      #     panel.grid = element_blank(),
+      #     legend.position = "right",
+      #     text = element_text(family = "sans", face = "bold")
+      #   )
+
+      # Résumer chaque bloc pour avoir une seule ligne par bloc
+      blocks <- core_data %>%
+        group_by(Block, Cluster) %>%
+        summarize(
+          Depth_start = min(.data[[depth_col]]),
+          Depth_end   = max(.data[[depth_col]]),
+          .groups = "drop"
+        ) %>%
+        mutate(
+          Depth_mid = (Depth_start + Depth_end) / 2,
+          Height    = Depth_end - Depth_start + 1
+        )
+
+      # Plot avec geom_tile
+      core_plot <- ggplot(blocks, aes(x = 1, y = Depth_mid, fill = factor(Cluster), height = Height)) +
         geom_tile(width = 1) +
         scale_y_reverse(position = "right") +
         scale_fill_manual(values = custom_palette, name = "Clusters") +
