@@ -26,15 +26,15 @@ visual.clust <- function(data) {
   n_clusters <- length(unique(data$Cluster))
 
   #repeat {
-    # Sélection colonne profondeur
-    repeat {
-      cat("\nAvailable columns:\n")
-      print(names(data))
-      cat("\n")
-      depth_col <- safe_readline("Enter the name of the column representing depth (e.g. depth): ")
-      if (depth_col %in% colnames(data)) break
-      cat("Invalid column name for depth. Please try again.\n")
-    }
+  # Sélection colonne profondeur
+  repeat {
+    cat("\nAvailable columns:\n")
+    print(names(data))
+    cat("\n")
+    depth_col <- safe_readline("Enter the name of the column representing depth (e.g. depth): ")
+    if (depth_col %in% colnames(data)) break
+    cat("Invalid column name for depth. Please try again.\n")
+  }
   #
   #   # Sélection variables
   #   repeat {
@@ -85,155 +85,159 @@ visual.clust <- function(data) {
   }
 
 
-    cat("\n")
+  cat("\n")
 
-    # Palette de couleurs
-    use_custom <- tolower(safe_readline("Would you like to set a custom palette? (yes/no): ", default = "no"))
-    if (use_custom %in% c("oui", "o", "yes", "y")) {
-      cat("Enter", n_clusters, "colors (by name or hexadecimal, e.g. 'red' or '#FF0000')\n")
-      custom_palette <- sapply(seq_len(n_clusters), function(i) safe_readline(paste("Color for cluster", i, ": ")))
-    } else {
-      custom_palette <- colorRampPalette(c("#662483", "#f39200", "#f9b233", "#ffda77", "#35163b"))(n_clusters)
-    }
-
-    # Préparer données
-    xrfStrat <- data %>%
-      dplyr::select(all_of(c(variables, depth_col, "Cluster"))) %>%
-      tidyr::pivot_longer(
-        cols = -c(all_of(depth_col), "Cluster"),
-        names_to = "elements",
-        values_to = "peakarea"
-      ) %>%
-      tidyr::drop_na()
-
-    cat("\n")
-
-    depth_unit <- safe_readline(
-      paste0("Enter the depth unit (default = mm): "),
-      default = "mm"
-    )
-
-    main_plot <- xrfStrat %>% ggplot(aes(x = peakarea, y = .data[[depth_col]])) +
-      geom_lineh(aes(color = Cluster), linewidth = 0.75) +
-      scale_y_reverse() +
-      scale_x_continuous(breaks = scales::pretty_breaks(n = 4)) +
-      tidypaleo::facet_geochem_gridh(vars(elements)) +
-      labs(
-        x = "Geochemistry",
-        y = paste0("Depth [", depth_unit, "]"),
-        color = "Cluster"
-      ) +
-      tidypaleo::theme_paleo() +
-      scale_color_gradientn(colors = custom_palette)+
-      theme(
-        text = element_text(family = "sans", face = "bold"),
-        axis.text = element_text(size = 11, color = "gray25"),
-        axis.title = element_text(size = 13),
-        strip.text = element_text(face = "bold", size = 12),
-        legend.position = "none")
-
-    # Virtual Core optionnel
-    show_core <- tolower(safe_readline("\nShow Virtual Core? (yes/no): ", default = "no"))
-    if (show_core %in% c("yes", "y", "oui", "o")) {
-      if (!requireNamespace("patchwork", quietly = TRUE)) install.packages("patchwork")
-      library(patchwork)
-
-      core_data <- xrfStrat %>%
-        dplyr::select(all_of(depth_col), Cluster) %>%
-        dplyr::distinct()
-
-      # core_plot <- ggplot(core_data, aes(x = 1, y = .data[[depth_col]], fill = factor(Cluster))) +
-      #   geom_tile(width = 1) +
-      #   scale_y_reverse(position = "right") +
-      #   scale_fill_manual(values = custom_palette, name = "Clusters") +
-      #   labs(x = NULL, y = NULL, title = "Virtual Core") +
-      #   tidypaleo::theme_paleo() +
-      #   theme(
-      #     axis.text.x = element_blank(),
-      #     axis.ticks.x = element_blank(),
-      #     panel.grid = element_blank(),
-      #     legend.position = "right",
-      #     text = element_text(family = "sans", face = "bold")
-      #   )
-
-      # Résumer chaque bloc pour avoir une seule ligne par bloc
-      core_data <- core_data %>%
-        mutate(Block = cumsum(Cluster != lag(Cluster, default = first(Cluster))))
-
-      blocks <- core_data %>%
-        group_by(Block, Cluster) %>%
-        summarize(
-          Depth_start = min(.data[[depth_col]]),
-          Depth_end   = max(.data[[depth_col]]),
-          .groups = "drop"
-        ) %>%
-        mutate(
-          Depth_mid = (Depth_start + Depth_end) / 2,
-          Height    = Depth_end - Depth_start + 1
-        )
-
-      # Plot avec geom_tile
-      core_plot <- ggplot(blocks, aes(x = 1, y = Depth_mid, fill = factor(Cluster), height = Height)) +
-        geom_tile(width = 1) +
-        scale_y_reverse(position = "right") +
-        scale_fill_manual(values = custom_palette, name = "Clusters") +
-        labs(x = NULL, y = NULL, title = "Virtual Core") +
-        tidypaleo::theme_paleo() +
-        theme(
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank(),
-          panel.grid = element_blank(),
-          legend.position = "right",
-          text = element_text(family = "sans", face = "bold")
-        )
-
-      combined_plot <- main_plot + core_plot + patchwork::plot_layout(widths = c(4, 0.25))
-      print(combined_plot)
-    } else {
-      print(main_plot)
-      cat("Virtual Core skipped.\n")
-    }
-
-    # Export PDF
-    save_pdf <- tolower(safe_readline("\nWould you like to export in PDF? (yes/no): ", default = "no"))
-
-    if (save_pdf %in% c("yes", "y")) {
-      if (!requireNamespace("rstudioapi", quietly = TRUE)) install.packages("rstudioapi")
-      library(rstudioapi)
-
-      if (!rstudioapi::isAvailable()) {
-        cat("RStudio API not available. Cannot select file interactively.\n")
-      } else {
-        pdf_path <- rstudioapi::selectFile(
-          caption = "Save cluster visualization",
-          label = "Save",
-          path = getwd(),
-          filter = list("PDF files" = "pdf"),
-          existing = FALSE
-        )
-
-        if (nzchar(pdf_path)) {
-          if (!grepl("\\.pdf$", pdf_path, ignore.case = TRUE))
-            pdf_path <- paste0(pdf_path, ".pdf")
-
-          # Demande des dimensions personnalisées
-          pdf_width <- as.numeric(safe_readline("Enter desired PDF width (in inches, e.g., 10): "))
-          pdf_height <- as.numeric(safe_readline("Enter desired PDF height (in inches, e.g., 8): "))
-
-          # Crée le PDF avec ces dimensions
-          pdf(pdf_path, width = pdf_width, height = pdf_height)
-          if (exists("combined_plot")) print(combined_plot)
-          else print(main_plot)
-          dev.off()
-
-          cat("\nCluster visualization saved to:", pdf_path, "\n")
-        } else {
-          cat("Saving cancelled.\n")
-        }
-      }
-    } else {
-      cat("PDF export skipped.\n")
-    }
-    cat("End.\n")
+  # Palette de couleurs
+  use_custom <- tolower(safe_readline("Would you like to set a custom palette? (yes/no): ", default = "no"))
+  if (use_custom %in% c("oui", "o", "yes", "y")) {
+    cat("Enter", n_clusters, "colors (by name or hexadecimal, e.g. 'red' or '#FF0000')\n")
+    custom_palette <- sapply(seq_len(n_clusters), function(i) safe_readline(paste("Color for cluster", i, ": ")))
+  } else {
+    custom_palette <- colorRampPalette(c("#662483", "#f39200", "#f9b233", "#ffda77", "#35163b"))(n_clusters)
   }
+
+  # Préparer données
+  xrfStrat <- data %>%
+    dplyr::select(all_of(c(variables, depth_col, "Cluster"))) %>%
+    tidyr::pivot_longer(
+      cols = -c(all_of(depth_col), "Cluster"),
+      names_to = "elements",
+      values_to = "peakarea"
+    ) %>%
+    tidyr::drop_na()
+
+  cat("\n")
+
+  depth_unit <- safe_readline(
+    paste0("Enter the depth unit (default = mm): "),
+    default = "mm"
+  )
+
+  main_plot <- xrfStrat %>% ggplot(aes(x = peakarea, y = .data[[depth_col]])) +
+    geom_lineh(aes(color = Cluster), linewidth = 0.75) +
+    scale_y_reverse() +
+    scale_x_continuous(breaks = scales::pretty_breaks(n = 4)) +
+    tidypaleo::facet_geochem_gridh(vars(elements)) +
+    labs(
+      x = "Geochemistry",
+      y = paste0("Depth [", depth_unit, "]"),
+      color = "Cluster"
+    ) +
+    tidypaleo::theme_paleo() +
+    scale_color_gradientn(colors = custom_palette)+
+    theme(
+      text = element_text(family = "sans", face = "bold"),
+      axis.text = element_text(size = 11, color = "gray25"),
+      axis.title = element_text(size = 13),
+      strip.text = element_text(face = "bold", size = 12),
+      legend.position = "none")
+
+  # Virtual Core optionnel
+  show_core <- tolower(safe_readline("\nShow Virtual Core? (yes/no): ", default = "no"))
+  if (show_core %in% c("yes", "y", "oui", "o")) {
+    if (!requireNamespace("patchwork", quietly = TRUE)) install.packages("patchwork")
+    library(patchwork)
+
+    core_data <- xrfStrat %>%
+      dplyr::select(all_of(depth_col), Cluster) %>%
+      dplyr::distinct()
+
+    # core_plot <- ggplot(core_data, aes(x = 1, y = .data[[depth_col]], fill = factor(Cluster))) +
+    #   geom_tile(width = 1) +
+    #   scale_y_reverse(position = "right") +
+    #   scale_fill_manual(values = custom_palette, name = "Clusters") +
+    #   labs(x = NULL, y = NULL, title = "Virtual Core") +
+    #   tidypaleo::theme_paleo() +
+    #   theme(
+    #     axis.text.x = element_blank(),
+    #     axis.ticks.x = element_blank(),
+    #     panel.grid = element_blank(),
+    #     legend.position = "right",
+    #     text = element_text(family = "sans", face = "bold")
+    #   )
+
+    # Résumer chaque bloc pour avoir une seule ligne par bloc
+    # Résumer chaque bloc pour avoir une seule ligne par bloc
+    core_data <- core_data %>%
+      mutate(Block = cumsum(Cluster != lag(Cluster, default = first(Cluster))))
+
+    # Calcul du pas réel de profondeur
+    depth_step <- median(diff(sort(core_data[[depth_col]])), na.rm = TRUE)
+
+    blocks <- core_data %>%
+      group_by(Block, Cluster) %>%
+      summarize(
+        Depth_start = min(.data[[depth_col]]),
+        Depth_end   = max(.data[[depth_col]]),
+        .groups = "drop"
+      ) %>%
+      mutate(
+        Depth_mid = (Depth_start + Depth_end) / 2,
+        Height    = Depth_end - Depth_start + depth_step  # ajuste en fonction du pas
+      )
+
+    core_plot <- ggplot(blocks, aes(x = 1, y = Depth_mid, fill = factor(Cluster), height = Height)) +
+      geom_tile(width = 1) +
+      scale_y_reverse(position = "right") +
+      scale_fill_manual(values = custom_palette, name = "Clusters") +
+      labs(x = NULL, y = NULL, title = "Virtual Core") +
+      tidypaleo::theme_paleo() +
+      theme(
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(),
+        panel.grid = element_blank(),
+        legend.position = "right",
+        text = element_text(family = "sans", face = "bold")
+      )
+
+
+    combined_plot <- main_plot + core_plot + patchwork::plot_layout(widths = c(4, 0.25))
+    print(combined_plot)
+  } else {
+    print(main_plot)
+    cat("Virtual Core skipped.\n")
+  }
+
+  # Export PDF
+  save_pdf <- tolower(safe_readline("\nWould you like to export in PDF? (yes/no): ", default = "no"))
+
+  if (save_pdf %in% c("yes", "y")) {
+    if (!requireNamespace("rstudioapi", quietly = TRUE)) install.packages("rstudioapi")
+    library(rstudioapi)
+
+    if (!rstudioapi::isAvailable()) {
+      cat("RStudio API not available. Cannot select file interactively.\n")
+    } else {
+      pdf_path <- rstudioapi::selectFile(
+        caption = "Save cluster visualization",
+        label = "Save",
+        path = getwd(),
+        filter = list("PDF files" = "pdf"),
+        existing = FALSE
+      )
+
+      if (nzchar(pdf_path)) {
+        if (!grepl("\\.pdf$", pdf_path, ignore.case = TRUE))
+          pdf_path <- paste0(pdf_path, ".pdf")
+
+        # Demande des dimensions personnalisées
+        pdf_width <- as.numeric(safe_readline("Enter desired PDF width (in inches, e.g., 10): "))
+        pdf_height <- as.numeric(safe_readline("Enter desired PDF height (in inches, e.g., 8): "))
+
+        # Crée le PDF avec ces dimensions
+        pdf(pdf_path, width = pdf_width, height = pdf_height)
+        if (exists("combined_plot")) print(combined_plot)
+        else print(main_plot)
+        dev.off()
+
+        cat("\nCluster visualization saved to:", pdf_path, "\n")
+      } else {
+        cat("Saving cancelled.\n")
+      }
+    }
+  } else {
+    cat("PDF export skipped.\n")
+  }
+  cat("End.\n")
+}
 
