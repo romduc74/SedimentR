@@ -152,6 +152,6 @@ scale_data <- function(donnees=NULL) {
   } else {
     cat("Summary not saved.\n")
   }
-
+  assign("df_clean_normalized", df_normalized, envir = .GlobalEnv)
   return(invisible(df_normalized))
 }
