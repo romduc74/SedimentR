@@ -2,7 +2,7 @@
 % Please edit documentation in R/charger.R
 \name{charger}
 \alias{charger}
-\title{Load a CSV or Excel (.xlsx) file into a DataFrame with SNR filtering}
+\title{Load a CSV or Excel (.xlsx) file into a DataFrame.}
 \usage{
 charger(path, sheet = NULL, sep, fileEncoding)
 }
@@ -12,8 +12,5 @@ charger(path, sheet = NULL, sep, fileEncoding)
 \item{sheet}{(optional) Name or index of the Excel sheet. If not specified, the first sheet is used.}
 }
 \description{
-This function reads a .csv or .xlsx file. For Excel files, you can specify a sheet
-by name or index. It calculates the SNR for numeric columns assuming Poisson counting
-statistics, and allows filtering by a user-defined SNR threshold, with optional manual
-removal of elements.
+Load a CSV or Excel (.xlsx) file into a DataFrame.
 }
