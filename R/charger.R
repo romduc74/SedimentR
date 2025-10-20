@@ -1,9 +1,4 @@
-#' Load a CSV or Excel (.xlsx) file into a DataFrame with SNR filtering
-#'
-#' This function reads a .csv or .xlsx file. For Excel files, you can specify a sheet
-#' by name or index. It calculates the SNR for numeric columns assuming Poisson counting
-#' statistics, and allows filtering by a user-defined SNR threshold, with optional manual
-#' removal of elements.
+#' Load a CSV or Excel (.xlsx) file into a DataFrame.
 #'
 #' @param path Full path to the CSV or Excel file.
 #' @param sheet (optional) Name or index of the Excel sheet. If not specified, the first sheet is used.
