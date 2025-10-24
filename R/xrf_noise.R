@@ -84,15 +84,16 @@ xrf_noise <- function(df) {
   cat("\n")
 
   # Automatic threshold: median − MAD
+  mean_ns<-mean(results$noise_score, na.rm = TRUE)
   median_ns <- median(results$noise_score, na.rm = TRUE)
   mad_ns <- mad(results$noise_score, constant = 1, na.rm = TRUE)
-  threshold_auto <- median_ns + mad_ns
+  threshold_auto <- median_ns + 2*mad_ns
   threshold_auto <- max(threshold_auto, 0)
 
   cat("\n--- Threshold determination ---\n")
   cat("\n")
-  cat(sprintf("Median = %.3f, MAD = %.3f, Automatic threshold (median−MAD) = %.3f\n\n",
-              median_ns, mad_ns, threshold_auto))
+  cat(sprintf("Median = %.3f, MAD = %.3f, Automatic threshold (Median + 2xMAD) = %.3f\n\n",
+              mean_ns, mad_ns, threshold_auto))
   cat("\n")
 
   # User chooses threshold
