@@ -17,7 +17,6 @@ xrf_noise <- function(df) {
 
   cat("\nType 'exit' at any time to quit.\n\n")
 
-  # --- Safe readline function ---
   safe_readline <- function(prompt = "", default = NULL) {
     input <- tryCatch({ readline(prompt) }, error = function(e) { "" })
     if (tolower(trimws(input)) == "exit") stop("Execution stopped by user with 'exit'.", call. = FALSE)
@@ -25,122 +24,138 @@ xrf_noise <- function(df) {
     return(input)
   }
 
-  # --- Interactive parameters (before threshold) ---
+  # EEMD parameters
   cat("EEMD parameters for XRF analysis:\n\n")
-  noise_strength <- as.numeric(safe_readline(
-    "1) Noise amplitude to add (recommended 0.2): ", default = "0.2"))
-  ensemble_size <- as.integer(safe_readline(
-    "2) Number of EEMD iterations (recommended 100): ", default = "100"))
-  drop_imf <- as.integer(safe_readline(
-    "3) Number of first IMFs considered as noise (recommended 2): ", default = "2"))
+  noise_strength <- as.numeric(safe_readline("1) Noise amplitude (recommended 0.2): ", default = "0.2"))
+  cat("\n")
+  ensemble_size  <- as.integer(safe_readline("2) Number of EEMD iterations (recommended 100): ", default = "100"))
+  cat("\n")
+  drop_imf       <- as.integer(safe_readline("3) Number of first IMFs considered as noise (recommended 2): ", default = "2"))
 
   cat("\nParameters set:\n")
+  cat("\n")
   cat(" → Noise strength  =", noise_strength, "\n")
+  cat("\n")
   cat(" → EEMD iterations =", ensemble_size, "\n")
+  cat("\n")
   cat(" → Noise IMFs      =", drop_imf, "\n\n")
 
-  # --- Depth column selection ---
-  cat("Available columns in the dataset:\n")
-  cat("\n")
+  # Depth column
+  cat("Available columns in the dataset:\n\n")
   print(names(df)); cat("\n")
-
   depth_col <- NULL
   while (is.null(depth_col)) {
     choice <- safe_readline("Enter the name of the depth column: ")
-    if (choice %in% names(df)) depth_col <- choice else message("Invalid column name. Please try again.")
+    if (choice %in% names(df)) depth_col <- choice else message("Invalid column name. Try again.")
   }
 
-  # --- Noise calculation (without threshold) ---
+  # Noise computation
   results <- data.frame(variable = character(), noise_score = numeric(), stringsAsFactors = FALSE)
-  df_denoised_total <- df[depth_col]  # all denoised
-  df_clean <- df[depth_col]           # filtered later
+  df_denoised_total <- df[depth_col]
+  df_clean <- df[depth_col]
 
   for (col in setdiff(names(df), depth_col)) {
     x <- df[[col]]
+    if (!is.numeric(x)) suppressWarnings(x <- as.numeric(as.character(x)))
+    if (all(is.na(x))) next
+
     imfs <- Rlibeemd::eemd(x, noise_strength = noise_strength, ensemble_size = ensemble_size)
-    var_total <- sum(apply(imfs, 2, var))
-    var_noise <- sum(apply(imfs[, 1:drop_imf, drop = FALSE], 2, var))
+    var_total <- sum(apply(imfs, 2, var, na.rm = TRUE))
+    var_noise <- sum(apply(imfs[, 1:min(drop_imf, ncol(imfs)), drop = FALSE], 2, var, na.rm = TRUE))
     noise_score <- var_noise / var_total
 
     results <- rbind(results, data.frame(variable = col, noise_score = noise_score))
 
-    # Denoised signal
-    if (ncol(imfs) <= drop_imf) signal_denoised <- rowSums(imfs)
-    else signal_denoised <- rowSums(imfs[, -(1:drop_imf), drop = FALSE])
+    if (ncol(imfs) <= drop_imf) {
+      signal_denoised <- rowSums(imfs, na.rm = TRUE)
+    } else {
+      signal_denoised <- rowSums(imfs[, -(1:drop_imf), drop = FALSE], na.rm = TRUE)
+    }
 
     df_denoised_total[[col]] <- signal_denoised
     df_clean[[col]] <- signal_denoised
   }
 
-  # --- Show noise scores ---
+  # Show noise scores
   cat("\n===== Noise Summary by Element =====\n\n")
   for (i in seq_len(nrow(results))) {
     cat(sprintf("%-10s : Noise Score = %.3f\n", results$variable[i], results$noise_score[i]))
   }
   cat("\n")
 
-  # --- Ask threshold AFTER seeing scores ---
-  noise_threshold <- as.numeric(safe_readline(
-    "Enter threshold for noise proportion to flag a variable (0–1, e.g., 0.3): "))
+  # Automatic threshold: median − MAD
+  median_ns <- median(results$noise_score, na.rm = TRUE)
+  mad_ns <- mad(results$noise_score, constant = 1, na.rm = TRUE)
+  threshold_auto <- median_ns + mad_ns
+  threshold_auto <- max(threshold_auto, 0)
 
-  results$is_noisy <- results$noise_score > noise_threshold
-  noisy_vars <- results$variable[results$is_noisy]
+  cat("\n--- Threshold determination ---\n")
+  cat("\n")
+  cat(sprintf("Median = %.3f, MAD = %.3f, Automatic threshold (median−MAD) = %.3f\n\n",
+              median_ns, mad_ns, threshold_auto))
+  cat("\n")
 
-
-  # --- Optionally remove noisy columns ---
-  if (length(noisy_vars) > 0) {
-    cat("\nNoisy variables:", paste(noisy_vars, collapse = ", "), "\n")
-    cat("\n")
-    ans <- ""
-    while (!(tolower(ans) %in% c("yes", "no"))) {
-      ans <- safe_readline("Do you want to remove noisy columns from the denoised dataset? (yes/no): ")
-    }
-    if (tolower(ans) == "yes") {
-      df_clean <- df_clean[, !(names(df_clean) %in% noisy_vars), drop = FALSE]
-      cat("\nNoisy columns removed — 'df_clean' created with only analysable variables.\n\n")
-    } else {
-      cat("\nWARNING: No noisy variables were removed.\n")
-      cat("=== These variables may remain non-analysable due to excessive noise content ===\n\n")
+  # User chooses threshold
+  choice <- safe_readline("Use automatic threshold ('auto') or enter custom ('custom')? [auto/custom]: ", default = "auto")
+  if (tolower(choice) == "custom") {
+    custom_val <- safe_readline("Enter custom threshold (0–1): ")
+    noise_threshold <- suppressWarnings(as.numeric(custom_val))
+    if (is.na(noise_threshold)) {
+      cat("Invalid value. Using automatic threshold.\n")
+      noise_threshold <- threshold_auto
     }
   } else {
-    cat("\nNo noisy variables detected — all variables retained.\n\n")
+    noise_threshold <- threshold_auto
   }
 
-  # --- Save both dataframes to Global Environment ---
+  cat(sprintf("\nUsing noise threshold = %.3f\n\n", noise_threshold))
+
+  # Flag clean/noisy variables
+  results$is_clean <- results$noise_score < noise_threshold
+  clean_vars <- results$variable[results$is_clean]
+  noisy_vars <- results$variable[!results$is_clean]
+
+  cat(sprintf("Clean variables (n=%d): %s\n", length(clean_vars), paste(clean_vars, collapse = ", ")))
+  cat("\n")
+  cat(sprintf("Noisy variables (n=%d): %s\n\n", length(noisy_vars), paste(noisy_vars, collapse = ", ")))
+
+  # Keep only clean variables
+  if (length(clean_vars) > 0) df_clean <- df_clean[, c(depth_col, clean_vars), drop = FALSE]
+
+  # Save globally
   assign("df_clean", df_clean, envir = .GlobalEnv)
   assign("df_denoised_total", df_denoised_total, envir = .GlobalEnv)
+
   # Optional caching
   if (exists("set_cache")) {
     set_cache("df_clean_cache", df_clean)
     set_cache("df_denoised_total_cache", df_denoised_total)
   }
 
-  # --- Summary text ---
+  # Summary
   summary_text <- paste0(
     "===== XRF Noise Detection Summary =====\n",
-    "\n",
-    "Number of observations       : ", nrow(df), "\n",
-    "Original variables           : ", ncol(df), "\n",
-    "Depth column                 : ", depth_col, "\n\n",
+    "Observations       : ", nrow(df), "\n",
+    "Original variables : ", ncol(df), "\n",
+    "Depth column       : ", depth_col, "\n\n",
     "EEMD parameters:\n",
-    " → Noise strength            : ", noise_strength, "\n",
-    " → EEMD iterations           : ", ensemble_size, "\n",
-    " → Noise IMFs considered     : ", drop_imf, "\n",
-    " → Noise threshold           : ", noise_threshold, "\n\n",
-    "Number of noisy variables    : ", sum(results$is_noisy), "\n",
-    "Noisy variables detected     : ", if(sum(results$is_noisy)>0) paste(noisy_vars, collapse = ", ") else "None", "\n",
-    "Variables retained (df_clean): ", paste(names(df_clean), collapse = ", "), "\n",
+    " → Noise strength : ", noise_strength, "\n",
+    " → EEMD iterations: ", ensemble_size, "\n",
+    " → Noise IMFs      : ", drop_imf, "\n",
+    " → Threshold used  : ", round(noise_threshold,3), "\n\n",
+    "Clean variables (", length(clean_vars), "): ", paste(clean_vars, collapse = ", "), "\n",
+    "Noisy variables detected (", length(noisy_vars), "): ",
+    if(length(noisy_vars) > 0) paste(noisy_vars, collapse = ", ") else "None", "\n",
     "\n",
+    "Dataframe df_clean ", length(clean_vars), " variables: " , paste(names(df_clean), collapse = ", "), "\n",
     "======================================\n"
   )
   cat(summary_text)
+  cat("\n")
 
-  # --- Optional save summary ---
-  save_summary <- ""
-  while (!(tolower(save_summary) %in% c("yes", "no"))) {
-    save_summary <- safe_readline("Do you want to save the summary report (.txt)? (yes/no): ")
-  }
-
+  # Save summary option
+  save_summary <- safe_readline("Do you want to save the summary report (.txt)? (yes/no): ", default = "no")
+  cat("\n")
   if (tolower(save_summary) == "yes") {
     if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable()) {
       file_path <- rstudioapi::selectFile(caption = "Save summary", label = "Save", existing = FALSE)
@@ -152,8 +167,12 @@ xrf_noise <- function(df) {
       writeLines(summary_text, con = file_path)
       message("Summary saved to: ", file_path)
     }
-  } else {
-    message("\nNo file selected. Summary not saved.\n")
   }
 
+  invisible(list(
+    results = results,
+    df_clean = df_clean,
+    df_denoised_total = df_denoised_total,
+    depth_col = depth_col
+  ))
 }
