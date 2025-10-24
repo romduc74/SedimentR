@@ -72,7 +72,7 @@ xrf_noise <- function(df) {
   # --- Robust Z-score ---
   median_ns <- median(results$noise_score, na.rm=TRUE)
   mad_ns <- mad(results$noise_score, constant=1, na.rm=TRUE)
-  k <- 2
+  k <- 1.5
   results$robust_Z <- (results$noise_score - median_ns) / mad_ns
 
   cat("\n--- Robust Z-score explanation ---\n\n")
@@ -80,7 +80,7 @@ xrf_noise <- function(df) {
   cat("  Z_i = (noise_score_i - median(noise_scores)) / MAD(noise_scores)\n")
   cat("It measures how far each variable's noise is from the median, scaled by the MAD.\n")
   cat("This method is robust to outliers and non-normal distributions.\n")
-  cat("Variables with Z > 2 are typically considered noisy.\n\n")
+  cat("Variables with Z > 1.5 are typically considered noisy.\n\n")
 
   # --- Show table ---
   cat("\n===== Noise Scores & Robust Z-scores =====\n\n")
@@ -144,7 +144,7 @@ xrf_noise <- function(df) {
     "\n\n → Threshold used  : ", threshold_used, "\n\n",
     "Clean variables (", length(clean_vars), "): ", paste(clean_vars, collapse=", "), "\n\n",
     "Noisy variables detected (", length(noisy_vars), "): ", if(length(noisy_vars)>0) paste(noisy_vars, collapse=", ") else "None", "\n\n",
-    "Dataframe df_clean (", length(clean_vars), ") variables: ", paste(names(df_clean), collapse=", "), "\n",
+    "Dataframe df_clean: ", paste(names(df_clean), collapse=", "), "\n",
     "======================================\n"
   )
   cat(summary_text)
