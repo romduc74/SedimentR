@@ -72,7 +72,7 @@ xrf_noise <- function(df) {
   # --- Robust Z-score ---
   median_ns <- median(results$noise_score, na.rm=TRUE)
   mad_ns <- mad(results$noise_score, constant=1, na.rm=TRUE)
-  k <- 1.5
+  k <- 0.5
   results$robust_Z <- (results$noise_score - median_ns) / mad_ns
 
   cat("\n--- Robust Z-score explanation ---\n\n")
