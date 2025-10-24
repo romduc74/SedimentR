@@ -69,59 +69,45 @@ xrf_noise <- function(df) {
     df_clean[[col]] <- signal_denoised
   }
 
-  # --- Robust Z-score ---
-  median_ns <- median(results$noise_score, na.rm=TRUE)
-  mad_ns <- mad(results$noise_score, constant=1, na.rm=TRUE)
-  k <- 0.5
-  results$robust_Z <- (results$noise_score - median_ns) / mad_ns
+  # --- Explanation of noise_score ---
+  cat("\n--- Understanding the Noise Score ---\n\n")
+  cat("The 'noise_score' represents the proportion of total signal variance\n")
+  cat("that comes from the first IMFs (the highest-frequency, most 'noisy' components).\n")
+  cat(" → A high noise_score (close to 1) means the signal is dominated by noise.\n")
+  cat(" → A low noise_score (close to 0) means the signal is mostly clean.\n\n")
+  cat("Choose a threshold to keep only variables that are less noisy.\n")
+  cat("For example, setting threshold = 0.3 will keep variables with noise_score < 0.3.\n\n")
 
-  cat("\n--- Robust Z-score explanation ---\n\n")
-  cat("The robust Z-score is computed as:\n")
-  cat("  Z_i = (noise_score_i - median(noise_scores)) / MAD(noise_scores)\n")
-  cat("It measures how far each variable's noise is from the median, scaled by the MAD.\n")
-  cat("This method is robust to outliers and non-normal distributions.\n")
-  cat("Variables with Z > 1.5 are typically considered noisy.\n\n")
-
-  # --- Show table ---
-  cat("\n===== Noise Scores & Robust Z-scores =====\n\n")
-  cat(sprintf("%-10s : %-10s : %-10s\n", "Variable", "Noise", "Z-score"))
+  # --- Display table of noise scores ---
+  cat("\n===== Noise Scores per Variable =====\n\n")
+  cat(sprintf("%-20s : %-10s\n", "Variable", "Noise_Score"))
   cat(strrep("-", 35), "\n")
   for(i in 1:nrow(results)) {
-    cat(sprintf("%-10s : %-10.3f : %-10.3f\n",
+    cat(sprintf("%-20s : %-10.3f\n",
                 results$variable[i],
-                results$noise_score[i],
-                results$robust_Z[i]))
+                results$noise_score[i]))
   }
   cat("\n")
 
   # --- User threshold choice ---
-  thr_choice <- safe_readline("Use default Robust Z-score [enter] or enter custom threshold on noise_score? (0–1): ", default = "")
+  thr_choice <- safe_readline("Enter noise_score threshold to keep low-noise variables (0–1, e.g. 0.3): ", default = "0.3")
   cat("\n")
-  if(thr_choice == "") {
-    # Default robust Z — keep variables outside [-0.5, 0.5]
-    results$is_clean <- results$robust_Z <= -k | results$robust_Z >= k
-    cat(sprintf("Clean data → Keeping variables with |Z| ≥ %.1f (excluding [-%.1f, %.1f])\n\n", k, k, k))
-    threshold_used <- paste0("Robust Z-score (|Z| <", k, " excluded)")
-  }
-  else {
-    # Custom threshold
-    noise_threshold <- suppressWarnings(as.numeric(thr_choice))
-    if(is.na(noise_threshold)) {
-      cat("Invalid input. Using Robust Z-score.\n\n")
-      results$is_clean <- results$robust_Z <= k
-      threshold_used <- paste0("Robust Z-score (Z >", k, ")")
-    } else {
-      results$is_clean <- results$noise_score < noise_threshold
-      threshold_used <- paste0("Custom noise_score <", noise_threshold)
-      cat(sprintf("Using custom noise_score threshold: %.3f\n\n", noise_threshold))
-    }
+  noise_threshold <- suppressWarnings(as.numeric(thr_choice))
+  if(is.na(noise_threshold)) {
+    noise_threshold <- 0.3
+    cat("Invalid input. Using default threshold = 0.3\n\n")
   }
 
+  results$is_clean <- results$noise_score < noise_threshold
+  threshold_used <- paste0("Custom noise_score <", noise_threshold)
+  cat(sprintf("Using noise_score threshold: %.3f → keeping variables with less noise\n\n", noise_threshold))
+
+  # --- Selection ---
   clean_vars <- results$variable[results$is_clean]
   noisy_vars <- results$variable[!results$is_clean]
 
-  cat(sprintf("Clean variables (n=%d): %s\n\n", length(clean_vars), paste(clean_vars, collapse=", ")))
-  cat(sprintf("Noisy variables (n=%d): %s\n\n", length(noisy_vars), paste(noisy_vars, collapse=", ")))
+  cat(sprintf("Low-noise variables kept (n=%d): %s\n\n", length(clean_vars), paste(clean_vars, collapse=", ")))
+  cat(sprintf("High-noise variables excluded (n=%d): %s\n\n", length(noisy_vars), if(length(noisy_vars)>0) paste(noisy_vars, collapse=", ") else "None"))
 
   if(length(clean_vars) > 0) df_clean <- df_clean[, c(depth_col, clean_vars), drop=FALSE]
 
@@ -143,8 +129,8 @@ xrf_noise <- function(df) {
     "\n\n → EEMD iterations : ", ensemble_size,
     "\n\n → Noise IMFs      : ", drop_imf,
     "\n\n → Threshold used  : ", threshold_used, "\n\n",
-    "Clean variables (", length(clean_vars), "): ", paste(clean_vars, collapse=", "), "\n\n",
-    "Noisy variables detected (", length(noisy_vars), "): ", if(length(noisy_vars)>0) paste(noisy_vars, collapse=", ") else "None", "\n\n",
+    "Low-noise variables (", length(clean_vars), "): ", paste(clean_vars, collapse=", "), "\n\n",
+    "High-noise variables (", length(noisy_vars), "): ", if(length(noisy_vars)>0) paste(noisy_vars, collapse=", ") else "None", "\n\n",
     "Dataframe df_clean: ", paste(names(df_clean), collapse=", "), "\n",
     "======================================\n"
   )
