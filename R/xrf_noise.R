@@ -98,11 +98,12 @@ xrf_noise <- function(df) {
   thr_choice <- safe_readline("Use default Robust Z-score [enter] or enter custom threshold on noise_score? (0–1): ", default = "")
   cat("\n")
   if(thr_choice == "") {
-    # Default robust Z
-    results$is_clean <- results$robust_Z <= k
-    cat(sprintf("Clean data → Using Robust Z-score threshold: Z ≤ %.1f\n\n", k))
-    threshold_used <- paste0("Robust Z-score (Z >", k, ")")
-  } else {
+    # Default robust Z — keep variables outside [-0.5, 0.5]
+    results$is_clean <- results$robust_Z <= -k | results$robust_Z >= k
+    cat(sprintf("Clean data → Keeping variables with |Z| ≥ %.1f (excluding [-%.1f, %.1f])\n\n", k, k, k))
+    threshold_used <- paste0("Robust Z-score (|Z| <", k, " excluded)")
+  }
+  else {
     # Custom threshold
     noise_threshold <- suppressWarnings(as.numeric(thr_choice))
     if(is.na(noise_threshold)) {
