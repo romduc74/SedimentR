@@ -108,7 +108,7 @@ visual.clust <- function(data) {
     mutate(
       depth_diff = .data[[depth_col]] - lag(.data[[depth_col]], default = first(.data[[depth_col]])),
       depth_step = median(diff(.data[[depth_col]]), na.rm = TRUE),
-      is_gap = depth_diff > 1.5 * depth_step,
+      is_gap = depth_diff > 1.9999999999999996 * depth_step,
       segment = cumsum(is_gap)
     ) %>%
     ungroup()
@@ -159,7 +159,7 @@ visual.clust <- function(data) {
     core_data <- core_data %>%
       mutate(
         depth_diff = .data[[depth_col]] - lag(.data[[depth_col]], default = first(.data[[depth_col]])),
-        is_gap = depth_diff > 1.5 * depth_step,
+        is_gap = depth_diff > 1.9999999999999996 * depth_step,
         Block = cumsum((Cluster != lag(Cluster, default = first(Cluster))) | is_gap)
       )
 
