@@ -426,6 +426,117 @@ xrf_clust <- function(data = NULL) {
         cat("Function 'visual.clust()' not found. Please load it before running this option.\n")
       }
     }
+
+    # --- Cluster quality and stability ---
+    cat("\n=== Cluster Quality and Stability Evaluation ===\n\n")
+    eval_choice <- tolower(safe_readline("Evaluate cluster stability and quality? (yes/no): "))
+
+    if(eval_choice %in% c("yes","y")){
+
+      # Silhouette
+      sil <- cluster::silhouette(clustering_result$cluster, dist(data))
+      sil_mean <- mean(sil[,3])
+
+      # Davies-Bouldin
+      db_index <- clusterCrit::intCriteria(as.matrix(data), clustering_result$cluster, "Davies_Bouldin")
+      dbi <- db_index$davies_bouldin
+
+      # Redirige la sortie temporairement pour ne rien afficher
+      temp <- tempfile()
+      sink(temp)
+      boot <- fpc::clusterboot(data, B = 50, clustermethod = fpc::kmeansCBI,
+                               k = optimal_clusters_max, seed = 123, showplots = FALSE)
+      sink()  # revient à la console
+      stab_mean <- mean(boot$bootmean)
+
+      # --- Interpretations ---
+      sil_text <- if(sil_mean > 0.75) "Excellent: clusters well separated"
+      else if(sil_mean > 0.6) "Good: mostly well assigned"
+      else if(sil_mean > 0.4) "Moderate: some points misassigned"
+      else if(sil_mean > 0.2) "Weak: clusters poorly defined"
+      else "Very weak: mostly overlapping"
+
+      db_text <- if(dbi < 0.5) "Excellent separation"
+      else if(dbi < 0.75) "Good separation"
+      else if(dbi < 1.0) "Moderate separation"
+      else "Weak separation, overlapping"
+
+      boot_text <- if(stab_mean > 0.8) "Very stable clusters"
+      else if(stab_mean > 0.6) "Stable clusters"
+      else if(stab_mean > 0.4) "Moderately stable"
+      else "Unstable clusters, use caution"
+
+      overall_text <- if(sil_mean>0.6 & dbi<0.75 & stab_mean>0.65) {
+        "Clustering quality is good, clusters are well-separated and stable."
+      } else if(sil_mean>0.4 & dbi<1 & stab_mean>0.4) {
+        "Clustering moderate → Some clusters may be ambiguous."
+      } else {
+        "Clustering is weak → Clusters poorly separated or unstable."
+      }
+
+      cat("\n")
+      # --- Summary lines with explanations ---
+      summary_lines <- c(
+        "====== Clustering Analysis (K-means) ======",
+        "",
+        sprintf("Silhouette mean                : %.3f", sil_mean),
+        sprintf("Davies-Bouldin index           : %.3f", dbi),
+        sprintf("Bootstrap stability (mean)     : %.3f", stab_mean),
+        "",
+        "------------------------------------------------",
+        "",
+        "Interpretation per metric:",
+        "",
+        sprintf("- Silhouette       : %.3f → %s", sil_mean, sil_text),
+        "",
+        "    → The silhouette measures cohesion and separation.",
+        "      Values near 1 indicate distinct, well-separated clusters.",
+        "      Values around 0 suggest overlap; negative values mean misclassification.",
+        "",
+        sprintf("- Davies-Bouldin   : %.3f → %s", dbi, db_text),
+        "",
+        "    → The Davies–Bouldin index measures how similar clusters are.",
+        "      Lower is better: values < 0.5 indicate strong separation.",
+        "      Values > 1 imply overlapping clusters.",
+        "",
+        sprintf("- Bootstrap stab.  : %.3f → %s", stab_mean, boot_text),
+        "",
+        "    → The bootstrap stability measures how reproducible clusters are.",
+        "      High values (>0.8) mean clusters remain stable across resampling.",
+        "      Low values (<0.4) mean clusters are unstable and likely artefacts.",
+        "",
+        "Overall evaluation:",
+        "",
+        overall_text,
+        "",
+        "------------------------------------------------"
+      )
+
+
+      cat(paste(summary_lines, collapse="\n"), "\n")
+
+      cat("\n")
+
+      # Optional export
+      save_eval <- tolower(safe_readline("Save evaluation summary to text file? (yes/no): "))
+      if(save_eval %in% c("yes","y")){
+        if(requireNamespace("rstudioapi", quietly=TRUE) && rstudioapi::isAvailable()){
+          eval_path <- rstudioapi::selectFile(
+            caption="Save clustering evaluation summary",
+            label="Save",
+            path=getwd(),
+            filter=list("Text files"="txt"),
+            existing=FALSE
+          )
+          if(nzchar(eval_path)){
+            if(!grepl("\\.txt$", eval_path, ignore.case=TRUE)) eval_path <- paste0(eval_path,".txt")
+            writeLines(summary_lines, eval_path)
+            cat("\n")
+            cat("Evaluation summary saved to:", eval_path, "\n")
+          } else cat("Saving cancelled.\n")
+        } else cat("RStudio API not available; cannot select file interactively.\n")
+      }
+    }
     cat("\n")
     # --- End of main loop ---
     cat("Clustering finished.\n")
