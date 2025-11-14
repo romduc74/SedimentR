@@ -8,7 +8,7 @@
 
 # Fonction utilitaire pour sécuriser les entrées utilisateur
 
-xrf_clust <- function(data = NULL) {
+xrf_clust  <- function(data = NULL) {
 
   # === Required packages ===
   required_packages <- c("NbClust", "ggplot2", "writexl", "rstudioapi", "factoextra")
@@ -25,14 +25,29 @@ xrf_clust <- function(data = NULL) {
     return(input)
   }
 
-  # === Select or load data ===
-  repeat {
-    if ("variables_cluster_cache" %in% list_cache()) {
-      data <- get_cache("variables_cluster_cache")
-      message("Using cached 'variables_cluster_cache' dataframe.")
-      break
-    }
+  # --- Internal cache helpers ---
+  if (!exists(".my_cache", envir = .GlobalEnv)) {
+    assign(".my_cache", new.env(parent = emptyenv()), envir = .GlobalEnv)
+  }
 
+  set_cache <- function(name, value) {
+    assign(name, value, envir = .my_cache)
+    invisible(TRUE)
+  }
+
+  get_cache <- function(name) {
+    if (exists(name, envir = .my_cache)) get(name, envir = .my_cache)
+    else stop("No cached object named '", name, "' found.")
+  }
+
+  list_cache <- function() ls(envir = .my_cache)
+
+
+  # === Select or load data ===
+  if ("variables_cluster_cache" %in% list_cache()) {
+    data <- get_cache("variables_cluster_cache")
+    message("Using cached 'variables_cluster_cache' dataframe.")
+  } else {
     df_list <- ls(envir = .GlobalEnv)
     df_list <- df_list[sapply(df_list, function(x) is.data.frame(get(x, envir = .GlobalEnv)))]
 
@@ -41,15 +56,18 @@ xrf_clust <- function(data = NULL) {
     cat("\nSelect the dataframe with the selected elements:\n")
     print(df_list)
     cat("\n")
-    df_name <- readline("Enter the name of the dataframe: ")
 
-    if (df_name %in% df_list) {
-      data <- get(df_name, envir = .GlobalEnv)
-      set_cache("variables_cluster_cache", data)
-      break
+    repeat {
+      df_name <- readline("Enter the name of the dataframe: ")
+      if (df_name %in% df_list) {
+        data <- get(df_name, envir = .GlobalEnv)
+        set_cache("variables_cluster_cache", data)  # <- ici tu mets bien dans le cache
+        break
+      }
+      cat("Dataframe not found. Try again.\n")
     }
-    cat("\nDataframe not found. Try again.\n")
   }
+
 
 
   # === Input validation ===
