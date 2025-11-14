@@ -13,7 +13,7 @@ if (!requireNamespace("rlang", quietly = TRUE)) {
 # Create internal cache environment
 #.my_cache <- rlang::new_environment(parent = emptyenv())
 #' Store an object in the internal package cache
-#'
+#'Problem
 #' @noRd
 set_cache <- function(name, value) {
   # Check if the cache environment exists in the global environment
