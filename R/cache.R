@@ -11,7 +11,7 @@ if (!requireNamespace("rlang", quietly = TRUE)) {
 #' @param value Any R object — the data or model to store.
 #' @return Invisibly returns TRUE.
 # Create internal cache environment
-.my_cache <- rlang::new_environment(parent = emptyenv())
+#.my_cache <- rlang::new_environment(parent = emptyenv())
 #' Store an object in the internal package cache
 #'Problem
 #' @noRd
