@@ -118,12 +118,12 @@ sedicore <- function(file_path = NULL, sheet = "data") {
   cat("\n==========================================\n")
 
   # --- Step 2: Noise reduction ---
-  cat("\n==========================================\n")
-  cat("\n--- Step 2 : Noise reduction (EEMD and IMF method) --------------\n")
-  cat("\n")
-  xrf_noise(df)
-  cat("\nNoise reduction completed.\n")
-  cat("\n==========================================\n")
+  # cat("\n==========================================\n")
+  # cat("\n--- Step 2 : Noise reduction (EEMD and IMF method) --------------\n")
+  # cat("\n")
+  # xrf_noise(df)
+  # cat("\nNoise reduction completed.\n")
+  # cat("\n==========================================\n")
 
   # --- Step 3: Scaling data ---
   cat("\n==========================================\n")
