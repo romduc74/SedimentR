@@ -11,7 +11,7 @@
 xrf_clust  <- function(data = NULL) {
 
   # === Required packages ===
-  required_packages <- c("NbClust", "ggplot2", "writexl", "rstudioapi", "factoextra")
+  required_packages <- c("NbClust", "ggplot2", "writexl", "rstudioapi", "factoextra","clusterCrit")
 
   for (pkg in required_packages) {
     if (!requireNamespace(pkg, quietly = TRUE)) install.packages(pkg)
