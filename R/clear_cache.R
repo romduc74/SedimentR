@@ -19,11 +19,15 @@ clear_cache <- function() {
   }
 
   message("Caches to delete: ", paste(cache_items, collapse = ", "))
+  cat("\n")
   confirm <- readline("Do you really want to clear them? (yes/no): ")
+  cat("\n")
 
   if (tolower(confirm) %in% c("yes", "y")) {
     rlang::env_unbind(cache_env, cache_items)
+    cat("\n")
     message("SedimentR cache successfully cleared.")
+    cat("\n")
   } else {
     message("Cache clearing canceled.")
   }

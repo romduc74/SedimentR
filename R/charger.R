@@ -58,6 +58,7 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
     df <- noise_output$df_clean
 
     cat("\nXRF noise filtering completed.\n")
+    cat("\n")
     cat("The dataframe has been updated with denoised & filtered variables.\n\n")
 
   } else {
@@ -66,7 +67,6 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
 
   # --- Bloc création ratios log-transformés ---
   answer <- safe_readline("Would you like to create log-transformed ratios? (yes/no) : ")
-  cat("\n")
   cat("\n")
   if (tolower(answer) == "yes") {
     cat("\n",
@@ -114,6 +114,7 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
     element_candidates <- colnames(df)
     element_names <- element_candidates[!grepl("/", element_candidates) & !grepl("log_", element_candidates)]
     cat("\n Elements available in your dataframe:\n")
+    cat("\n")
     print(element_names)
     cat("\n")
     cat("\n")
@@ -145,6 +146,7 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
       cat(paste0("\nCreation of the log ratio for ", ratio, "\n"))
 
       numerator <- safe_readline(paste("Numerator of", ratio, ": "))
+      cat("\n")
       denominator <- safe_readline(paste("Denominator  of", ratio, ": "))
 
       var_name <- paste0("log_", numerator, "_", denominator)
@@ -166,7 +168,7 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
           NA
         )
       } else {
-        cat("⚠ df_denoised_total not found — ratio not added to denoised dataset.\n")
+        cat("df_denoised_total not found — ratio not added to denoised dataset.\n")
       }
 
       cat("\n")

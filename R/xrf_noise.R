@@ -138,7 +138,7 @@ xrf_noise <- function(df) {
   cat("\n")
 
   # --- Save summary option ---
-  save_summary <- safe_readline("Save summary report (.txt)? [yes/no]: ", default="no")
+  save_summary <- safe_readline("Save summary report (.txt)? (yes/no): ", default="no")
   cat("\n")
   if(tolower(save_summary)=="yes") {
     if(requireNamespace("rstudioapi", quietly=TRUE) && rstudioapi::isAvailable()) {
