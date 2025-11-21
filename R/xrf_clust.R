@@ -74,19 +74,76 @@ xrf_clust  <- function(data = NULL) {
   if (!is.data.frame(data) && !is.matrix(data)) stop("The input must be a dataframe or matrix.")
   if (!all(sapply(data, is.numeric))) stop("All columns must be numeric.")
 
-  # --- Determine number of clusters ---
-  if (nrow(data) < 20) {
-    cat("\n")
-    cat("Automatic detection of the optimal number of clusters via NbClust is not reliable for such small datasets.\n\n")
+  # # --- Determine number of clusters ---
+  # if (nrow(data) < 20) {
+  #   cat("\n")
+  #   cat("Automatic detection of the optimal number of clusters via NbClust is not reliable for such small datasets.\n\n")
+  #
+  #   cat("In small datasets, statistical criteria may fail to give meaningful results, because:\n\n")
+  #   cat("- There are too few observations to form well-defined clusters.\n")
+  #   cat("- Indices or gap statistic can be highly unstable.\n")
+  #   cat("- Random variability may dominate over actual structure in the data.\n\n")
+  #
+  #   cat("Please use your expert judgment to choose the number of clusters. Consider:\n\n")
+  #   cat("- Domain knowledge about the variables and expected groups.\n")
+  #   cat("- Visual inspection (e.g., PCA projections).\n\n")
+  #
+  #   repeat {
+  #     n_clusters <- as.integer(safe_readline("Enter desired number of clusters (integer ≥ 2): "))
+  #     if (!is.na(n_clusters) && n_clusters >= 2) break
+  #     cat("Invalid input. Please enter an integer ≥ 2.\n")
+  #   }
+  #
+  #   optimal_clusters_max <- n_clusters
+  # } else {
+  #   # Dataset large enough → use NbClust
+  #   repeat {
+  #     max_clusters <- as.integer(safe_readline("Enter max number of clusters to test (min 2, e.g. 10): "))
+  #     if (!is.na(max_clusters) && max_clusters >= 2) break
+  #     cat("Invalid number. Please enter integer ≥ 2.\n\n")
+  #   }
+  #   cat("\n====== Determining Optimal Clusters via NbClust ======\n\n")
+  #   nb <- NbClust(data, distance = "euclidean", min.nc = 2, max.nc = max_clusters, method = "kmeans")
+  #
+  #   results <- nb$Best.nc[1, ]
+  #   freq_table <- sort(table(results), decreasing = TRUE)
+  #   clusters_with_max_freq <- as.numeric(names(freq_table[freq_table == max(freq_table)]))
+  #
+  #   if (length(clusters_with_max_freq) == 1) {
+  #     optimal_clusters_max <- clusters_with_max_freq
+  #   } else {
+  #     repeat {
+  #       cat("Multiple optimal cluster numbers detected:", paste(clusters_with_max_freq, collapse = ", "), "\n")
+  #       user_input <- as.integer(safe_readline("Choose one of these cluster numbers: "))
+  #       if (user_input %in% clusters_with_max_freq) {
+  #         optimal_clusters_max <- user_input
+  #         break
+  #       }
+  #       cat("Invalid choice. Try again.\n\n")
+  #     }
+  #   }
+  # }
+  #
+  # cat("\nNumber of clusters selected:", optimal_clusters_max, "\n\n")
 
-    cat("In small datasets, statistical criteria may fail to give meaningful results, because:\n\n")
-    cat("- There are too few observations to form well-defined clusters.\n")
-    cat("- Indices or gap statistic can be highly unstable.\n")
-    cat("- Random variability may dominate over actual structure in the data.\n\n")
+  # --- Determine number of clusters (manual or automatic) ---
 
-    cat("Please use your expert judgment to choose the number of clusters. Consider:\n\n")
-    cat("- Domain knowledge about the variables and expected groups.\n")
-    cat("- Visual inspection (e.g., PCA projections).\n\n")
+  cat("\nCluster selection mode:\n")
+  cat("\n")
+  cat("(1): Automatic detection of optimal number clusters (NbClust)\n")
+  cat("\n")
+  cat("(2): Manual (user choice)\n\n")
+
+  repeat {
+    choice <- safe_readline("Choose mode (1 or 2): ")
+    if (choice %in% c("1","2")) break
+    cat("Invalid choice. Please enter 1 or 2.\n")
+  }
+
+  if (choice == "2") {
+
+    # --- MANUAL mode, independent of dataset size ---
+    cat("\n=== Manual cluster selection ===\n\n")
 
     repeat {
       n_clusters <- as.integer(safe_readline("Enter desired number of clusters (integer ≥ 2): "))
@@ -95,36 +152,66 @@ xrf_clust  <- function(data = NULL) {
     }
 
     optimal_clusters_max <- n_clusters
+
   } else {
-    # Dataset large enough → use NbClust
-    repeat {
-      max_clusters <- as.integer(safe_readline("Enter max number of clusters to test (min 2, e.g. 10): "))
-      if (!is.na(max_clusters) && max_clusters >= 2) break
-      cat("Invalid number. Please enter integer ≥ 2.\n\n")
-    }
-    cat("\n====== Determining Optimal Clusters via NbClust ======\n\n")
-    nb <- NbClust(data, distance = "euclidean", min.nc = 2, max.nc = max_clusters, method = "kmeans")
 
-    results <- nb$Best.nc[1, ]
-    freq_table <- sort(table(results), decreasing = TRUE)
-    clusters_with_max_freq <- as.numeric(names(freq_table[freq_table == max(freq_table)]))
+    # --- AUTOMATIC mode (NbClust) ---
+    if (nrow(data) < 20) {
 
-    if (length(clusters_with_max_freq) == 1) {
-      optimal_clusters_max <- clusters_with_max_freq
+      cat("\nDataset too small for reliable NbClust results.\n")
+      cat("\n")
+      cat("Automatic detection of the optimal number of clusters via NbClust is not reliable for such small datasets.\n\n")
+
+      cat("In small datasets, statistical criteria may fail to give meaningful results, because:\n\n")
+      cat("- There are too few observations to form well-defined clusters.\n")
+      cat("- Indices or gap statistic can be highly unstable.\n")
+      cat("- Random variability may dominate over actual structure in the data.\n\n")
+
+      cat("Please use your expert judgment to choose the number of clusters. Consider:\n\n")
+      cat("- Domain knowledge about the variables and expected groups.\n")
+      cat("- Visual inspection (e.g., PCA projections).\n\n")
+
+      repeat {
+        n_clusters <- as.integer(safe_readline("Enter desired number of clusters (integer ≥ 2): "))
+        if (!is.na(n_clusters) && n_clusters >= 2) break
+        cat("Invalid input. Please enter an integer ≥ 2.\n")
+      }
+      optimal_clusters_max <- n_clusters
+
     } else {
       repeat {
-        cat("Multiple optimal cluster numbers detected:", paste(clusters_with_max_freq, collapse = ", "), "\n")
-        user_input <- as.integer(safe_readline("Choose one of these cluster numbers: "))
-        if (user_input %in% clusters_with_max_freq) {
-          optimal_clusters_max <- user_input
-          break
+        cat("\n")
+        max_clusters <- as.integer(safe_readline("Enter max number of clusters to test (min 2, e.g. 10): "))
+        if (!is.na(max_clusters) && max_clusters >= 2) break
+        cat("Invalid number. Please enter integer ≥ 2.\n\n")
+      }
+
+      cat("\n====== Determining Optimal Clusters via NbClust ======\n\n")
+      cat("\n")
+      nb <- NbClust(data, distance = "euclidean", min.nc = 2, max.nc = max_clusters, method = "kmeans")
+
+      results <- nb$Best.nc[1, ]
+      freq_table <- sort(table(results), decreasing = TRUE)
+      clusters_with_max_freq <- as.numeric(names(freq_table[freq_table == max(freq_table)]))
+
+      if (length(clusters_with_max_freq) == 1) {
+        optimal_clusters_max <- clusters_with_max_freq
+      } else {
+        repeat {
+          cat("Multiple optimal cluster numbers detected:", paste(clusters_with_max_freq, collapse = ", "), "\n")
+          user_input <- as.integer(safe_readline("Choose one of these cluster numbers: "))
+          if (user_input %in% clusters_with_max_freq) {
+            optimal_clusters_max <- user_input
+            break
+          }
+          cat("Invalid choice. Try again.\n\n")
         }
-        cat("Invalid choice. Try again.\n\n")
       }
     }
   }
 
   cat("\nNumber of clusters selected:", optimal_clusters_max, "\n\n")
+
 
   # --- Apply K-means ---
   set.seed(123)
