@@ -37,6 +37,30 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
   cat("\nData loaded successfully.\n")
   cat("\n")
 
+  # --- Bloc débruitage XRF via xrf_noise() ---
+  cat("\n")
+  cat("Would you like to run the XRF noise detection & denoising module (EEMD-based)? (yes/no): ")
+  run_noise <- safe_readline("")
+
+  if (tolower(run_noise) == "yes") {
+
+    if (!exists("xrf_noise")) {
+      stop("The function 'xrf_noise()' is not available in the current environment.")
+    }
+
+    cat("\nLaunching XRF noise detection...\n\n")
+
+    noise_output <- xrf_noise(df)
+
+    df <- noise_output$df_clean
+
+    cat("\nXRF noise filtering completed.\n")
+    cat("The dataframe has been updated with denoised & filtered variables.\n\n")
+
+  } else {
+    cat("XRF noise detection skipped.\n\n")
+  }
+
   # --- Bloc création ratios log-transformés ---
   answer <- safe_readline("Would you like to create log-transformed ratios? (yes/no) : ")
   cat("\n")
@@ -97,6 +121,23 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
     cat("\n")
     cat("\n")
 
+    # for (ratio in selected_ratios) {
+    #   cat(paste0("\nCreation of the log ratio for ", ratio, "\n"))
+    #
+    #   numerator <- safe_readline(paste("Numerator of", ratio, ": "))
+    #   denominator <- safe_readline(paste("Denominator  of", ratio, ": "))
+    #
+    #   var_name <- paste0("log_", numerator, "_", denominator)
+    #
+    #   df[[var_name]] <- ifelse(
+    #     !is.na(df[[numerator]]) & !is.na(df[[denominator]]) & df[[denominator]] != 0,
+    #     log(df[[numerator]] / df[[denominator]]),
+    #     NA
+    #   )
+    #   cat("\n")
+    #   cat(paste0("Variable created: ", var_name, "\n"))
+    #   cat("\n")
+    # }
     for (ratio in selected_ratios) {
       cat(paste0("\nCreation of the log ratio for ", ratio, "\n"))
 
@@ -105,15 +146,31 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
 
       var_name <- paste0("log_", numerator, "_", denominator)
 
+      # --- Création dans df ---
       df[[var_name]] <- ifelse(
         !is.na(df[[numerator]]) & !is.na(df[[denominator]]) & df[[denominator]] != 0,
         log(df[[numerator]] / df[[denominator]]),
         NA
       )
+
+      # --- Création dans df_denoised_total si disponible ---
+      if (exists("df_denoised_total", inherits = TRUE)) {
+        df_denoised_total[[var_name]] <- ifelse(
+          !is.na(df_denoised_total[[numerator]]) &
+            !is.na(df_denoised_total[[denominator]]) &
+            df_denoised_total[[denominator]] != 0,
+          log(df_denoised_total[[numerator]] / df_denoised_total[[denominator]]),
+          NA
+        )
+      } else {
+        cat("⚠ df_denoised_total not found — ratio not added to denoised dataset.\n")
+      }
+
       cat("\n")
       cat(paste0("Variable created: ", var_name, "\n"))
       cat("\n")
     }
+
   } else {
     cat("No log-transformed ratios were created.\n")
   }
@@ -162,5 +219,17 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
   cat("\n")
   cat("\n")
 
-  return(df)
+  # --- Save globally & optional caching ---
+  assign("df_clean", df, envir=.GlobalEnv)
+  assign("df_denoised_total", df_denoised_total, envir=.GlobalEnv)
+
+  # if(exists("set_cache"))
+  #   {
+  #   set_cache("df_clean_cache", df_clean)
+  #   set_cache("df_denoised_total_cache", df_denoised_total)
+  # }
+
+    set_cache("df_clean_cache", df_clean)
+    set_cache("df_denoised_total_cache", df_denoised_total)
+
 }
