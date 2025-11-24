@@ -13,7 +13,7 @@ vignette: >
 
 # Overview
 
-`sedimentR` provides tools to **do X**, **solve Y**, and **streamline Z**.  
+`sedimentR` provides tools to **process**, **denoise** and **analyse** xrf datasets.  
 This vignette shows the core workflow, key functions, and practical examples.
 
 ---
