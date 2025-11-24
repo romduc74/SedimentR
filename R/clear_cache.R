@@ -18,7 +18,7 @@ clear_cache <- function() {
     return(invisible(TRUE))
   }
 
-  message("Caches to delete: ", paste(cache_items, collapse = ", "))
+  message("Files found in cache : ", paste(cache_items, collapse = ", "))
   cat("\n")
   confirm <- readline("Do you really want to clear them? (yes/no): ")
   cat("\n")
