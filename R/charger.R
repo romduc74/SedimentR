@@ -169,9 +169,18 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
           log(df_denoised_total[[numerator]] / df_denoised_total[[denominator]]),
           NA
         )
-      } else {
+      } else if (!exists("df_denoised_total")) {
         cat("df_denoised_total not found — ratio not added to denoised dataset.\n")
       }
+      else {
+        df[[var_name]] <- ifelse(
+        !is.na(df[[numerator]]) &
+          !is.na(df[[denominator]]) &
+          df[[denominator]] != 0,
+        log(df[[numerator]] / df[[denominator]]),
+        NA
+        )
+        }
 
       cat("\n")
       cat(paste0("Variable created: ", var_name, "\n"))
