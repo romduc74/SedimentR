@@ -249,46 +249,61 @@ xrf_clust  <- function(data = NULL) {
   #   }
   # }
 
-  if ("df_denoised_total_cache" %in% list_cache()) {
+  repeat {
 
-    df_denoised_total <- get_cache("df_denoised_total_cache")
-    df_denoised_total$Cluster <- clustering_result$cluster
-    set_cache("df_denoised_total_cache", df_denoised_total)
-    assign("Dataframe_Clustering", df_denoised_total, envir = .GlobalEnv)
-    cat("\nCluster column added to cached 'df_denoised_total'.\n\n")
-    break
+    # --- 1) Utiliser df_denoised_total_cache si disponible ---
+    if ("df_denoised_total_cache" %in% list_cache()) {
 
-  } else if ("df_clean_cache" %in% list_cache()) {
-
-    df_denoised_total <- get_cache("df_clean_cache")
-    df_denoised_total$Cluster <- clustering_result$cluster
-    set_cache("df_clean_cache", df_denoised_total)
-    assign("Dataframe_Clustering", df_denoised_total, envir = .GlobalEnv)
-    cat("\nCluster column added to cached 'df_clean_cache'.\n\n")
-    break
-
-  } else {
-
-    df_list <- ls(envir = .GlobalEnv)
-    df_list <- df_list[sapply(df_list, function(x) is.data.frame(get(x, envir = .GlobalEnv)))]
-
-    if (length(df_list) == 0) stop("No data frames found in the global environment.")
-
-    cat("\n=== Select the dataframe to which the 'Cluster' column will be added ===\n\n")
-    cat("Dataframes available:\n")
-    print(df_list)
-    cat("\n")
-
-    df_name <- safe_readline("Enter the name of the target dataframe: ")
-
-    if (df_name %in% df_list) {
-      df_denoised_total <- get(df_name, envir = .GlobalEnv)
+      df_denoised_total <- get_cache("df_denoised_total_cache")
       df_denoised_total$Cluster <- clustering_result$cluster
-      assign(df_name, df_denoised_total, envir = .GlobalEnv)
-      cat("\nCluster column added to", df_name, "\n\n")
+      set_cache("df_denoised_total_cache", df_denoised_total)
+      assign("Dataframe_Clustering", df_denoised_total, envir = .GlobalEnv)
+
+      cat("\nCluster column added to cached 'df_denoised_total'.\n\n")
       break
+
+    } else if ("df_clean_cache" %in% list_cache()) {
+
+      # --- 2) Sinon, utiliser df_clean_cache ---
+      df_denoised_total <- get_cache("df_clean_cache")
+      df_denoised_total$Cluster <- clustering_result$cluster
+      set_cache("df_clean_cache", df_denoised_total)
+      assign("Dataframe_Clustering", df_denoised_total, envir = .GlobalEnv)
+
+      cat("\nCluster column added to cached 'df_clean_cache'.\n\n")
+      break
+
     } else {
-      cat("Dataframe not found. Try again.\n\n")
+
+      # --- 3) Sinon, menu interactif ---
+      df_list <- ls(envir = .GlobalEnv)
+      df_list <- df_list[sapply(df_list, function(x) is.data.frame(get(x, envir = .GlobalEnv)))]
+
+      if (length(df_list) == 0) {
+        stop("No data frames found in the global environment.")
+      }
+
+      cat("\n=== Select the dataframe to which the 'Cluster' column will be added ===\n\n")
+      cat("Dataframes available:\n")
+      print(df_list)
+      cat("\n")
+
+      df_name <- safe_readline("Enter the name of the target dataframe: ")
+
+      if (df_name %in% df_list) {
+
+        df_denoised_total <- get(df_name, envir = .GlobalEnv)
+        df_denoised_total$Cluster <- clustering_result$cluster
+        assign(df_name, df_denoised_total, envir = .GlobalEnv)
+
+        cat("\nCluster column added to", df_name, "\n\n")
+        break
+
+      } else {
+
+        cat("Dataframe not found. Try again.\n\n")
+
+      }
     }
   }
 
@@ -421,11 +436,27 @@ xrf_clust  <- function(data = NULL) {
   cat("\n")
   if (show_acp %in% c("yes", "y")) {
 
+    # if ("df_denoised_total_cache" %in% list_cache()) {
+    #   df_cluster <- get_cache("df_denoised_total_cache")
+    # } else {
+    #   cat("The dataframe 'df_denoised_total_cache' was not found.\n")
+    # }
+
+    # Sélection du dataframe pour df_cluster
     if ("df_denoised_total_cache" %in% list_cache()) {
+
       df_cluster <- get_cache("df_denoised_total_cache")
+
+    } else if ("df_clean_cache" %in% list_cache()) {
+
+      df_cluster <- get_cache("df_clean_cache")
+      cat("The dataframe 'df_denoised_total_cache' was not found. Using 'df_clean_cache' instead.\n")
+
     } else {
-      cat("The dataframe 'df_denoised_total_cache' was not found.\n")
+
+      cat("Neither 'df_denoised_total_cache' nor 'df_clean_cache' were found.\n")
     }
+
 
     repeat {
       if ("df_normalized_cache" %in% list_cache()) {
@@ -554,45 +585,111 @@ xrf_clust  <- function(data = NULL) {
   show_geo <- tolower(safe_readline("Would you like to visualize geochemical profiles by cluster? (yes/no): "))
   cat("\n")
 
+  # if (show_geo %in% c("yes", "y", "oui", "o")) {
+  #
+  #   if (exists("visual.clust")) {
+  #     repeat {
+  #       # Vérifie cache
+  #       if ("df_denoised_total_cache" %in% list_cache()) {
+  #         df_denoised_total <- get_cache("df_denoised_total_cache")
+  #         message("Using cached 'df_denoised_total_cache' dataframe.")
+  #
+  #         if ("Cluster" %in% colnames(df_denoised_total)) {
+  #           visual.clust(df_denoised_total)
+  #           break  # <-- OK ici, car on est dans un repeat
+  #         } else {
+  #           cat("Cached dataframe found but no 'Cluster' column detected.\n")
+  #         }
+  #       } else {
+  #         cat("No cached dataframe found under 'df_denoised_total_cache'.\n")
+  #       }
+  #
+  #
+  #
+  #       # Demande à l'utilisateur
+  #       df_visu_name <- safe_readline("Enter the name of the dataframe containing 'Cluster': ")
+  #       if (exists(df_visu_name, envir = .GlobalEnv)) {
+  #         df_visu <- get(df_visu_name, envir = .GlobalEnv)
+  #         if ("Cluster" %in% colnames(df_visu)) {
+  #           visual.clust(df_visu)
+  #           break  # <-- OK ici
+  #         } else {
+  #           cat("The selected dataframe does not contain a 'Cluster' column.\n")
+  #         }
+  #       } else {
+  #         cat("Dataframe not found in global environment.\n")
+  #       }
+  #
+  #       cat("\nTry again.\n")
+  #     }
+  #   } else {
+  #     cat("Function 'visual.clust()' not found. Please load it before running this option.\n")
+  #   }
+  # }
+
   if (show_geo %in% c("yes", "y", "oui", "o")) {
 
     if (exists("visual.clust")) {
       repeat {
-        # Vérifie cache
+
+        # --- 1) Utiliser df_denoised_total_cache si présent ---
         if ("df_denoised_total_cache" %in% list_cache()) {
+
           df_denoised_total <- get_cache("df_denoised_total_cache")
           message("Using cached 'df_denoised_total_cache' dataframe.")
 
           if ("Cluster" %in% colnames(df_denoised_total)) {
             visual.clust(df_denoised_total)
-            break  # <-- OK ici, car on est dans un repeat
+            break
           } else {
             cat("Cached dataframe found but no 'Cluster' column detected.\n")
           }
-        } else {
-          cat("No cached dataframe found under 'df_denoised_total_cache'.\n")
-        }
 
-        # Demande à l'utilisateur
-        df_visu_name <- safe_readline("Enter the name of the dataframe containing 'Cluster': ")
-        if (exists(df_visu_name, envir = .GlobalEnv)) {
-          df_visu <- get(df_visu_name, envir = .GlobalEnv)
-          if ("Cluster" %in% colnames(df_visu)) {
-            visual.clust(df_visu)
-            break  # <-- OK ici
+          # --- 2) Sinon utiliser df_clean_cache si présent ---
+        } else if ("df_clean_cache" %in% list_cache()) {
+
+          df_denoised_total <- get_cache("df_clean_cache")
+          message("Using cached 'df_clean_cache' dataframe (df_denoised_total_cache not found).")
+
+          if ("Cluster" %in% colnames(df_denoised_total)) {
+            visual.clust(df_denoised_total)
+            break
           } else {
-            cat("The selected dataframe does not contain a 'Cluster' column.\n")
+            cat("'df_clean_cache' found but no 'Cluster' column detected.\n")
           }
+
+          # --- 3) Sinon rien trouvé, passer au choix utilisateur ---
         } else {
-          cat("Dataframe not found in global environment.\n")
+
+          cat("No cached dataframe found under 'df_denoised_total_cache' or 'df_clean_cache'.\n")
+
+          df_visu_name <- safe_readline("Enter the name of the dataframe containing 'Cluster': ")
+
+          if (exists(df_visu_name, envir = .GlobalEnv)) {
+
+            df_visu <- get(df_visu_name, envir = .GlobalEnv)
+
+            if ("Cluster" %in% colnames(df_visu)) {
+              visual.clust(df_visu)
+              break
+            } else {
+              cat("The selected dataframe does not contain a 'Cluster' column.\n")
+            }
+
+          } else {
+            cat("Dataframe not found in global environment.\n")
+          }
+
         }
 
         cat("\nTry again.\n")
       }
+
     } else {
       cat("Function 'visual.clust()' not found. Please load it before running this option.\n")
     }
   }
+
 
   # --- Cluster quality and stability ---
   cat("\n=== Cluster Quality and Stability Evaluation ===\n\n")
