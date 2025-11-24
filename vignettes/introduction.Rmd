@@ -13,14 +13,35 @@ vignette: >
 
 # Overview
 
-`sedimentR` provides tools to **process**, **denoise** and **analyse** xrf datasets.  
+The `sedimentR` package provides tools to **process**, **denoise** and **analyse** xrf datasets.  
 This vignette shows the core workflow, key functions, and practical examples.
 
 ---
 
 # Installation
 
-```r
+```{r}
 install.packages("sedimentR")
 # or development version:
 # remotes::install_github("yourname/sedimentR")
+```
+
+# Workflow
+
+The different functions of the package have been merged into one complete workflow function : 
+```{r}
+sedicore()
+```
+Otherwise the different function are independently available : 
+```{r}
+library(sedimentR)
+vignette("introduction", package = "sedimentR")
+
+charger("D:/abardell/Documents/Amaury/Uruguay/Catchments/Salto_Grande/XRF_edxrf/donnees_XRF_traitees_romain_ss_sol.csv", sep = ";",fileEncoding="utf8")
+
+scale_data()
+
+prop.select()
+
+xrf_clust()
+```
