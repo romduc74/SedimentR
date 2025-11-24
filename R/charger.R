@@ -11,9 +11,9 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
     if (tolower(input) == "exit") stop("User has interrupted execution via 'exit'.")
     return(input)
   }
+
   if (exists(".my_cache", envir = .GlobalEnv)) {
     clear_cache()
-    message("Previous cache detected and cleared")
   }
   # --- Read CSV or Excel ---
   if (extension == "csv") {

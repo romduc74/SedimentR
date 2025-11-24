@@ -46,7 +46,7 @@ get_cache <- function(name) {
 
 #' Clear all objects stored in the package cache
 #' @noRd
-clear_cache <- function() {
+clear_cache_hidden <- function() {
   rlang::env_unbind(.my_cache, rlang::env_names(.my_cache))
   invisible(TRUE)
 }
