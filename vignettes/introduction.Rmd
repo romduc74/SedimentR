@@ -1,0 +1,26 @@
+---
+title: "Introduction to sedimentR"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to sedimentR}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+<center>
+<img src="figures/logo.png" width="200">
+</center>
+
+# Overview
+
+`sedimentR` provides tools to **do X**, **solve Y**, and **streamline Z**.  
+This vignette shows the core workflow, key functions, and practical examples.
+
+---
+
+# Installation
+
+```r
+install.packages("sedimentR")
+# or development version:
+# remotes::install_github("yourname/sedimentR")

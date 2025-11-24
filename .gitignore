@@ -3,3 +3,6 @@
 .RData
 .Ruserdata
 R/.DS_Store
+inst/doc
+/doc/
+/Meta/
