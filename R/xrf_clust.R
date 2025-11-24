@@ -218,18 +218,60 @@ xrf_clust  <- function(data = NULL) {
   clustering_result <- kmeans(data, centers = optimal_clusters_max, nstart = 100)
 
   # --- Add cluster column ---
-  repeat {
-    if ("df_denoised_total_cache" %in% list_cache()) {
-      df_denoised_total <- get_cache("df_denoised_total_cache")
-      df_denoised_total$Cluster <- clustering_result$cluster
-      set_cache("df_denoised_total_cache", df_denoised_total)
-      assign("Dataframe_Clustering",df_denoised_total, envir = .GlobalEnv)
-      cat("\nCluster column added to cached 'df_denoised_total'.\n\n")
-      break
-    }
+  # repeat {
+  #   if ("df_denoised_total_cache" %in% list_cache()) {
+  #     df_denoised_total <- get_cache("df_denoised_total_cache")
+  #     df_denoised_total$Cluster <- clustering_result$cluster
+  #     set_cache("df_denoised_total_cache", df_denoised_total)
+  #     assign("Dataframe_Clustering",df_denoised_total, envir = .GlobalEnv)
+  #     cat("\nCluster column added to cached 'df_denoised_total'.\n\n")
+  #     break
+  #   }
+  #
+  #   df_list <- ls(envir = .GlobalEnv)
+  #   df_list <- df_list[sapply(df_list, function(x) is.data.frame(get(x, envir = .GlobalEnv)))]
+  #   if (length(df_list) == 0) stop("No data frames found in the global environment.")
+  #
+  #   cat("\n=== Select the dataframe to which the 'Cluster' column will be added ===\n\n")
+  #   cat("Dataframes available:\n")
+  #   print(df_list)
+  #   cat("\n")
+  #
+  #   df_name <- safe_readline("Enter the name of the target dataframe: ")
+  #   if (df_name %in% df_list) {
+  #     df_denoised_total <- get(df_name, envir = .GlobalEnv)
+  #     df_denoised_total$Cluster <- clustering_result$cluster
+  #     assign(df_name, df_denoised_total, envir = .GlobalEnv)
+  #     cat("\nCluster column added to", df_name, "\n\n")
+  #     break
+  #   } else {
+  #     cat("Dataframe not found. Try again.\n\n")
+  #   }
+  # }
+
+  if ("df_denoised_total_cache" %in% list_cache()) {
+
+    df_denoised_total <- get_cache("df_denoised_total_cache")
+    df_denoised_total$Cluster <- clustering_result$cluster
+    set_cache("df_denoised_total_cache", df_denoised_total)
+    assign("Dataframe_Clustering", df_denoised_total, envir = .GlobalEnv)
+    cat("\nCluster column added to cached 'df_denoised_total'.\n\n")
+    break
+
+  } else if ("df_clean_cache" %in% list_cache()) {
+
+    df_denoised_total <- get_cache("df_clean_cache")
+    df_denoised_total$Cluster <- clustering_result$cluster
+    set_cache("df_clean_cache", df_denoised_total)
+    assign("Dataframe_Clustering", df_denoised_total, envir = .GlobalEnv)
+    cat("\nCluster column added to cached 'df_clean_cache'.\n\n")
+    break
+
+  } else {
 
     df_list <- ls(envir = .GlobalEnv)
     df_list <- df_list[sapply(df_list, function(x) is.data.frame(get(x, envir = .GlobalEnv)))]
+
     if (length(df_list) == 0) stop("No data frames found in the global environment.")
 
     cat("\n=== Select the dataframe to which the 'Cluster' column will be added ===\n\n")
@@ -238,6 +280,7 @@ xrf_clust  <- function(data = NULL) {
     cat("\n")
 
     df_name <- safe_readline("Enter the name of the target dataframe: ")
+
     if (df_name %in% df_list) {
       df_denoised_total <- get(df_name, envir = .GlobalEnv)
       df_denoised_total$Cluster <- clustering_result$cluster
@@ -248,6 +291,7 @@ xrf_clust  <- function(data = NULL) {
       cat("Dataframe not found. Try again.\n\n")
     }
   }
+
 
   # --- Optional save dataframe ---
   save_choice <- tolower(safe_readline("Would you like to save this dataframe? (yes/no): "))
