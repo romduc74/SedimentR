@@ -17,10 +17,10 @@ clear_cache <- function() {
     message("Cache is already empty.")
     return(invisible(TRUE))
   }
-
+  cat("\n")
   message("Files found in cache : ", paste(cache_items, collapse = ", "))
   cat("\n")
-  confirm <- readline("Do you really want to clear them? (yes/no): ")
+  confirm <- readline("Do you want to clear them? (yes/no): ")
   cat("\n")
 
   if (tolower(confirm) %in% c("yes", "y")) {
