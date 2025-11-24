@@ -43,6 +43,7 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
   # --- Bloc débruitage XRF via xrf_noise() ---
   cat("\n")
   cat("Would you like to run the XRF noise detection & denoising module (EEMD-based)? (yes/no): ")
+  cat("\n")
   run_noise <- safe_readline("")
 
   if (tolower(run_noise) == "yes") {
@@ -50,7 +51,7 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
     if (!exists("xrf_noise")) {
       stop("The function 'xrf_noise()' is not available in the current environment.")
     }
-
+    cat("\n")
     cat("\nLaunching XRF noise detection...\n\n")
 
     noise_output <- xrf_noise(df)
@@ -62,6 +63,7 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
     cat("The dataframe has been updated with denoised & filtered variables.\n\n")
 
   } else {
+    cat("\n")
     cat("XRF noise detection skipped.\n\n")
   }
 
