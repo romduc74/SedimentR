@@ -436,11 +436,27 @@ xrf_clust  <- function(data = NULL) {
   cat("\n")
   if (show_acp %in% c("yes", "y")) {
 
+    # if ("df_denoised_total_cache" %in% list_cache()) {
+    #   df_cluster <- get_cache("df_denoised_total_cache")
+    # } else {
+    #   cat("The dataframe 'df_denoised_total_cache' was not found.\n")
+    # }
+
+    # Sélection du dataframe pour df_cluster
     if ("df_denoised_total_cache" %in% list_cache()) {
+
       df_cluster <- get_cache("df_denoised_total_cache")
+
+    } else if ("df_clean_cache" %in% list_cache()) {
+
+      df_cluster <- get_cache("df_clean_cache")
+      cat("The dataframe 'df_denoised_total_cache' was not found. Using 'df_clean_cache' instead.\n")
+
     } else {
-      cat("The dataframe 'df_denoised_total_cache' was not found.\n")
+
+      cat("Neither 'df_denoised_total_cache' nor 'df_clean_cache' were found.\n")
     }
+
 
     repeat {
       if ("df_normalized_cache" %in% list_cache()) {
