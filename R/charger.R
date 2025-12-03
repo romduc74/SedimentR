@@ -3,7 +3,7 @@
 #' @param path Full path to the CSV or Excel file.
 #' @param sheet (optional) Name or index of the Excel sheet. If not specified, the first sheet is used.
 #' @export
-charger <- function(path, sheet = NULL, sep, fileEncoding) {
+charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
   extension <- tools::file_ext(path)
 
   safe_readline <- function(prompt_msg) {
