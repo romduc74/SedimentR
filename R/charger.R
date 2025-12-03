@@ -16,13 +16,70 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
     clear_cache()
   }
   # --- Read CSV or Excel ---
+  # if (extension == "csv") {
+  #   df <- tryCatch({
+  #     read.csv(path, sep = sep, fileEncoding = fileEncoding, stringsAsFactors = FALSE, check.names = FALSE)
+  #   }, error = function(e) {
+  #     read.csv(path, sep = sep, fileEncoding = fileEncoding, stringsAsFactors = FALSE, check.names = FALSE)
+  #   })
+  #
+  #   df[] <- lapply(df, function(col) {
+  #     if (is.character(col)) {
+  #       col <- gsub(",", ".", col, fixed = TRUE)
+  #       suppressWarnings(as.numeric(col))
+  #     } else col
+  #   })
+  #
+  # } else if (extension == "xlsx") {
+  #   if (!requireNamespace("readxl", quietly = TRUE)) stop("Package 'readxl' required for Excel files.")
+  #   if (is.null(sheet)) sheet <- readxl::excel_sheets(path)[1]
+  #   df <- readxl::read_excel(path, sheet = sheet)
+  #   df <- as.data.frame(df)
+  # } else stop("Unsupported file format. Use .csv or .xlsx.")
+  # cat("\n")
+  # cat("\nData loaded successfully.\n")
+  # cat("\n")
+
+  #--- Interactive part:
+
+  # --- Select file interactively if not provided ---
+  if (is.null(path)) {
+    if (!rstudioapi::isAvailable()) stop("RStudio API not available for interactive selection.")
+    cat("\nSelect your data file (CSV or XLSX)...\n")
+    path <- rstudioapi::selectFile(
+      caption = "Select your data file",
+      label = "Open",
+      path = getwd(),
+      filter = list(
+        "Data files" = c("csv","xlsx"),
+        "CSV files" = "csv",
+        "Excel files" = "xlsx"
+      ),
+      existing = TRUE
+    )
+    if (!nzchar(path)) {
+      cat("\nFile selection cancelled.\n")
+      return(invisible(NULL))
+    }
+  }
+
+  cat("\nSelected file:", basename(path), "\n")
+  extension <- tolower(tools::file_ext(path))
+
+  # --- Read CSV ---
   if (extension == "csv") {
+    sep <- safe_readline("Enter separator used in CSV (default ','): ")
+    if (sep == "") sep <- ","
+    fileEncoding <- safe_readline("Enter file encoding (default 'UTF-8'): ")
+    if (fileEncoding == "") fileEncoding <- "UTF-8"
+
     df <- tryCatch({
       read.csv(path, sep = sep, fileEncoding = fileEncoding, stringsAsFactors = FALSE, check.names = FALSE)
     }, error = function(e) {
-      read.csv(path, sep = sep, fileEncoding = fileEncoding, stringsAsFactors = FALSE, check.names = FALSE)
+      stop("Failed to read CSV file: ", e$message)
     })
 
+    # Convert numeric columns (comma → dot)
     df[] <- lapply(df, function(col) {
       if (is.character(col)) {
         col <- gsub(",", ".", col, fixed = TRUE)
@@ -30,15 +87,37 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
       } else col
     })
 
+    # --- Read Excel ---
   } else if (extension == "xlsx") {
-    if (!requireNamespace("readxl", quietly = TRUE)) stop("Package 'readxl' required for Excel files.")
-    if (is.null(sheet)) sheet <- readxl::excel_sheets(path)[1]
-    df <- readxl::read_excel(path, sheet = sheet)
+    if (is.null(sheet)) {
+      sheets <- excel_sheets(path)
+      cat("\nAvailable sheets:\n")
+      cat("\n")
+      print(sheets)
+      cat("\n")
+      repeat {
+        sheet_choice <- safe_readline("Enter sheet name or index to load: ")
+        if (sheet_choice %in% sheets) {
+          sheet <- sheet_choice
+          break
+        } else if (suppressWarnings(!is.na(as.numeric(sheet_choice))) && as.numeric(sheet_choice) %in% seq_along(sheets)) {
+          sheet <- as.numeric(sheet_choice)
+          break
+        } else {
+          cat("Invalid sheet. Try again.\n")
+        }
+      }
+    }
+
+    df <- read_excel(path, sheet = sheet)
     df <- as.data.frame(df)
+
   } else stop("Unsupported file format. Use .csv or .xlsx.")
+
   cat("\n")
   cat("\nData loaded successfully.\n")
   cat("\n")
+
 
   # --- Bloc débruitage XRF via xrf_noise() ---
   cat("\n")
