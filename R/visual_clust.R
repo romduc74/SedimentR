@@ -196,6 +196,77 @@ visual.clust <- function(data) {
     cat("\nVirtual Core skipped.\n")
   }
 
+  ## ============================================================
+  ## Photo de carotte (optionnelle)
+  ## ============================================================
+  cat("\n\n==============================\n")
+  cat("  PHOTO DE CAROTTE (OPTIONNELLE)\n")
+  cat("==============================\n\n")
+
+  add_photo <- tolower(safe_readline("Would you like to add a core image? (yes/no): ", default = "no"))
+
+  if (add_photo %in% c("yes", "y")) {
+
+    photo_file <- rstudioapi::selectFile(
+      caption = "Sélectionner une photo de carotte",
+      label = "Ouvrir",
+      path = getwd(),
+      filter = list("Images" = c("jpg","jpeg","png","tif","tiff")),
+      existing = TRUE
+    )
+
+    if (!nzchar(photo_file)) {
+      cat("\nNo image selected.\nCore photo skipped.\n")
+    } else {
+
+      file_ext <- tolower(tools::file_ext(photo_file))
+      temp_png <- tempfile(fileext = ".png")
+
+      if (file_ext %in% c("jpg", "jpeg")) {
+        img <- readJPEG(photo_file)
+        writePNG(img, target = temp_png)
+      } else if (file_ext %in% c("tif", "tiff")) {
+        img <- readTIFF(photo_file)
+        writePNG(img, target = temp_png)
+      } else if (file_ext == "png") {
+        temp_png <- photo_file
+        img <- readPNG(temp_png)
+      } else {
+        stop("Format non supporté.")
+      }
+
+      photo_plot <- ggdraw() +
+        draw_image(img, scale = 0.91) +
+        ggtitle("Sediment Core") +
+        theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+    }
+
+  } else {
+    cat("\nCore photo skipped.\n")
+  }
+
+  ## ============================================================
+  ## Combinaison finale
+  ## ============================================================
+  plots_to_combine <- list()
+  if (exists("photo_plot")) plots_to_combine <- c(plots_to_combine, list(photo_plot))
+  if (exists("main_plot")) plots_to_combine <- c(plots_to_combine, list(main_plot))
+  if (exists("core_plot")) plots_to_combine <- c(plots_to_combine, list(core_plot))
+
+
+  if (length(plots_to_combine) == 1) {
+    combined_plot <- plots_to_combine[[1]]
+  } else if (length(plots_to_combine) > 1) {
+    widths <- c()
+    if (exists("photo_plot")) widths <- c(widths, 0.7)
+    if (exists("main_plot")) widths <- c(widths, 4)
+    if (exists("core_plot")) widths <- c(widths, 0.25)
+    combined_plot <- patchwork::wrap_plots(plots_to_combine, nrow = 1) + patchwork::plot_layout(widths = widths)
+  }
+
+  print(combined_plot)
+  combined_plot <<- combined_plot
+
   ## PDF Export
   cat("\n\n==============================\n")
   cat("  EXPORT GRAPH TO PDF\n")
