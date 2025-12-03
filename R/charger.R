@@ -40,7 +40,8 @@ charger <- function(path, sheet = NULL, sep, fileEncoding) {
   # cat("\nData loaded successfully.\n")
   # cat("\n")
 
-  #--- Interactive part:
+  #--- Interactive part: Avec ou sans chemin
+
 
   # --- Select file interactively if not provided ---
   if (is.null(path)) {
