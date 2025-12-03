@@ -4,6 +4,14 @@
 #' @param sheet (optional) Name or index of the Excel sheet. If not specified, the first sheet is used.
 #' @export
 charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
+
+  # --- Required packages ---
+  if (!requireNamespace("rstudioapi", quietly = TRUE)) install.packages("rstudioapi")
+  library(rstudioapi)
+  if (!requireNamespace("readxl", quietly = TRUE)) install.packages("readxl")
+  library(readxl)
+
+
   extension <- tools::file_ext(path)
 
   safe_readline <- function(prompt_msg) {
