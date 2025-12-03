@@ -17,7 +17,7 @@ knitr::opts_chunk$set(
 ```
 
 <center>
-<img src="figures/logo.png" width="200">
+<img src="figures/logo_V3.png" width="200">
 </center>
 
 # Overview
