@@ -223,11 +223,13 @@ visual.clust <- function(data) {
       temp_png <- tempfile(fileext = ".png")
 
       if (file_ext %in% c("jpg", "jpeg")) {
-        img <- readJPEG(photo_file)
-        writePNG(img, target = temp_png)
+        tmp_img <- readJPEG(photo_file)     # lire JPG
+        writePNG(tmp_img, target = temp_png) # convertir en PNG temporaire
+        img <- readPNG(temp_png)            # lire le PNG pour draw_image
       } else if (file_ext %in% c("tif", "tiff")) {
-        img <- readTIFF(photo_file)
-        writePNG(img, target = temp_png)
+        tmp_img <- readTIFF(photo_file)
+        writePNG(tmp_img, target = temp_png)
+        img <- readPNG(temp_png)
       } else if (file_ext == "png") {
         temp_png <- photo_file
         img <- readPNG(temp_png)
