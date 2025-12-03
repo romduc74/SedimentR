@@ -8,7 +8,7 @@
 #' @return Un graphique ggplot2 avec les profils géochimiques colorés par cluster
 #' @export
 visual.clust <- function(data) {
-  packages <- c("ggplot2", "tidypaleo", "dplyr", "tidyr", "tibble", "scales", "patchwork")
+  packages <- c("ggplot2", "tidypaleo", "dplyr", "tidyr", "tibble", "scales", "patchwork", "grid", "png", "jpeg", "tiff","cowplot")
   for (pkg in packages) {
     if (!requireNamespace(pkg, quietly = TRUE)) install.packages(pkg)
     library(pkg, character.only = TRUE)
