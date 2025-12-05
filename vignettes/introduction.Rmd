@@ -397,3 +397,4 @@ Average stability over all clusters:
 Finally, one of the key strengths of the SedimentR package and notably the `xrf_clust()` function is the ability to visually compare a virtual core constructed from clustering
 results with the actual sediment core photograph. This comparison is complemented by the display of elemental variations along the core depth. The integrative approach of `sedimentR` enhances the interpretability of sediment core analyses and provides a clear, comprehensive view of geochemical and sedimentological variability.
 
+---
