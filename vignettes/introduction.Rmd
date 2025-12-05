@@ -16,16 +16,36 @@ knitr::opts_chunk$set(
 )
 ```
 
+<<<<<<< HEAD
 <center>
 <img src="figures/logo_V3.png" width="200">
 </center>
+=======
+<div style="display:flex; justify-content:center; gap:20px;">
+  <img src="figures/Sed.png" width="400" style="border:0;">
+</div>
+
+---
+>>>>>>> f258ad1 (Update)
 
 # Overview
 
 The `sedimentR` package provides tools to **process**, **denoise** and **analyse** xrf datasets.  
 This vignette shows the core workflow, key functions, and practical examples.
 
----
+`sedimentR` provides tools for:
+
+- Importing XRF or geochemical datasets
+
+- Scaling and transforming geochemical variables
+
+- Exploring proxy ratios
+
+- Performing clustering analyses
+
+- Visualizing sediment cores with aligned depth scales
+
+- Integrating sediment core photographs
 
 # Installation
 
@@ -35,24 +55,348 @@ install.packages("sedimentR")
 # remotes::install_github("yourname/sedimentR")
 ```
 
-# Workflow
+# Workflow 
 
-The different functions of the package have been merged into one complete workflow function : 
+## Automated workflow
+
 ```{r}
+
 sedicore()
+
 ```
-Otherwise the different function are independently available : 
+
+The automated workflow reproduces these steps in a fully guided, interactive manner, ensuring consistent processing of sediment-core XRF datasets from raw import to facies interpretation.
+
+
+1)- **Load the dataset and create geochemical ratios**
+
+(with an optional XRF denoising module)
+
+2)- **Scale the variables**
+
+(CLR transformation and log-transform for ratios)
+
+2)-**Select the most informative variables**
+
+using PCA and loading-threshold filtering
+
+3)- **Run clustering**
+
+through a complete K-means–based facies identification procedure
+
+4)- **Plot the core**
+
+generating the depth-aligned geochemical facies plot, the virtual core,
+and (optionally) the sediment core photograph
+
+### `sedimentR`:
+
+
+`sedicore()` runs the full automated workflow provided by the `sedimentR` package, offering a complete geochemical processing pipeline for sediment cores. The function guides the user through all analytical stages, from raw data import to the final clustering and interpretation of geochemical facies.
+
+The workflow begins with an interactive data-loading step using the `charger()` function. Depending on the file format (CSV or Excel), the user can specify the separator, encoding, or select the appropriate Excel sheet. If no file path is supplied, a file-selection dialog is opened to allow the user to choose the dataset.
+
+An optional second stage applies XRF noise-reduction methods (EEMD decomposition and IMF extraction), producing cleaned and denoised geochemical signals.
+
+The next step involves transforming the dataset through centered log-ratio (CLR) scaling and the creation of log-transformed elemental ratios, handled by `scale_data()`.
+
+Variable selection is then performed using principal component analysis (PCA). Only variables with loadings above a user-defined threshold are retained, ensuring that the selection focuses on geochemically meaningful contributors via the `prop.select` function.
+
+Finally, sedicore() executes the full clustering module implemented in `xrf_clust()`, including K-means clustering, proxy contribution analysis, identification of cluster-driving variables, and optional visualizations (e.g. PCA, Clustering, Virtual Core or Sediment core picture).
+
+The entire process is fully guided: each step prints informative progress messages, invites user interaction when needed, and stores intermediate outputs in the global environment for further visualization or analysis.
+
+## Step-by-step workflow:
+
 ```{r}
+
 library(sedimentR)
+
 vignette("introduction", package = "sedimentR")
 
-charger("path_to_data.xlsx") 
-or 
-charger("path_to_data.csv", sep = ",",fileEncoding="utf8")
+charger()
 
 scale_data()
 
 prop.select()
 
 xrf_clust()
+
 ```
+
+### `charger()`:
+
+The `charger()` function allows you to import geochemical data from CSV or Excel files,create log-transformed ratios, and optionally clean missing values.  
+
+It can be used in both **interactive** and **non-interactive** modes.
+
+
+```{r load-data, echo=TRUE, message=FALSE}
+# --- 1. Non-interactive mode: CSV file ---
+
+# Load a CSV file directly, specify separator and encoding
+
+df_csv <- charger(
+  path = "data/my_data.csv",
+  sep = ",",
+  fileEncoding = "UTF-8"
+)
+
+# --- 2. Non-interactive mode: Excel file ---
+
+# Load an Excel file, specify sheet
+
+df_excel <- charger(
+  path = "data/my_data.xlsx",
+  sheet = "Sheet1"
+)
+
+# --- 3. Interactive mode ---
+
+# If no path is provided, a file selection dialog will open
+# You will then be prompted for CSV separator or Excel sheet
+
+df_interactive <- charger()
+```
+
+##### 1. Integration of `xrf_noise` within `charger()` function:
+
+After loading your data with `charger()`, you have the option to perform noise reduction on the XRF data immediately after loading. This is done by calling the  **XRF noise detection & denoising module**. The module computes a noise score for each variable, removes the first high-frequency IMFs considered as noise, and produces a cleaned and denoised dataset. This step is fully interactive, allowing you to set thresholds and review which variables are retained.
+
+#### Ratios creation:
+
+The `charger()`function also allows the user to create geochemical ratios during the data-import step.
+This operation is entirely optional and can be skipped at any time. When enabled, the user is free to define any combination of elemental ratios, depending on the analytical objectives or the sedimentological processes they wish to highlight.
+
+Ratio creation is not restricted to predefined pairs, the user may specify as many ratios as needed, using any elements present in the dataset. This flexibility ensures full control over the geochemical transformations applied to the data and allows the workflow to adapt to a wide range of research contexts, from detrital proxies to redox indicators or biogenic markers.
+
+### `scale_data()`:
+
+Once the data are loaded, the next analytical steps involve transforming the variables. Individual elemental variables are processed using a Centered Log-Ratio (CLR) transformation, which is commonly applied to compositional geochemical datasets. In contrast, user-defined elemental ratios are log-transformed, ensuring consistent normalization and allowing them to be directly comparable within the workflow.
+
+If you have previously run charger() (and optionally created ratios), `scale_data()` will automatically:
+
+1)- detect which columns correspond to single elements
+
+2)- detect which columns correspond to ratios (e.g., log_Fe_Ti, log_Ca_K)
+
+3)- apply the appropriate transformation
+
+4)- return a clean, transformed dataset ready for PCA
+
+
+This transformed dataset is typically the one you will use for PCA (`prop.select()`) and clustering (`xrf_clust()`).
+
+```{r scale, echo=TRUE, message=FALSE}
+# --- 1. How should the function be used? ---
+
+scale_data()
+
+```
+
+##### 1. CLR equation used in `scale_data()`:
+
+$$
+y_{ij} = \log\left(\frac{x_{ij}}{g_i}\right),
+\qquad
+g_i = \left( \prod_{j=1}^{q} x_{ij} \right)^{1/q}
+$$
+
+- \(x_{ij}\) : raw value of element \(j\) at depth \(i\)  
+- \(q\) : number of elements used in the CLR transformation at depth \(i\)  
+- \(g_i\) : geometric mean of all elements measured at depth \(i\)  
+- \(y_{ij}\) : CLR-transformed value for element \(j\) at depth \(i\)
+`
+
+### `prop.select()`: Selection of variables 
+
+```{r select, echo=TRUE, message=FALSE}
+# --- 1. How should the function be used? ---
+
+prop.select()
+
+```
+
+---
+
+##### 1. Cumulative variance method:
+
+The `prop.select()` function performs a Principal Component Analysis (PCA) on a dataset of normalized variables to identify the most informative elements. By examining the contribution of each variable to the selected principal components, the function highlights those that best capture the structure and variance of the data. Users can choose the number of components to retain using cumulative variance, broken-stick, or manual selection methods and can define a percentile threshold to automatically select the most significant variables. Overall, `prop.select()` provides an interactive workflow to reduce dimensionality and extract key variables for subsequent analyses, such as clustering or pattern identification.
+
+
+
+- The proportion of variance for each component ( \(j\) ):
+
+\begin{equation}
+\lambda_j = \frac{\sigma_j^2}{\sum_{i=1}^{p} \sigma_i^2}
+\end{equation}
+
+where ( $\sigma_j^2$ ) is the eigenvalue and ( \(p\) ) the total number of components.
+
+- Cumulative variance up to component ( \(k\) ):
+
+\begin{equation}
+V_k = \sum_{j=1}^{k} \lambda_j
+\end{equation}
+
+- Component selection criterion:
+
+\begin{equation}
+V_k \geq \theta
+\end{equation}
+
+where ( $\theta$ ) is the chosen threshold (e.g., $\theta$ = 0.9 ).
+
+
+##### 2.The broken method: 
+
+The broken-stick model provides theoretical eigenvalues based on an equal partitioning of the total variance among all principal components. These values are then compared to the observed eigenvalues from Principal Component Analysis (PCA). Components are retained only when their observed variance exceeds the corresponding broken-stick expectation.
+
+\begin{equation}
+b_j = \frac{1}{p} \sum_{k=j}^{p} \frac{1}{k}
+\end{equation}
+
+where \(p\) is the total number of principal components and  \(k\) the summation index. The \(j\) principal component is considered as significative if \( \lambda_j \), the variance proportion, satisfies the following condition :  
+
+\begin{equation}
+\lambda_j > b_j
+\end{equation}
+
+That is, the explained variance of component \(j\) must be greater than the variance expected under the broken-stick model.
+
+##### 3.  Loadings threshold:
+
+The number of principal components to be retained is then determined., the next step is to evaluate the contribution of each variable to these components through their loadings, allowing the identification of the most influential variables. $L_{ij}$ is defined as the loading of the $i$ variable on the $j$ principal component in the PCA. For each components $j$, the most influential properties (in absolute values) are identified. 
+
+To this end, the following method is applied : The absolute weight of the loadings on each $j$ components is calculated :
+
+\begin{equation}
+w_{ij} = |L_{ij}|
+\end{equation}
+
+The $S_j$ threshold is determined based on the percentile of the weights.
+
+\begin{equation}
+  \mathrm{S_j} = Quantile_{p}(w_{1j}, w_{2j}, \dots, w_{nj})
+\end{equation}
+
+ where $p$ is the chosen percentile. For example, for the 90\textsuperscript{e} percentile of the weights, $p = 0.90$
+
+Finally, the $i$ variables are selected such as :
+
+\begin{equation}
+  w_{ij} \geq S_j
+\end{equation}
+
+Thus, only variables whose contribution exceeds the chosen percentile threshold for each component are retained.
+
+### `xrf_clust`: Clustering on variables selected
+
+
+```{r cluster, echo=TRUE, message=FALSE}
+# --- 1. How should the function be used? ---
+
+xrf_clust()
+
+```
+
+The `xrf_clust()` function performs clustering analysis on a dataset of selected variables. It helps to determine the optimal number of clusters, to classify observations in the clusters, analyze cluster drivers, and provide multiple visualization options. The main enhancement of this approach is the coupling of variable selection from PCA analysis with the estimation of the optimal number of clusters. The best cluster number is determined using a comprehensive set of validity indices available in the \texttt{NbClust} package (Charrad et al., 2014), providing a robust, data-driven method for clustering via the k-means method. 
+
+The user may also manually choose the number of clusters, for example based on the number of sedimentary facies visually identified in the core. Both approaches—automatic and manual clustering—are fully supported. However, to assess the robustness of the clustering solution, several validation metrics can be computed. Comparing the automatic and manually selected number of clusters helps determine which configuration yields the most reliable and interpretable results.
+
+
+To assess the robustness of the clusters, **three complementary indices** are calculated: Silhouette, Davies–Bouldin, and Bootstrap Stability.
+
+---
+
+##### 1. Silhouette Index
+
+The silhouette measures cohesion and separation of clusters. For each point \(i\):
+
+\[
+s(i) = \frac{b(i) - a(i)}{\max(a(i), b(i))}
+\]
+
+where:  
+- \(a(i)\) = average distance between point \(i\) and all other points in **the same cluster**  
+- \(b(i)\) = minimum average distance between point \(i\) and points in **other clusters**  
+
+The **mean silhouette** over all points gives an overall assessment:
+
+\[
+\bar{s} = \frac{1}{n} \sum_{i=1}^{n} s(i)
+\]
+
+**Interpretation**:  
+- Values near 1 → well-separated clusters  
+- Values around 0 → overlapping clusters  
+- Negative values → possible misclassification
+
+---
+
+##### 2. Davies–Bouldin Index
+
+Measures cluster similarity. For each cluster pair \(i, j\):
+
+\[
+R_{ij} = \frac{S_i + S_j}{M_{ij}}
+\]
+
+where:  
+- \(S_i = \frac{1}{|C_i|} \sum_{x \in C_i} \| x - \mu_i \|\) = intra-cluster dispersion  
+- \(M_{ij} = \| \mu_i - \mu_j \|\) = distance between cluster centers  
+
+For cluster \(i\), take the worst-case ratio:
+
+\[
+R_i = \max_{j \neq i} R_{ij}
+\]
+
+The Davies–Bouldin index is the mean over all clusters:
+
+\[
+DBI = \frac{1}{k} \sum_{i=1}^{k} R_i
+\]
+
+- \(k\) = number of clusters
+
+**Interpretation**:  
+- Lower values are better  
+- DBI < 0.5 → well-separated clusters  
+- DBI > 1 → overlapping clusters
+
+---
+
+##### 3. Bootstrap Stability
+
+Assesses how reproducible clusters are under resampling. For cluster \(C_i\):
+
+\[
+\text{Stability}_i = \frac{1}{B} \sum_{b=1}^{B} \text{Jaccard}(C_i, C_i^{(b)})
+\]
+
+where:  
+- \(B\) = number of bootstrap resamples  
+- \(C_i^{(b)}\) = cluster obtained on the \(b^{th}\) bootstrap sample  
+- \(\text{Jaccard}(C_i, C_i^{(b)}) = \frac{|C_i \cap C_i^{(b)}|}{|C_i \cup C_i^{(b)}|}\)  
+
+Average stability over all clusters:
+
+\[
+\bar{\text{Stability}} = \frac{1}{k} \sum_{i=1}^{k} \text{Stability}_i
+\]
+
+- \(k\) = number of clusters
+
+**Interpretation**:  
+- High (>0.8) → stable clusters  
+- Low (<0.4) → unstable clusters, possibly artefacts
+
+---
+
+##### Visualization
+
+
+Finally, one of the key strengths of the SedimentR package and notably the `xrf_clust()` function is the ability to visually compare a virtual core constructed from clustering
+results with the actual sediment core photograph. This comparison is complemented by the display of elemental variations along the core depth. The integrative approach of `sedimentR` enhances the interpretability of sediment core analyses and provides a clear, comprehensive view of geochemical and sedimentological variability.
+
