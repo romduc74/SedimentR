@@ -16,17 +16,14 @@ knitr::opts_chunk$set(
 )
 ```
 
-<<<<<<< HEAD
-<center>
-<img src="figures/logo_V3.png" width="200">
-</center>
-=======
+
+
 <div style="display:flex; justify-content:center; gap:20px;">
   <img src="figures/Sed.png" width="400" style="border:0;">
 </div>
 
 ---
->>>>>>> f258ad1 (Update)
+
 
 # Overview
 
