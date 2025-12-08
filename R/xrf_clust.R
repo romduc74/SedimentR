@@ -11,7 +11,7 @@
 xrf_clust  <- function(data = NULL) {
 
   # === Required packages ===
-  required_packages <- c("NbClust", "ggplot2", "writexl", "rstudioapi", "factoextra","clusterCrit","fpc")
+  required_packages <- c("NbClust", "ggplot2", "writexl", "rstudioapi", "factoextra","clusterCrit","fpc","ggdendro","dendextend")
 
   for (pkg in required_packages) {
     if (!requireNamespace(pkg, quietly = TRUE)) install.packages(pkg)
@@ -74,60 +74,11 @@ xrf_clust  <- function(data = NULL) {
   if (!is.data.frame(data) && !is.matrix(data)) stop("The input must be a dataframe or matrix.")
   if (!all(sapply(data, is.numeric))) stop("All columns must be numeric.")
 
-  # # --- Determine number of clusters ---
-  # if (nrow(data) < 20) {
-  #   cat("\n")
-  #   cat("Automatic detection of the optimal number of clusters via NbClust is not reliable for such small datasets.\n\n")
-  #
-  #   cat("In small datasets, statistical criteria may fail to give meaningful results, because:\n\n")
-  #   cat("- There are too few observations to form well-defined clusters.\n")
-  #   cat("- Indices or gap statistic can be highly unstable.\n")
-  #   cat("- Random variability may dominate over actual structure in the data.\n\n")
-  #
-  #   cat("Please use your expert judgment to choose the number of clusters. Consider:\n\n")
-  #   cat("- Domain knowledge about the variables and expected groups.\n")
-  #   cat("- Visual inspection (e.g., PCA projections).\n\n")
-  #
-  #   repeat {
-  #     n_clusters <- as.integer(safe_readline("Enter desired number of clusters (integer ≥ 2): "))
-  #     if (!is.na(n_clusters) && n_clusters >= 2) break
-  #     cat("Invalid input. Please enter an integer ≥ 2.\n")
-  #   }
-  #
-  #   optimal_clusters_max <- n_clusters
-  # } else {
-  #   # Dataset large enough → use NbClust
-  #   repeat {
-  #     max_clusters <- as.integer(safe_readline("Enter max number of clusters to test (min 2, e.g. 10): "))
-  #     if (!is.na(max_clusters) && max_clusters >= 2) break
-  #     cat("Invalid number. Please enter integer ≥ 2.\n\n")
-  #   }
-  #   cat("\n====== Determining Optimal Clusters via NbClust ======\n\n")
-  #   nb <- NbClust(data, distance = "euclidean", min.nc = 2, max.nc = max_clusters, method = "kmeans")
-  #
-  #   results <- nb$Best.nc[1, ]
-  #   freq_table <- sort(table(results), decreasing = TRUE)
-  #   clusters_with_max_freq <- as.numeric(names(freq_table[freq_table == max(freq_table)]))
-  #
-  #   if (length(clusters_with_max_freq) == 1) {
-  #     optimal_clusters_max <- clusters_with_max_freq
-  #   } else {
-  #     repeat {
-  #       cat("Multiple optimal cluster numbers detected:", paste(clusters_with_max_freq, collapse = ", "), "\n")
-  #       user_input <- as.integer(safe_readline("Choose one of these cluster numbers: "))
-  #       if (user_input %in% clusters_with_max_freq) {
-  #         optimal_clusters_max <- user_input
-  #         break
-  #       }
-  #       cat("Invalid choice. Try again.\n\n")
-  #     }
-  #   }
-  # }
-  #
-  # cat("\nNumber of clusters selected:", optimal_clusters_max, "\n\n")
+
+
+  # ===========
 
   # --- Determine number of clusters (manual or automatic) ---
-
   cat("\nCluster selection mode:\n")
   cat("\n")
   cat("(1): Automatic detection of optimal number clusters (NbClust)\n")
@@ -140,55 +91,154 @@ xrf_clust  <- function(data = NULL) {
     cat("Invalid choice. Please enter 1 or 2.\n")
   }
 
-  if (choice == "2") {
+  # --- MANUAL mode ---
+  if (choice == "2" || nrow(data) < 20) {
 
-    # --- MANUAL mode, independent of dataset size ---
-    cat("\n=== Manual cluster selection ===\n\n")
+    if (choice == "2") {
+      cat("\n=== Manual cluster selection ===\n\n")
+    } else {
+      cat("\nDataset too small for reliable NbClust results.\n\n")
+      cat("Automatic detection of the optimal number of clusters via NbClust is not reliable for such small datasets.\n\n")
+      cat("In small datasets, statistical criteria may fail to give meaningful results, because:\n\n")
+      cat("- There are too few observations to form well-defined clusters.\n")
+      cat("- Indices or gap statistic can be highly unstable.\n")
+      cat("- Random variability may dominate over actual structure in the data.\n\n")
+      cat("Please use your expert judgment to choose the number of clusters. Consider:\n\n")
+      cat("- Domain knowledge about the variables and expected groups.\n")
+      cat("- Visual inspection (e.g., PCA projections).\n\n")
+    }
 
     repeat {
       n_clusters <- as.integer(safe_readline("Enter desired number of clusters (integer ≥ 2): "))
       if (!is.na(n_clusters) && n_clusters >= 2) break
       cat("Invalid input. Please enter an integer ≥ 2.\n")
     }
-
     optimal_clusters_max <- n_clusters
 
-  } else {
-
-    # --- AUTOMATIC mode (NbClust) ---
-    if (nrow(data) < 20) {
-
-      cat("\nDataset too small for reliable NbClust results.\n")
+    # --- Choose clustering method ---
+    cat("\n--- Clustering method ---\n\n")
+    repeat {
+      cat("Available clustering methods:\n")
       cat("\n")
-      cat("Automatic detection of the optimal number of clusters via NbClust is not reliable for such small datasets.\n\n")
+      cat("(1): K-means \n")
+      cat("\n")
+      cat("(2): Hierarchical clustering \n\n")
 
-      cat("In small datasets, statistical criteria may fail to give meaningful results, because:\n\n")
-      cat("- There are too few observations to form well-defined clusters.\n")
-      cat("- Indices or gap statistic can be highly unstable.\n")
-      cat("- Random variability may dominate over actual structure in the data.\n\n")
+      method_choice <- as.integer(safe_readline("Choose a method (1 or 2): "))
+      if (method_choice %in% c(1,2)) break
+      cat("Invalid choice. Please enter 1 or 2.\n\n")
+    }
 
-      cat("Please use your expert judgment to choose the number of clusters. Consider:\n\n")
-      cat("- Domain knowledge about the variables and expected groups.\n")
-      cat("- Visual inspection (e.g., PCA projections).\n\n")
-
-      repeat {
-        n_clusters <- as.integer(safe_readline("Enter desired number of clusters (integer ≥ 2): "))
-        if (!is.na(n_clusters) && n_clusters >= 2) break
-        cat("Invalid input. Please enter an integer ≥ 2.\n")
-      }
-      optimal_clusters_max <- n_clusters
-
+    if (method_choice == 1) {
+      set.seed(123)
+      clustering_result <- kmeans(data, centers=optimal_clusters_max, nstart=100)
     } else {
+
+      # --- Hierarchical ---
+      available_distances <- c("euclidean","maximum","manhattan","canberra","binary","minkowski")
       repeat {
-        cat("\n")
-        max_clusters <- as.integer(safe_readline("Enter max number of clusters to test (min 2, e.g. 10): "))
-        if (!is.na(max_clusters) && max_clusters >= 2) break
-        cat("Invalid number. Please enter integer ≥ 2.\n\n")
+        cat("\nDistances available for hierarchical clustering:\n\n")
+        for(i in seq_along(available_distances)) {
+          cat("  ", i, "-", available_distances[i], "\n\n")  # double saut de ligne entre chaque option
+        }
+
+        distance_choice <- safe_readline("Select a distance (number or name): ")
+        distance_num <- as.integer(distance_choice)
+
+        if(!is.na(distance_num) && distance_num>=1 && distance_num<=length(available_distances)){
+          chosen_distance <- available_distances[distance_num]
+          break
+        }
+        if(tolower(distance_choice) %in% available_distances){
+          chosen_distance <- tolower(distance_choice)
+          break
+        }
+        cat("\nInvalid input. Try again.\n\n")
       }
 
-      cat("\n====== Determining Optimal Clusters via NbClust ======\n\n")
+
+      hclust_methods <- c("ward.D","ward.D2","single","complete","average","mcquitty","median","centroid")
+      repeat {
+        cat("\nAvailable hierarchical methods:\n\n")
+        for(i in seq_along(hclust_methods)) {
+          cat("  ", i, "-", hclust_methods[i], "\n\n")  # double saut de ligne entre chaque option
+        }
+
+        hclust_choice <- as.integer(safe_readline("Choose a hierarchical method (number): "))
+        if(!is.na(hclust_choice) && hclust_choice>=1 && hclust_choice<=length(hclust_methods)){
+          method_name <- hclust_methods[hclust_choice]
+          break
+        }
+        cat("\nInvalid choice. Try again.\n\n")
+      }
+
+
+      hclust_methods <- c("ward.D","ward.D2","single","complete","average","mcquitty","median","centroid")
+      repeat {
+        cat("\nAvailable hierarchical methods:\n\n")
+        for(i in seq_along(hclust_methods)) cat("  ", i, "-", hclust_methods[i], "\n")
+        cat("\n")  # ligne vide après la liste
+
+        hclust_choice <- as.integer(safe_readline("Choose a hierarchical method (number): "))
+        if(!is.na(hclust_choice) && hclust_choice>=1 && hclust_choice<=length(hclust_methods)){
+          method_name <- hclust_methods[hclust_choice]
+          break
+        }
+        cat("\nInvalid choice. Try again.\n\n")  # espace avant le message d'erreur
+      }
+
+
+      dist_matrix <- dist(data, method=chosen_distance)
+      hc <- hclust(dist_matrix, method=method_name)
+      clusters <- cutree(hc, k=optimal_clusters_max)
+      clustering_result <- list(cluster=clusters)
+
+      # --- Plot dendrogram ---
+      # plot(hc, main = "Dendrogram", xlab = "", sub = "", cex = 0.8)
+      # rect.hclust(hc, k = optimal_clusters_max, border = 2:5)
+
+      # Convertir l'objet hclust en dendrogram pour ggplot
+
+      # Palette personnalisée pour le nombre de clusters choisi
+      palette_finale <- colorRampPalette(c("#662483", "#f39200", "#f9b233", "#ffda77", "#35163b"))(optimal_clusters_max)
+
+      # Convertir en dendrogram
+      dend <- as.dendrogram(hc)
+
+      # Colorer les branches selon le nombre de clusters et ta palette
+      dend <- color_branches(dend, k = optimal_clusters_max, col = palette_finale)
+
+      # Afficher le dendrogramme
+      plot(dend, main = "Hierarchical Clustering Dendrogram")
+    }
+
+  } else {
+    # --- AUTOMATIC mode (NbClust) for datasets >=20 ---
+    repeat {
       cat("\n")
-      nb <- NbClust(data, distance = "euclidean", min.nc = 2, max.nc = max_clusters, method = "kmeans")
+      max_clusters <- as.integer(safe_readline("Enter max number of clusters to test (min 2, e.g. 10): "))
+      if (!is.na(max_clusters) && max_clusters >= 2) break
+      cat("Invalid number. Please enter integer ≥ 2.\n\n")
+    }
+
+    # --- Choose clustering method ---
+    cat("\n--- Clustering method ---\n\n")
+    repeat {
+      cat("Available clustering methods:\n")
+
+      cat("\n")
+      cat("(1): K-means \n")
+      cat("\n")
+      cat("(2): Hierarchical clustering \n\n")
+
+      method_choice <- as.integer(safe_readline("Choose a method (1 or 2): "))
+      if (method_choice %in% c(1,2)) break
+      cat("Invalid choice. Please enter 1 or 2.\n\n")
+    }
+
+    if (method_choice == 1) {
+      cat("\n====== Determining Optimal Clusters via NbClust (K-means) ======\n\n")
+      nb <- NbClust(data, distance="euclidean", min.nc=2, max.nc=max_clusters, method="kmeans")
 
       results <- nb$Best.nc[1, ]
       freq_table <- sort(table(results), decreasing = TRUE)
@@ -207,47 +257,100 @@ xrf_clust  <- function(data = NULL) {
           cat("Invalid choice. Try again.\n\n")
         }
       }
+
+      set.seed(123)
+      clustering_result <- kmeans(data, centers=optimal_clusters_max, nstart=100)
+
+    } else {
+      # --- Hierarchical with NbClust ---
+      available_distances <- c("euclidean","maximum","manhattan","canberra","binary","minkowski")
+      repeat {
+        cat("\nDistances available for hierarchical clustering:\n\n")
+        for(i in seq_along(available_distances)) {
+          cat("  ", i, "-", available_distances[i], "\n\n")  # double saut de ligne entre chaque option
+        }
+
+        distance_choice <- safe_readline("Select a distance (number or name): ")
+        distance_num <- as.integer(distance_choice)
+
+        if(!is.na(distance_num) && distance_num>=1 && distance_num<=length(available_distances)){
+          chosen_distance <- available_distances[distance_num]
+          break
+        }
+        if(tolower(distance_choice) %in% available_distances){
+          chosen_distance <- tolower(distance_choice)
+          break
+        }
+        cat("\nInvalid input. Try again.\n\n")
+      }
+
+      hclust_methods <- c("ward.D","ward.D2","single","complete","average","mcquitty","median","centroid")
+      repeat {
+        cat("\nAvailable hierarchical methods:\n\n")
+        for(i in seq_along(hclust_methods)) {
+          cat("  ", i, "-", hclust_methods[i], "\n\n")  # double saut de ligne entre chaque option
+        }
+
+        hclust_choice <- as.integer(safe_readline("Choose a hierarchical method (number): "))
+        if(!is.na(hclust_choice) && hclust_choice>=1 && hclust_choice<=length(hclust_methods)){
+          method_name <- hclust_methods[hclust_choice]
+          break
+        }
+        cat("\nInvalid choice. Try again.\n\n")
+      }
+
+
+      cat("\n====== Determining Optimal Clusters via NbClust (Hierarchical) ======\n\n")
+      nb <- NbClust(data, distance=chosen_distance, min.nc=2, max.nc=max_clusters, method=method_name)
+
+      results <- nb$Best.nc[1, ]
+      freq_table <- sort(table(results), decreasing = TRUE)
+      clusters_with_max_freq <- as.numeric(names(freq_table[freq_table == max(freq_table)]))
+
+      if (length(clusters_with_max_freq) == 1) {
+        optimal_clusters_max <- clusters_with_max_freq
+      } else {
+        repeat {
+          cat("Multiple optimal cluster numbers detected:", paste(clusters_with_max_freq, collapse = ", "), "\n")
+          user_input <- as.integer(safe_readline("Choose one of these cluster numbers: "))
+          if (user_input %in% clusters_with_max_freq) {
+            optimal_clusters_max <- user_input
+            break
+          }
+          cat("Invalid choice. Try again.\n\n")
+        }
+      }
+
+      dist_matrix <- dist(data, method=chosen_distance)
+      hc <- hclust(dist_matrix, method=method_name)
+      clusters <- cutree(hc, k=optimal_clusters_max)
+      clustering_result <- list(cluster=clusters)
+
+      # --- Plot dendrogram ---
+      # plot(hc, main = "Dendrogram", xlab = "", sub = "", cex = 0.8)
+      # rect.hclust(hc, k = optimal_clusters_max, border = 2:5)
+
+      # Convertir l'objet hclust en dendrogram pour ggplot
+
+      # Palette personnalisée pour le nombre de clusters choisi
+      palette_finale <- colorRampPalette(c("#662483", "#f39200", "#f9b233", "#ffda77", "#35163b"))(optimal_clusters_max)
+
+      # Convertir en dendrogram
+      dend <- as.dendrogram(hc)
+
+      # Colorer les branches selon le nombre de clusters et ta palette
+      dend <- color_branches(dend, k = optimal_clusters_max, col = palette_finale)
+
+      # Afficher le dendrogramme
+      plot(dend, main = "Hierarchical Clustering Dendrogram")
     }
   }
 
   cat("\nNumber of clusters selected:", optimal_clusters_max, "\n\n")
 
 
-  # --- Apply K-means ---
-  set.seed(123)
-  clustering_result <- kmeans(data, centers = optimal_clusters_max, nstart = 100)
 
-  # --- Add cluster column ---
-  # repeat {
-  #   if ("df_denoised_total_cache" %in% list_cache()) {
-  #     df_denoised_total <- get_cache("df_denoised_total_cache")
-  #     df_denoised_total$Cluster <- clustering_result$cluster
-  #     set_cache("df_denoised_total_cache", df_denoised_total)
-  #     assign("Dataframe_Clustering",df_denoised_total, envir = .GlobalEnv)
-  #     cat("\nCluster column added to cached 'df_denoised_total'.\n\n")
-  #     break
-  #   }
-  #
-  #   df_list <- ls(envir = .GlobalEnv)
-  #   df_list <- df_list[sapply(df_list, function(x) is.data.frame(get(x, envir = .GlobalEnv)))]
-  #   if (length(df_list) == 0) stop("No data frames found in the global environment.")
-  #
-  #   cat("\n=== Select the dataframe to which the 'Cluster' column will be added ===\n\n")
-  #   cat("Dataframes available:\n")
-  #   print(df_list)
-  #   cat("\n")
-  #
-  #   df_name <- safe_readline("Enter the name of the target dataframe: ")
-  #   if (df_name %in% df_list) {
-  #     df_denoised_total <- get(df_name, envir = .GlobalEnv)
-  #     df_denoised_total$Cluster <- clustering_result$cluster
-  #     assign(df_name, df_denoised_total, envir = .GlobalEnv)
-  #     cat("\nCluster column added to", df_name, "\n\n")
-  #     break
-  #   } else {
-  #     cat("Dataframe not found. Try again.\n\n")
-  #   }
-  # }
+
 
   repeat {
 
@@ -436,11 +539,7 @@ xrf_clust  <- function(data = NULL) {
   cat("\n")
   if (show_acp %in% c("yes", "y")) {
 
-    # if ("df_denoised_total_cache" %in% list_cache()) {
-    #   df_cluster <- get_cache("df_denoised_total_cache")
-    # } else {
-    #   cat("The dataframe 'df_denoised_total_cache' was not found.\n")
-    # }
+
 
     # Sélection du dataframe pour df_cluster
     if ("df_denoised_total_cache" %in% list_cache()) {
@@ -585,47 +684,7 @@ xrf_clust  <- function(data = NULL) {
   show_geo <- tolower(safe_readline("Would you like to visualize geochemical profiles by cluster? (yes/no): "))
   cat("\n")
 
-  # if (show_geo %in% c("yes", "y", "oui", "o")) {
-  #
-  #   if (exists("visual.clust")) {
-  #     repeat {
-  #       # Vérifie cache
-  #       if ("df_denoised_total_cache" %in% list_cache()) {
-  #         df_denoised_total <- get_cache("df_denoised_total_cache")
-  #         message("Using cached 'df_denoised_total_cache' dataframe.")
-  #
-  #         if ("Cluster" %in% colnames(df_denoised_total)) {
-  #           visual.clust(df_denoised_total)
-  #           break  # <-- OK ici, car on est dans un repeat
-  #         } else {
-  #           cat("Cached dataframe found but no 'Cluster' column detected.\n")
-  #         }
-  #       } else {
-  #         cat("No cached dataframe found under 'df_denoised_total_cache'.\n")
-  #       }
-  #
-  #
-  #
-  #       # Demande à l'utilisateur
-  #       df_visu_name <- safe_readline("Enter the name of the dataframe containing 'Cluster': ")
-  #       if (exists(df_visu_name, envir = .GlobalEnv)) {
-  #         df_visu <- get(df_visu_name, envir = .GlobalEnv)
-  #         if ("Cluster" %in% colnames(df_visu)) {
-  #           visual.clust(df_visu)
-  #           break  # <-- OK ici
-  #         } else {
-  #           cat("The selected dataframe does not contain a 'Cluster' column.\n")
-  #         }
-  #       } else {
-  #         cat("Dataframe not found in global environment.\n")
-  #       }
-  #
-  #       cat("\nTry again.\n")
-  #     }
-  #   } else {
-  #     cat("Function 'visual.clust()' not found. Please load it before running this option.\n")
-  #   }
-  # }
+
 
   if (show_geo %in% c("yes", "y", "oui", "o")) {
 
@@ -805,12 +864,8 @@ xrf_clust  <- function(data = NULL) {
   # --- End of main loop ---
   cat("Clustering finished.\n")
 
+  cat("\n")
 
-  # # --- Restart clustering? ---
-  # restart <- safe_readline("\nWould you like to perform another clustering? (yes/no): ")
-  # if (tolower(restart) %in% c("no", "n")) {
-  #   cat("Clustering finished.\n")
-  #   break
-  # }
+
 }
 
