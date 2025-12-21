@@ -197,6 +197,109 @@ visual.clust <- function(data) {
   }
 
   ## ============================================================
+  ## MODELE D'AGE (OPTIONNEL)
+  ## ============================================================
+  cat("\n\n==============================\n")
+  cat("  AGE MODEL OPTION\n")
+  cat("==============================\n\n")
+
+  add_age_model <- tolower(safe_readline(
+    "Would you like to add an age-depth model? (yes/no): ",
+    default = "no"
+  ))
+
+  cat("\n")
+
+  if (add_age_model %in% c("yes", "y")) {
+
+    ## Sélection du fichier
+    age_file <- rstudioapi::selectFile(
+      caption = "Select age model table",
+      label   = "Open",
+      path    = getwd(),
+      filter  = list(
+        "Data files" = c("csv", "txt", "xlsx")
+      ),
+      existing = TRUE
+    )
+
+    if (!nzchar(age_file)) {
+      cat("\nNo age model selected. Skipped.\n")
+    } else {
+
+      ext <- tolower(tools::file_ext(age_file))
+
+      ## Lecture du fichier
+      if (ext == "xlsx") {
+
+        sheets <- readxl::excel_sheets(age_file)
+        cat("\nAvailable sheets:\n")
+        print(sheets)
+
+        sheet_name <- safe_readline(
+          "Enter the sheet name containing the age model: "
+        )
+
+        age_data <- readxl::read_excel(age_file, sheet = sheet_name)
+
+      } else {
+        age_data <- read.csv(age_file, stringsAsFactors = FALSE)
+      }
+
+      ## Sélection des colonnes
+      repeat {
+        cat("\nAge model columns:\n")
+        cat("\n")
+        print(names(age_data))
+        cat("\n")
+
+        age_depth_col <- safe_readline(
+          "Enter the depth column name: "
+        )
+        cat("\n")
+        age_col <- safe_readline(
+          "Enter the age (years) column name: "
+        )
+        cat("\n")
+
+        if (all(c(age_depth_col, age_col) %in% names(age_data))) break
+        cat("\nInvalid column names. Please try again.\n")
+      }
+      cat("\n")
+
+      ## Unités
+      age_unit <- safe_readline(
+        "Enter age unit (e.g., cal yr BP, ka, yr): ",
+        default = "yr"
+      )
+
+      cat("\n")
+      ## Graphique du modèle d'âge
+      age_plot <- ggplot(
+        age_data,
+        aes(
+          x = .data[[age_col]],
+          y = .data[[age_depth_col]]
+        )
+      ) +
+        geom_path(linewidth = 0.8, color = "black") +
+        scale_y_reverse() +
+        labs(
+          x = paste0("Age [", age_unit, "]"),
+          y = paste0("Depth [", depth_unit, "]"),
+          title = "Age model"
+        ) +
+        tidypaleo::theme_paleo() +
+        theme(
+          axis.text.y =  element_text(family = "sans", face = "bold"),
+          axis.text = element_text(size = 11, color = "gray25"),
+          text = element_text(family = "sans", face = "bold")
+        )
+    }
+  }
+
+
+  ## ============================================================
   ## Photo de carotte (optionnelle)
   ## ============================================================
   cat("\n\n==============================\n")
@@ -252,8 +355,9 @@ visual.clust <- function(data) {
   ## ============================================================
   plots_to_combine <- list()
   if (exists("photo_plot")) plots_to_combine <- c(plots_to_combine, list(photo_plot))
-  if (exists("main_plot")) plots_to_combine <- c(plots_to_combine, list(main_plot))
-  if (exists("core_plot")) plots_to_combine <- c(plots_to_combine, list(core_plot))
+  if (exists("age_plot"))   plots_to_combine <- c(plots_to_combine, list(age_plot))
+  if (exists("main_plot"))  plots_to_combine <- c(plots_to_combine, list(main_plot))
+  if (exists("core_plot"))  plots_to_combine <- c(plots_to_combine, list(core_plot))
 
 
   if (length(plots_to_combine) == 1) {
@@ -261,6 +365,7 @@ visual.clust <- function(data) {
   } else if (length(plots_to_combine) > 1) {
     widths <- c()
     if (exists("photo_plot")) widths <- c(widths, 0.7)
+    if (exists("age_plot"))   widths <- c(widths, 1)
     if (exists("main_plot")) widths <- c(widths, 4)
     if (exists("core_plot")) widths <- c(widths, 0.25)
     combined_plot <- patchwork::wrap_plots(plots_to_combine, nrow = 1) + patchwork::plot_layout(widths = widths)
