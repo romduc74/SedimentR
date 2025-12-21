@@ -79,7 +79,7 @@ using PCA and loading-threshold filtering
 
 3)- **Run clustering**
 
-through a complete K-means–based facies identification procedure
+through a complete K-means or hierarchical clustering-based facies identification procedure.
 
 4)- **Plot the core**
 
@@ -99,7 +99,7 @@ The next step involves transforming the dataset through centered log-ratio (CLR)
 
 Variable selection is then performed using principal component analysis (PCA). Only variables with loadings above a user-defined threshold are retained, ensuring that the selection focuses on geochemically meaningful contributors via the `prop.select` function.
 
-Finally, sedicore() executes the full clustering module implemented in `xrf_clust()`, including K-means clustering, proxy contribution analysis, identification of cluster-driving variables, and optional visualizations (e.g. PCA, Clustering, Virtual Core or Sediment core picture).
+Finally, sedicore() executes the full clustering module implemented in `xrf_clust()`, including K-means and hierarchical clustering, proxy contribution analysis, identification of cluster-driving variables, and optional visualizations (e.g. PCA, Clustering, Virtual Core or Sediment core picture).
 
 The entire process is fully guided: each step prints informative progress messages, invites user interaction when needed, and stores intermediate outputs in the global environment for further visualization or analysis.
 
@@ -297,7 +297,7 @@ xrf_clust()
 
 ```
 
-The `xrf_clust()` function performs clustering analysis on a dataset of selected variables. It helps to determine the optimal number of clusters, to classify observations in the clusters, analyze cluster drivers, and provide multiple visualization options. The main enhancement of this approach is the coupling of variable selection from PCA analysis with the estimation of the optimal number of clusters. The best cluster number is determined using a comprehensive set of validity indices available in the \texttt{NbClust} package (Charrad et al., 2014), providing a robust, data-driven method for clustering via the k-means method. 
+The `xrf_clust()` function performs clustering analysis on a dataset of selected variables. It helps to determine the optimal number of clusters, to classify observations in the clusters, analyze cluster drivers, and provide multiple visualization options. The main enhancement of this approach is the coupling of variable selection from PCA analysis with the estimation of the optimal number of clusters. The best cluster number is determined using a comprehensive set of validity indices available in the \texttt{NbClust} package (Charrad et al., 2014), providing a robust, data-driven method for clustering via the k-means or hierarchical clustering method. 
 
 The user may also manually choose the number of clusters, for example based on the number of sedimentary facies visually identified in the core. Both approaches—automatic and manual clustering—are fully supported. However, to assess the robustness of the clustering solution, several validation metrics can be computed. Comparing the automatic and manually selected number of clusters helps determine which configuration yields the most reliable and interpretable results.
 
