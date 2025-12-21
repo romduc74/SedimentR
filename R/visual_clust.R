@@ -208,8 +208,6 @@ visual.clust <- function(data) {
     default = "no"
   ))
 
-  cat("\n")
-
   if (add_age_model %in% c("yes", "y")) {
 
     ## Sélection du fichier
@@ -234,8 +232,9 @@ visual.clust <- function(data) {
 
         sheets <- readxl::excel_sheets(age_file)
         cat("\nAvailable sheets:\n")
+        cat("\n")
         print(sheets)
-
+        cat("\n")
         sheet_name <- safe_readline(
           "Enter the sheet name containing the age model: "
         )

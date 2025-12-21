@@ -213,7 +213,6 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
     selected_ratios <- trimws(selected_ratios)
 
     cat("\n")
-    cat("\n")
 
     # for (ratio in selected_ratios) {
     #   cat(paste0("\nCreation of the log ratio for ", ratio, "\n"))
@@ -234,7 +233,7 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
     # }
     for (ratio in selected_ratios) {
       cat(paste0("\nCreation of the log ratio for ", ratio, "\n"))
-
+      cat("\n")
       numerator <- safe_readline(paste("Numerator of", ratio, ": "))
       cat("\n")
       denominator <- safe_readline(paste("Denominator  of", ratio, ": "))
