@@ -21,9 +21,32 @@ visual.clust <- function(data) {
     return(input)
   }
 
-  if (!"Cluster" %in% names(data)) stop("The ‘Cluster’ column is missing from the dataframe.")
-  data$Cluster <- as.numeric(data$Cluster)
-  n_clusters <- length(unique(na.omit(data$Cluster)))
+  ## ============================================================
+  ## CLUSTER OPTION
+  ## ============================================================
+  cat("\n\n==============================\n")
+  cat("  CLUSTER DISPLAY OPTION\n")
+  cat("==============================\n\n")
+
+  show_clusters <- tolower(
+    safe_readline("Would you like to display clusters? (yes/no): ", default = "yes")
+  )
+
+  use_clusters <- show_clusters %in% c("yes", "y")
+
+
+  # if (!"Cluster" %in% names(data)) stop("The ‘Cluster’ column is missing from the dataframe.")
+  # data$Cluster <- as.numeric(data$Cluster)
+  # n_clusters <- length(unique(na.omit(data$Cluster)))
+
+
+  if (use_clusters) {
+    if (!"Cluster" %in% names(data)) {
+      stop("The ‘Cluster’ column is required when cluster display is enabled.")
+    }
+    data$Cluster <- as.numeric(data$Cluster)
+    n_clusters <- length(unique(na.omit(data$Cluster)))
+  }
 
   ## Depth column selection
   repeat {
@@ -50,7 +73,8 @@ visual.clust <- function(data) {
     var_input <- safe_readline("Enter your choice: ")
 
     if (tolower(var_input) == "all") {
-      variables <- setdiff(names(data), c(depth_col, "Cluster"))
+      # variables <- setdiff(names(data), c(depth_col, "Cluster"))
+      variables <- setdiff(names(data),c(depth_col, if (use_clusters) "Cluster"))
       cat("\nAll variables selected.\n")
       break
     }
@@ -73,16 +97,18 @@ visual.clust <- function(data) {
   }
 
   ## Color palette
-  cat("\n\n==============================\n")
-  cat("  COLOR PALETTE SELECTION\n")
-  cat("==============================\n\n")
-  use_custom <- tolower(safe_readline("Would you like to set a custom palette? (yes/no): ", default = "no"))
+  if (use_clusters) {
+    cat("\n\n==============================\n")
+    cat("  COLOR PALETTE SELECTION\n")
+    cat("==============================\n\n")
+    use_custom <- tolower(safe_readline("Would you like to set a custom palette? (yes/no): ", default = "no"))
 
-  if (use_custom %in% c("yes", "y")) {
-    cat("\nEnter", n_clusters, "colors (by name or hexadecimal, e.g., 'red' or '#FF0000')\n\n")
-    custom_palette <- sapply(seq_len(n_clusters), function(i) safe_readline(paste("Color for cluster", i, ": ")))
-  } else {
-    custom_palette <- colorRampPalette(c("#662483", "#f39200", "#f9b233", "#ffda77", "#35163b"))(n_clusters)
+    if (use_custom %in% c("yes", "y")) {
+      cat("\nEnter", n_clusters, "colors (by name or hexadecimal, e.g., 'red' or '#FF0000')\n\n")
+      custom_palette <- sapply(seq_len(n_clusters), function(i) safe_readline(paste("Color for cluster", i, ": ")))
+    } else {
+      custom_palette <- colorRampPalette(c("#662483", "#f39200", "#f9b233", "#ffda77", "#35163b"))(n_clusters)
+    }
   }
 
   ## Data preparation
@@ -90,14 +116,28 @@ visual.clust <- function(data) {
   cat("  DATA PREPARATION\n")
   cat("==============================\n\n")
 
+  # xrfStrat <- data %>%
+  #   # dplyr::select(all_of(c(variables, depth_col, "Cluster"))) %>%
+  #   dplyr::select(all_of(c(variables, depth_col, if (use_clusters) "Cluster"))) %>%
+  #   tidyr::pivot_longer(
+  #     cols = -c(all_of(depth_col), "Cluster"),
+  #     names_to = "elements",
+  #     values_to = "peakarea"
+  #   ) %>%
+  #   tidyr::drop_na(any_of(c(variables, depth_col)))  # Keep NA in Cluster only
+
+
+  cols_to_keep <- c(variables, depth_col)
+  if (use_clusters) cols_to_keep <- c(cols_to_keep, "Cluster")
+
   xrfStrat <- data %>%
-    dplyr::select(all_of(c(variables, depth_col, "Cluster"))) %>%
+    dplyr::select(all_of(cols_to_keep)) %>%
     tidyr::pivot_longer(
-      cols = -c(all_of(depth_col), "Cluster"),
+      cols = -all_of(c(depth_col, if (use_clusters) "Cluster")),
       names_to = "elements",
       values_to = "peakarea"
     ) %>%
-    tidyr::drop_na(any_of(c(variables, depth_col)))  # Keep NA in Cluster only
+    tidyr::drop_na(any_of(c(variables, depth_col)))
 
   depth_unit <- safe_readline("\nEnter the depth unit (default = mm): ", default = "mm")
 
@@ -113,25 +153,52 @@ visual.clust <- function(data) {
     ) %>%
     ungroup()
 
+
+
   ## Main plot
   # cat("\n\n==============================\n")
   # cat("  MAIN PLOT CREATION\n")
   # cat("==============================\n\n")
   #
 
+  # main_plot <- xrfStrat %>%
+  #   ggplot(aes(x = peakarea, y = .data[[depth_col]], group = interaction(elements, segment))) +
+  #   geom_lineh(aes(color = Cluster), linewidth = 0.75, na.rm = TRUE) +
+  #   scale_y_reverse() +
+  #   scale_x_continuous(breaks = scales::pretty_breaks(n = 4)) +
+  #   tidypaleo::facet_geochem_gridh(vars(elements)) +
+  #   labs(
+  #     x = "Geochemistry",
+  #     y = paste0("Depth [", depth_unit, "]"),
+  #     color = "Cluster"
+  #   ) +
+  #   tidypaleo::theme_paleo() +
+  #   scale_color_gradientn(colors = custom_palette) +
+  #   theme(
+  #     text = element_text(family = "sans", face = "bold"),
+  #     axis.text = element_text(size = 11, color = "gray25"),
+  #     axis.title = element_text(size = 13),
+  #     strip.text = element_text(face = "bold", size = 12),
+  #     legend.position = "none"
+  #   )
+
   main_plot <- xrfStrat %>%
-    ggplot(aes(x = peakarea, y = .data[[depth_col]], group = interaction(elements, segment))) +
-    geom_lineh(aes(color = Cluster), linewidth = 0.75, na.rm = TRUE) +
+    ggplot(aes(x = peakarea, y = .data[[depth_col]],
+               group = interaction(elements, segment))) +
+    geom_lineh(
+      aes(color = if (use_clusters) Cluster else NULL),
+      linewidth = 0.75,
+      na.rm = TRUE
+    ) +
     scale_y_reverse() +
     scale_x_continuous(breaks = scales::pretty_breaks(n = 4)) +
     tidypaleo::facet_geochem_gridh(vars(elements)) +
     labs(
       x = "Geochemistry",
       y = paste0("Depth [", depth_unit, "]"),
-      color = "Cluster"
+      color = if (use_clusters) "Cluster" else NULL
     ) +
     tidypaleo::theme_paleo() +
-    scale_color_gradientn(colors = custom_palette) +
     theme(
       text = element_text(family = "sans", face = "bold"),
       axis.text = element_text(size = 11, color = "gray25"),
@@ -140,11 +207,26 @@ visual.clust <- function(data) {
       legend.position = "none"
     )
 
+  if (use_clusters) {
+    main_plot <- main_plot +
+      scale_color_gradientn(colors = custom_palette)
+  }
+
+
   ## Virtual Core
   cat("\n\n==============================\n")
   cat("  VIRTUAL CORE OPTION\n")
   cat("==============================\n\n")
-  show_core <- tolower(safe_readline("Show Virtual Core? (yes/no): ", default = "no"))
+
+  #show_core <- tolower(safe_readline("Show Virtual Core? (yes/no): ", default = "no"))
+
+  if (use_clusters) {
+    show_core <- tolower(safe_readline("Show Virtual Core? (yes/no): ", default = "no"))
+  } else {
+    show_core <- "no"
+    cat("\nVirtual Core disabled (no clusters).\n")
+  }
+
 
   if (show_core %in% c("yes", "y")) {
     cat("\nGenerating Virtual Core...\n\n")
@@ -273,6 +355,14 @@ visual.clust <- function(data) {
       )
 
       cat("\n")
+
+
+
+      Depth_end <- max(xrfStrat[[depth_col]], na.rm = TRUE)
+
+      age_data <- age_data %>%
+        dplyr::filter(.data[[age_depth_col]] <= Depth_end)
+
       ## Graphique du modèle d'âge
       age_plot <- ggplot(
         age_data,
@@ -282,20 +372,30 @@ visual.clust <- function(data) {
         )
       ) +
         geom_path(linewidth = 0.8, color = "black") +
-        scale_y_reverse() +
+        #  scale_y_reverse() +
+        scale_y_reverse(limits = c(Depth_end, NA))+
         labs(
           x = paste0("Age [", age_unit, "]"),
           y = paste0("Depth [", depth_unit, "]"),
           title = "Age model"
         ) +
         tidypaleo::theme_paleo() +
+        # theme(
+        #   axis.text.y =  element_text(family = "sans", face = "bold"),
+        #   axis.text = element_text(size = 11, color = "gray25"),
+        #   text = element_text(family = "sans", face = "bold")
+        # )
         theme(
-          axis.text.y =  element_text(family = "sans", face = "bold"),
+          text = element_text(family = "sans", face = "bold"),
           axis.text = element_text(size = 11, color = "gray25"),
-          text = element_text(family = "sans", face = "bold")
+          axis.title = element_text(size = 13),
+          strip.text = element_text(face = "bold", size = 12),
+          legend.position = "none"
         )
+
     }
   }
+
 
 
   ## ============================================================
