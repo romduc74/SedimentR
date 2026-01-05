@@ -121,6 +121,14 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
     df <- read_excel(path, sheet = sheet)
     df <- as.data.frame(df)
 
+    # Conversion en numérique
+    df[] <- lapply(df, function(col) {
+      if (is.numeric(col)) return(col)
+      if (is.factor(col)) col <- as.character(col)
+      if (is.character(col)) col <- gsub(",", ".", col, fixed = TRUE)
+      suppressWarnings(as.numeric(col))
+    })
+
   } else stop("Unsupported file format. Use .csv or .xlsx.")
 
   cat("\n")
