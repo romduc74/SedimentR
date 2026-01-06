@@ -187,7 +187,7 @@ visual.clust <- function(data) {
                group = interaction(elements, segment))) +
     geom_lineh(
       aes(color = if (use_clusters) Cluster else NULL),
-      linewidth = 0.75,
+      linewidth = 0.25,
       na.rm = TRUE
     ) +
     scale_y_reverse() +
@@ -371,7 +371,7 @@ visual.clust <- function(data) {
           y = .data[[age_depth_col]]
         )
       ) +
-        geom_path(linewidth = 0.8, color = "black") +
+        geom_path(linewidth = 0.25, color = "black") +
         #  scale_y_reverse() +
         scale_y_reverse(limits = c(Depth_end, NA))+
         labs(
