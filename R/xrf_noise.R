@@ -32,18 +32,19 @@ xrf_noise <- function(df) {
   cat("\n")
 
   #drop_imf       <- as.integer(safe_readline("3) Number of first IMFs considered as noise (recommended 2): ", default = "2"))
-  cat("3) Denoising level (EMD-IMF)")
-  cat("\n")
-  cat(" 1 → Reliable denoising (IMF1 removed)")
-  cat("\n")
-  cat(" 2 → Strong denoising   (IMF1–2 removed)")
-  cat("\n")
-  cat("About IMFs (Intrinsic Mode Functions):")
-  cat("\n")
-  cat("- IMF 1 contains the highest-frequency components\n")
-  cat("- Subsequent IMFs represent progressively lower-frequency, more structured signals\n")
-  cat("- Removing too many IMFs may suppress meaningful geochemical variability\n")
-  cat("\n")
+  cat("3) Denoising level (EMD-IMF)\n\n")
+
+  cat(" 1 → Reliable denoising (IMF1 removed)\n\n")
+
+  cat(" 2 → Strong denoising   (IMF1–2 removed)\n\n")
+
+  cat("About IMFs (Intrinsic Mode Functions):\n\n")
+
+  cat("- IMF 1 contains the highest-frequency components\n\n")
+
+  cat("- Subsequent IMFs represent progressively lower-frequency, more structured signals\n\n")
+
+  cat("- Removing too many IMFs may suppress meaningful geochemical variability\n\n")
 
   denoise_level <- as.integer(safe_readline("Choose denoising level (1 or 2) [default = 1]: ",default = "1"))
 
@@ -159,7 +160,7 @@ xrf_noise <- function(df) {
     "EEMD parameters:\n\n → Noise strength : ", noise_strength,
     "\n\n → EEMD iterations : ", ensemble_size,
     "\n\n → Noise IMFs      : ", drop_imf,
-    "\n\n → Denoising strength  :", denoising_strength,
+    "\n\n → Denoising strength  : ", denoising_strength,
     "\n\n → Threshold used  : ", threshold_used, "\n\n",
     "Low-noise variables (", length(clean_vars), "): ", paste(clean_vars, collapse=", "), "\n\n",
     "High-noise variables (", length(noisy_vars), "): ", if(length(noisy_vars)>0) paste(noisy_vars, collapse=", ") else "None", "\n\n",
