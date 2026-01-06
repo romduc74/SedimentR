@@ -32,7 +32,7 @@ xrf_noise <- function(df) {
   cat("\n")
 
   #drop_imf       <- as.integer(safe_readline("3) Number of first IMFs considered as noise (recommended 2): ", default = "2"))
-  cat("3) Denoising level (EMD-IMF)\n\n")
+  cat(" ===== Denoising level selection =====\n\n")
 
   cat(" 1 → Reliable denoising (IMF1 removed)\n\n")
 
@@ -46,7 +46,7 @@ xrf_noise <- function(df) {
 
   cat("WARNING: Removing too many IMFs may suppress meaningful geochemical variability\n\n")
 
-  denoise_level <- as.integer(safe_readline("Choose denoising level (1 or 2) [default = 1]: ",default = "1"))
+  denoise_level <- as.integer(safe_readline("3) Denoising level : Choose level (1 or 2) [default = 1]: ",default = "1"))
 
   drop_imf <- switch(
     denoise_level,
