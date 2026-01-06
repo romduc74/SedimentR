@@ -790,9 +790,9 @@ xrf_clust  <- function(data = NULL) {
     else "Unstable clusters, use caution"
 
     overall_text <- if(sil_mean>0.6 & dbi<0.75 & stab_mean>0.65) {
-      "Clustering quality is good, clusters are well-separated and stable."
+      "Clustering quality is strong → All validation indices support well-separated and stable clusters."
     } else if(sil_mean>0.4 & dbi<1 & stab_mean>0.4) {
-      "Clustering moderate → Some clusters may be ambiguous."
+      "Clustering quality is acceptable → The clustering remains interpretable, but conclusions should rely on a joint discussion of the validation indices and domain knowledge."
     } else {
       "Clustering is weak → Clusters poorly separated or unstable."
     }
