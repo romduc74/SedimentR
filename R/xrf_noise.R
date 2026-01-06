@@ -36,7 +36,7 @@ xrf_noise <- function(df) {
 
   cat(" 1 → Reliable denoising (IMF1 removed)\n\n")
 
-  cat(" 2 → Strong denoising   (IMF1–2 removed)\n\n")
+  cat(" 2 → Strong denoising (IMF1–2 removed)\n\n")
 
   cat("About IMFs (Intrinsic Mode Functions):\n\n")
 
@@ -44,7 +44,7 @@ xrf_noise <- function(df) {
 
   cat("- Subsequent IMFs represent progressively lower-frequency, more structured signals\n\n")
 
-  cat("- Removing too many IMFs may suppress meaningful geochemical variability\n\n")
+  cat("WARNING: Removing too many IMFs may suppress meaningful geochemical variability\n\n")
 
   denoise_level <- as.integer(safe_readline("Choose denoising level (1 or 2) [default = 1]: ",default = "1"))
 
