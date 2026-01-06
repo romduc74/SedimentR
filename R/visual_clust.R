@@ -357,11 +357,15 @@ visual.clust <- function(data) {
       cat("\n")
 
 
-
+      Depth_start <- min(xrfStrat[[depth_col]], na.rm = TRUE)
       Depth_end <- max(xrfStrat[[depth_col]], na.rm = TRUE)
 
       age_data <- age_data %>%
-        dplyr::filter(.data[[age_depth_col]] <= Depth_end)
+        dplyr::filter(
+          .data[[age_depth_col]] >= Depth_start,
+          .data[[age_depth_col]] <= Depth_end
+        )
+
 
       ## Graphique du modèle d'âge
       age_plot <- ggplot(
@@ -373,7 +377,7 @@ visual.clust <- function(data) {
       ) +
         geom_path(linewidth = 0.25, color = "black") +
         #  scale_y_reverse() +
-        scale_y_reverse(limits = c(Depth_end, NA))+
+        scale_y_reverse(limits = c(Depth_end, Depth_start))+
         labs(
           x = paste0("Age [", age_unit, "]"),
           y = paste0("Depth [", depth_unit, "]"),
