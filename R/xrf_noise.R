@@ -26,9 +26,9 @@ xrf_noise <- function(df) {
 
   # --- EEMD parameters ---
   cat("EEMD parameters:\n\n")
-  noise_strength <- as.numeric(safe_readline("1) Noise amplitude (recommended 0.2)  [default = 0.2]: ", default = "0.2"))
+  noise_strength <- as.numeric(safe_readline("1) Noise amplitude [default = 0.2]: ", default = "0.2"))
   cat("\n")
-  ensemble_size  <- as.integer(safe_readline("2) Number of EEMD iterations (recommended 100)  [default = 100]: ", default = "100"))
+  ensemble_size  <- as.integer(safe_readline("2) Number of EEMD iterations [default = 100]: ", default = "100"))
   cat("\n")
 
   #drop_imf       <- as.integer(safe_readline("3) Number of first IMFs considered as noise (recommended 2): ", default = "2"))
