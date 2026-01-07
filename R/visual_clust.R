@@ -137,7 +137,10 @@ visual.clust <- function(data) {
       names_to = "elements",
       values_to = "peakarea"
     ) %>%
-    tidyr::drop_na(any_of(c(variables, depth_col)))
+    tidyr::drop_na(any_of(c(variables, depth_col)))%>%
+    mutate(
+      elements = factor(elements, levels = variables)
+    )
 
   depth_unit <- safe_readline("\nEnter the depth unit (default = mm): ", default = "mm")
 
