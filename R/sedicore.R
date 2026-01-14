@@ -82,17 +82,17 @@ sedicore <- function(file_path = NULL, sheet = "data") {
   }
 
   # # --- Prepare arguments for 'charger' ---
-  # sep <- ","
-  # fileEncoding <- "UTF-8"
-  #
-  # if (tolower(extension) == "csv") {
-  #   cat("\n--- CSV file detected --------------------\n\n")
-  #   sep <- safe_readline("Enter separator used in CSV (default ','): ")
-  #   if (sep == "") sep <- ","
-  #   cat("\n")
-  #   fileEncoding <- safe_readline("Enter file encoding (default 'UTF-8'): ")
-  #   if (fileEncoding == "") fileEncoding <- "UTF-8"
-  # }
+  sep <- ","
+  fileEncoding <- "UTF-8"
+
+  if (tolower(extension) == "csv") {
+    cat("\n--- CSV file detected --------------------\n\n")
+    sep <- safe_readline("Enter separator used in CSV (default ','): ")
+    if (sep == "") sep <- ","
+    cat("\n")
+    fileEncoding <- safe_readline("Enter file encoding (default 'UTF-8'): ")
+    if (fileEncoding == "") fileEncoding <- "UTF-8"
+  }
   #
   if (tolower(extension) == "xlsx") {
     cat("\n--- Excel file detected ------------------\n\n")
