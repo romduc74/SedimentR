@@ -113,7 +113,8 @@ sedicore <- function(file_path = NULL, sheet = "data") {
   # --- Step 1: Data loading ---
   cat("\n==========================================\n")
   cat("\n--- Step 1 : Loading data for Clustering Analysis -----------------\n")
-  df <- charger(file_path, sheet = sheet, sep = sep, fileEncoding = fileEncoding)
+#  df <- charger(file_path, sheet = sheet, sep = sep, fileEncoding = fileEncoding)
+  df <- charger(file_path, sheet = sheet)
   cat("\nData successfully loaded.\n")
   cat("\n==========================================\n")
 
