@@ -81,34 +81,34 @@ sedicore <- function(file_path = NULL, sheet = "data") {
     return(input)
   }
 
-  # --- Prepare arguments for 'charger' ---
-  sep <- ","
-  fileEncoding <- "UTF-8"
-
-  if (tolower(extension) == "csv") {
-    cat("\n--- CSV file detected --------------------\n\n")
-    sep <- safe_readline("Enter separator used in CSV (default ','): ")
-    if (sep == "") sep <- ","
-    cat("\n")
-    fileEncoding <- safe_readline("Enter file encoding (default 'UTF-8'): ")
-    if (fileEncoding == "") fileEncoding <- "UTF-8"
-  }
-
-  if (tolower(extension) == "xlsx") {
-    cat("\n--- Excel file detected ------------------\n\n")
-    sheets <- readxl::excel_sheets(file_path)
-    cat("Available sheets:\n")
-    print(sheets)
-    cat("\n")
-
-    repeat {
-      sheet_choice <- safe_readline("Enter sheet name to load: ")
-      if (sheet_choice %in% sheets) {
-        sheet <- sheet_choice
-        break
-      } else cat("Invalid sheet name. Try again.\n\n")
-    }
-  }
+  # # --- Prepare arguments for 'charger' ---
+  # sep <- ","
+  # fileEncoding <- "UTF-8"
+  #
+  # if (tolower(extension) == "csv") {
+  #   cat("\n--- CSV file detected --------------------\n\n")
+  #   sep <- safe_readline("Enter separator used in CSV (default ','): ")
+  #   if (sep == "") sep <- ","
+  #   cat("\n")
+  #   fileEncoding <- safe_readline("Enter file encoding (default 'UTF-8'): ")
+  #   if (fileEncoding == "") fileEncoding <- "UTF-8"
+  # }
+  #
+  # if (tolower(extension) == "xlsx") {
+  #   cat("\n--- Excel file detected ------------------\n\n")
+  #   sheets <- readxl::excel_sheets(file_path)
+  #   cat("Available sheets:\n")
+  #   print(sheets)
+  #   cat("\n")
+  #
+  #   repeat {
+  #     sheet_choice <- safe_readline("Enter sheet name to load: ")
+  #     if (sheet_choice %in% sheets) {
+  #       sheet <- sheet_choice
+  #       break
+  #     } else cat("Invalid sheet name. Try again.\n\n")
+  #   }
+  # }
 
   # --- Step 1: Data loading ---
   cat("\n==========================================\n")
