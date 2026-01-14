@@ -76,40 +76,103 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
   extension <- tolower(tools::file_ext(path))
 
   # --- Read CSV ---
-  if (extension == "csv") {
-    sep <- safe_readline("Enter separator used in CSV (default ','): ")
-    if (sep == "") sep <- ","
-    fileEncoding <- safe_readline("Enter file encoding (default 'UTF-8'): ")
-    if (fileEncoding == "") fileEncoding <- "UTF-8"
 
-    df <- tryCatch({
-      read.csv(path, sep = sep, fileEncoding = fileEncoding, stringsAsFactors = FALSE, check.names = FALSE)
-    }, error = function(e) {
-      stop("Failed to read CSV file: ", e$message)
-    })
+  # if (extension == "csv") {
+  #   sep <- safe_readline("Enter separator used in CSV (default ','): ")
+  #   if (sep == "") sep <- ","
+  #   fileEncoding <- safe_readline("Enter file encoding (default 'UTF-8'): ")
+  #   if (fileEncoding == "") fileEncoding <- "UTF-8"
+  #
+  #   df <- tryCatch({
+  #     read.csv(path, sep = sep, fileEncoding = fileEncoding, stringsAsFactors = FALSE, check.names = FALSE)
+  #   }, error = function(e) {
+  #     stop("Failed to read CSV file: ", e$message)
+  #   })
+  #
+  #   # Convert numeric columns (comma → dot)
+  #   df[] <- lapply(df, function(col) {
+  #     if (is.character(col)) {
+  #       col <- gsub(",", ".", col, fixed = TRUE)
+  #       suppressWarnings(as.numeric(col))
+  #     } else col
+  #   })
 
-    # Convert numeric columns (comma → dot)
-    df[] <- lapply(df, function(col) {
-      if (is.character(col)) {
-        col <- gsub(",", ".", col, fixed = TRUE)
-        suppressWarnings(as.numeric(col))
-      } else col
-    })
+
+
+    if (extension == "csv") {
+
+      if (missing(sep) || is.null(sep)) {
+        sep <- safe_readline("Enter separator used in CSV (default ','): ")
+        if (sep == "") sep <- ","
+      }
+
+      cat("\n")
+
+      if (missing(fileEncoding) || is.null(fileEncoding)) {
+        fileEncoding <- safe_readline("Enter file encoding (default 'UTF-8'): ")
+        if (fileEncoding == "") fileEncoding <- "UTF-8"
+      }
+
+      # --- Lecture du CSV ---
+      df <- tryCatch({
+        read.csv(path, sep = sep, fileEncoding = fileEncoding,
+                 stringsAsFactors = FALSE, check.names = FALSE)
+      }, error = function(e) {
+        stop("Failed to read CSV file: ", e$message)
+      })
+
+      # --- Conversion des colonnes numériques (comma → dot) ---
+      df[] <- lapply(df, function(col) {
+        if (is.character(col)) {
+          col <- gsub(",", ".", col, fixed = TRUE)
+          suppressWarnings(as.numeric(col))
+        } else col
+      })
+
+
+
 
     # --- Read Excel ---
+  # } else if (extension == "xlsx") {
+  #   if (is.null(sheet)) {
+  #     sheets <- excel_sheets(path)
+  #     cat("\nAvailable sheets:\n")
+  #     cat("\n")
+  #     print(sheets)
+  #     cat("\n")
+  #     repeat {
+  #       sheet_choice <- safe_readline("Enter sheet name or index to load: ")
+  #       if (sheet_choice %in% sheets) {
+  #         sheet <- sheet_choice
+  #         break
+  #       } else if (suppressWarnings(!is.na(as.numeric(sheet_choice))) && as.numeric(sheet_choice) %in% seq_along(sheets)) {
+  #         sheet <- as.numeric(sheet_choice)
+  #         break
+  #       } else {
+  #         cat("Invalid sheet. Try again.\n")
+  #       }
+  #     }
+  #   }
+  #
+  #   df <- read_excel(path, sheet = sheet)
+  #   df <- as.data.frame(df)
+
+
   } else if (extension == "xlsx") {
+
     if (is.null(sheet)) {
       sheets <- excel_sheets(path)
-      cat("\nAvailable sheets:\n")
-      cat("\n")
+      cat("\nAvailable sheets:\n\n")
       print(sheets)
       cat("\n")
+
       repeat {
         sheet_choice <- safe_readline("Enter sheet name or index to load: ")
         if (sheet_choice %in% sheets) {
           sheet <- sheet_choice
           break
-        } else if (suppressWarnings(!is.na(as.numeric(sheet_choice))) && as.numeric(sheet_choice) %in% seq_along(sheets)) {
+        } else if (suppressWarnings(!is.na(as.numeric(sheet_choice))) &&
+                   as.numeric(sheet_choice) %in% seq_along(sheets)) {
           sheet <- as.numeric(sheet_choice)
           break
         } else {
@@ -121,6 +184,8 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
     df <- read_excel(path, sheet = sheet)
     df <- as.data.frame(df)
 
+
+
     # Conversion en numérique
     df[] <- lapply(df, function(col) {
       if (is.numeric(col)) return(col)
@@ -131,16 +196,61 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
 
   } else stop("Unsupported file format. Use .csv or .xlsx.")
 
+  # --- Gestion des valeurs manquantes ---
+  if (anyNA(df)) {
+    cat("\nWARNING: The dataframe contains missing values (NA).\n")
+    cat("\n")
+    cat("Available columns:\n")
+    cat("\n")
+    print(colnames(df))
+    cat("\n")
+
+    exclude_response <- tolower(safe_readline("Do you want to exclude any columns from the NA filtering? (yes/no): "))
+    cat("\n")
+    excluded_columns <- NULL
+    cat("\n")
+    if (exclude_response == "yes") {
+      input <- safe_readline("Enter column names to exclude (separated by commas): ")
+      excluded_columns <- trimws(unlist(strsplit(input, ",")))
+      invalid_columns <- setdiff(excluded_columns, colnames(df))
+      if (length(invalid_columns) > 0) stop(paste("Invalid column names:", paste(invalid_columns, collapse = ", ")))
+    }
+    cat("\n")
+    na_response <- tolower(safe_readline("Do you want to delete rows with NA values? (yes/no): "))
+    cat("\n")
+    if (na_response == "yes") {
+      df_tmp <- df
+      if (!is.null(excluded_columns)) df_tmp <- df[, !(names(df) %in% excluded_columns), drop = FALSE]
+      na_rows <- which(apply(df_tmp, 1, function(x) any(is.na(x))))
+      if (length(na_rows) > 0) {
+        cat("Rows removed:", paste(na_rows, collapse = ", "), "\n")
+        df <- df[complete.cases(df_tmp), ]
+      } else {
+        cat("No rows to remove: no NA values in selected columns.\n")
+      }
+      cat("The dataframe is now cleaned.\n")
+    } else {
+      cat("Rows containing NA values were retained.\n")
+    }
+  } else {
+    cat("No missing values found in the dataframe.\n")
+  }
+
   cat("\n")
   cat("\nData loaded successfully.\n")
   cat("\n")
 
 
   # --- Bloc débruitage XRF via xrf_noise() ---
+  # cat("\n")
+  # cat("Would you like to run the XRF noise detection & denoising module (EEMD-based)? (yes/no): ")
+  # cat("\n")
+  # run_noise <- safe_readline("")
+
   cat("\n")
-  cat("Would you like to run the XRF noise detection & denoising module (EEMD-based)? (yes/no): ")
+  run_noise <- safe_readline("Would you like to run the XRF noise detection & denoising module (EEMD-based)? (yes/no): ")
   cat("\n")
-  run_noise <- safe_readline("")
+
 
   if (tolower(run_noise) == "yes") {
 
@@ -286,48 +396,6 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
     cat("No log-transformed ratios were created.\n")
   }
   cat("\n")
-
-  # --- Gestion des valeurs manquantes ---
-  if (anyNA(df)) {
-    cat("\nWARNING: The dataframe contains missing values (NA).\n")
-    cat("\n")
-    cat("Available columns:\n")
-    cat("\n")
-    print(colnames(df))
-    cat("\n")
-
-    exclude_response <- tolower(safe_readline("Do you want to exclude any columns from the NA filtering? (yes/no): "))
-    cat("\n")
-    excluded_columns <- NULL
-    cat("\n")
-    if (exclude_response == "yes") {
-      input <- safe_readline("Enter column names to exclude (separated by commas): ")
-      excluded_columns <- trimws(unlist(strsplit(input, ",")))
-      invalid_columns <- setdiff(excluded_columns, colnames(df))
-      if (length(invalid_columns) > 0) stop(paste("Invalid column names:", paste(invalid_columns, collapse = ", ")))
-    }
-    cat("\n")
-    na_response <- tolower(safe_readline("Do you want to delete rows with NA values? (yes/no): "))
-    cat("\n")
-    if (na_response == "yes") {
-      df_tmp <- df
-      if (!is.null(excluded_columns)) df_tmp <- df[, !(names(df) %in% excluded_columns), drop = FALSE]
-      na_rows <- which(apply(df_tmp, 1, function(x) any(is.na(x))))
-      if (length(na_rows) > 0) {
-        cat("Rows removed:", paste(na_rows, collapse = ", "), "\n")
-        df <- df[complete.cases(df_tmp), ]
-      } else {
-        cat("No rows to remove: no NA values in selected columns.\n")
-      }
-      cat("The dataframe is now cleaned.\n")
-    } else {
-      cat("Rows containing NA values were retained.\n")
-    }
-  } else {
-    cat("No missing values found in the dataframe.\n")
-  }
-
-  cat("\n")
   cat("\n")
 
   # --- Save globally & optional caching ---
@@ -344,8 +412,5 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
   #   set_cache("df_clean_cache", df_clean)
   #   set_cache("df_denoised_total_cache", df_denoised_total)
   # }
-
-
-
 
 }

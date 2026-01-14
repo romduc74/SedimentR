@@ -133,7 +133,7 @@ It can be used in both **interactive** and **non-interactive** modes.
 
 # Load a CSV file directly, specify separator and encoding
 
-df_csv <- charger(
+charger(
   path = "data/my_data.csv",
   sep = ",",
   fileEncoding = "UTF-8"
@@ -143,7 +143,7 @@ df_csv <- charger(
 
 # Load an Excel file, specify sheet
 
-df_excel <- charger(
+charger(
   path = "data/my_data.xlsx",
   sheet = "Sheet1"
 )
@@ -153,7 +153,7 @@ df_excel <- charger(
 # If no path is provided, a file selection dialog will open
 # You will then be prompted for CSV separator or Excel sheet
 
-df_interactive <- charger()
+charger()
 ```
 
 ##### 1. Integration of `xrf_noise` within `charger()` function:
