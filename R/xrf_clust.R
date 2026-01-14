@@ -200,7 +200,7 @@ xrf_clust  <- function(data = NULL) {
       # Convertir l'objet hclust en dendrogram pour ggplot
 
       # Palette personnalisée pour le nombre de clusters choisi
-      palette_finale <- colorRampPalette(c("#662483", "#f39200", "#f9b233", "#ffda77", "#35163b"))(optimal_clusters_max)
+      palette_finale <- colorRampPalette(c("#35163b", "#662483", "#f39200", "#f9b233", "#ffda77"))(optimal_clusters_max)
 
       # Convertir en dendrogram
       dend <- as.dendrogram(hc)
@@ -333,7 +333,7 @@ xrf_clust  <- function(data = NULL) {
       # Convertir l'objet hclust en dendrogram pour ggplot
 
       # Palette personnalisée pour le nombre de clusters choisi
-      palette_finale <- colorRampPalette(c("#662483", "#f39200", "#f9b233", "#ffda77", "#35163b"))(optimal_clusters_max)
+      palette_finale <- colorRampPalette(c("#35163b", "#662483", "#f39200", "#f9b233", "#ffda77"))(optimal_clusters_max)
 
       # Convertir en dendrogram
       dend <- as.dendrogram(hc)
@@ -584,7 +584,7 @@ xrf_clust  <- function(data = NULL) {
       for (i in seq_len(n_clusters)) user_colors[i] <- safe_readline(paste("Color for cluster", i, ": "))
       palette_finale <- user_colors
     } else {
-      palette_finale <- colorRampPalette(c("#662483", "#f39200", "#f9b233", "#ffda77", "#35163b"))(n_clusters)
+      palette_finale <- colorRampPalette(c("#35163b", "#662483", "#f39200", "#f9b233", "#ffda77"))(n_clusters)
     }
     cat("\n")
     cat("Palette used:", paste(palette_finale, collapse = ", "), "\n\n")

@@ -107,7 +107,7 @@ visual.clust <- function(data) {
       cat("\nEnter", n_clusters, "colors (by name or hexadecimal, e.g., 'red' or '#FF0000')\n\n")
       custom_palette <- sapply(seq_len(n_clusters), function(i) safe_readline(paste("Color for cluster", i, ": ")))
     } else {
-      custom_palette <- colorRampPalette(c("#662483", "#f39200", "#f9b233", "#ffda77", "#35163b"))(n_clusters)
+      custom_palette <- colorRampPalette(c("#35163b", "#662483", "#f39200", "#f9b233", "#ffda77"))(n_clusters)
     }
   }
 
