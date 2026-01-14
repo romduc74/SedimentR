@@ -73,6 +73,7 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
   }
 
   cat("\nSelected file:", basename(path), "\n")
+  cat("\n")
   extension <- tolower(tools::file_ext(path))
 
   # --- Read CSV ---
@@ -208,7 +209,6 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
     exclude_response <- tolower(safe_readline("Do you want to exclude any columns from the NA filtering? (yes/no): "))
     cat("\n")
     excluded_columns <- NULL
-    cat("\n")
     if (exclude_response == "yes") {
       input <- safe_readline("Enter column names to exclude (separated by commas): ")
       excluded_columns <- trimws(unlist(strsplit(input, ",")))
@@ -257,7 +257,6 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
     if (!exists("xrf_noise")) {
       stop("The function 'xrf_noise()' is not available in the current environment.")
     }
-    cat("\n")
     cat("\nLaunching XRF noise detection...\n\n")
 
     noise_output <- xrf_noise(df)
