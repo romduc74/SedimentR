@@ -23,32 +23,7 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
   if (exists(".my_cache", envir = .GlobalEnv)) {
     clear_cache()
   }
-  # --- Read CSV or Excel ---
-  # if (extension == "csv") {
-  #   df <- tryCatch({
-  #     read.csv(path, sep = sep, fileEncoding = fileEncoding, stringsAsFactors = FALSE, check.names = FALSE)
-  #   }, error = function(e) {
-  #     read.csv(path, sep = sep, fileEncoding = fileEncoding, stringsAsFactors = FALSE, check.names = FALSE)
-  #   })
-  #
-  #   df[] <- lapply(df, function(col) {
-  #     if (is.character(col)) {
-  #       col <- gsub(",", ".", col, fixed = TRUE)
-  #       suppressWarnings(as.numeric(col))
-  #     } else col
-  #   })
-  #
-  # } else if (extension == "xlsx") {
-  #   if (!requireNamespace("readxl", quietly = TRUE)) stop("Package 'readxl' required for Excel files.")
-  #   if (is.null(sheet)) sheet <- readxl::excel_sheets(path)[1]
-  #   df <- readxl::read_excel(path, sheet = sheet)
-  #   df <- as.data.frame(df)
-  # } else stop("Unsupported file format. Use .csv or .xlsx.")
-  # cat("\n")
-  # cat("\nData loaded successfully.\n")
-  # cat("\n")
 
-  #--- Interactive part: Avec ou sans chemin
 
 
   # --- Select file interactively if not provided ---
@@ -76,87 +51,40 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
   cat("\n")
   extension <- tolower(tools::file_ext(path))
 
-  # --- Read CSV ---
-
-  # if (extension == "csv") {
-  #   sep <- safe_readline("Enter separator used in CSV (default ','): ")
-  #   if (sep == "") sep <- ","
-  #   fileEncoding <- safe_readline("Enter file encoding (default 'UTF-8'): ")
-  #   if (fileEncoding == "") fileEncoding <- "UTF-8"
-  #
-  #   df <- tryCatch({
-  #     read.csv(path, sep = sep, fileEncoding = fileEncoding, stringsAsFactors = FALSE, check.names = FALSE)
-  #   }, error = function(e) {
-  #     stop("Failed to read CSV file: ", e$message)
-  #   })
-  #
-  #   # Convert numeric columns (comma → dot)
-  #   df[] <- lapply(df, function(col) {
-  #     if (is.character(col)) {
-  #       col <- gsub(",", ".", col, fixed = TRUE)
-  #       suppressWarnings(as.numeric(col))
-  #     } else col
-  #   })
 
 
 
-    if (extension == "csv") {
+  if (extension == "csv") {
 
-      if (missing(sep) || is.null(sep)) {
-        sep <- safe_readline("Enter separator used in CSV (default ','): ")
-        if (sep == "") sep <- ","
-      }
+    if (missing(sep) || is.null(sep)) {
+      sep <- safe_readline("Enter separator used in CSV (default ','): ")
+      if (sep == "") sep <- ","
+    }
 
-      cat("\n")
+    cat("\n")
 
-      if (missing(fileEncoding) || is.null(fileEncoding)) {
-        fileEncoding <- safe_readline("Enter file encoding (default 'UTF-8'): ")
-        if (fileEncoding == "") fileEncoding <- "UTF-8"
-      }
+    if (missing(fileEncoding) || is.null(fileEncoding)) {
+      fileEncoding <- safe_readline("Enter file encoding (default 'UTF-8'): ")
+      if (fileEncoding == "") fileEncoding <- "UTF-8"
+    }
 
-      # --- Lecture du CSV ---
-      df <- tryCatch({
-        read.csv(path, sep = sep, fileEncoding = fileEncoding,
-                 stringsAsFactors = FALSE, check.names = FALSE)
-      }, error = function(e) {
-        stop("Failed to read CSV file: ", e$message)
-      })
+    # --- Lecture du CSV ---
+    df <- tryCatch({
+      read.csv(path, sep = sep, fileEncoding = fileEncoding,
+               stringsAsFactors = FALSE, check.names = FALSE)
+    }, error = function(e) {
+      stop("Failed to read CSV file: ", e$message)
+    })
 
-      # --- Conversion des colonnes numériques (comma → dot) ---
-      df[] <- lapply(df, function(col) {
-        if (is.character(col)) {
-          col <- gsub(",", ".", col, fixed = TRUE)
-          suppressWarnings(as.numeric(col))
-        } else col
-      })
-
-
+    # --- Conversion des colonnes numériques (comma → dot) ---
+    df[] <- lapply(df, function(col) {
+      if (is.character(col)) {
+        col <- gsub(",", ".", col, fixed = TRUE)
+        suppressWarnings(as.numeric(col))
+      } else col
+    })
 
 
-    # --- Read Excel ---
-  # } else if (extension == "xlsx") {
-  #   if (is.null(sheet)) {
-  #     sheets <- excel_sheets(path)
-  #     cat("\nAvailable sheets:\n")
-  #     cat("\n")
-  #     print(sheets)
-  #     cat("\n")
-  #     repeat {
-  #       sheet_choice <- safe_readline("Enter sheet name or index to load: ")
-  #       if (sheet_choice %in% sheets) {
-  #         sheet <- sheet_choice
-  #         break
-  #       } else if (suppressWarnings(!is.na(as.numeric(sheet_choice))) && as.numeric(sheet_choice) %in% seq_along(sheets)) {
-  #         sheet <- as.numeric(sheet_choice)
-  #         break
-  #       } else {
-  #         cat("Invalid sheet. Try again.\n")
-  #       }
-  #     }
-  #   }
-  #
-  #   df <- read_excel(path, sheet = sheet)
-  #   df <- as.data.frame(df)
 
 
   } else if (extension == "xlsx") {
@@ -199,6 +127,7 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
 
   # --- Gestion des valeurs manquantes ---
   if (anyNA(df)) {
+    cat("\n")
     cat("\nWARNING: The dataframe contains missing values (NA).\n")
     cat("\n")
     cat("Available columns:\n")
@@ -226,13 +155,17 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
         cat("Rows removed:", paste(na_rows, collapse = ", "), "\n")
         df <- df[complete.cases(df_tmp), ]
       } else {
+        cat("\n")
         cat("No rows to remove: no NA values in selected columns.\n")
       }
+      cat("\n")
       cat("The dataframe is now cleaned.\n")
     } else {
+      cat("\n")
       cat("Rows containing NA values were retained.\n")
     }
   } else {
+    cat("\n")
     cat("No missing values found in the dataframe.\n")
   }
 
@@ -241,11 +174,6 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
   cat("\n")
 
 
-  # --- Bloc débruitage XRF via xrf_noise() ---
-  # cat("\n")
-  # cat("Would you like to run the XRF noise detection & denoising module (EEMD-based)? (yes/no): ")
-  # cat("\n")
-  # run_noise <- safe_readline("")
 
   cat("\n")
   run_noise <- safe_readline("Would you like to run the XRF noise detection & denoising module (EEMD-based)? (yes/no): ")
@@ -268,7 +196,6 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
     cat("The dataframe has been updated with denoised & filtered variables.\n\n")
 
   } else {
-    cat("\n")
     cat("XRF noise detection skipped.\n\n")
   }
 
@@ -276,122 +203,133 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
   answer <- safe_readline("Would you like to create log-transformed ratios? (yes/no) : ")
   cat("\n")
   if (tolower(answer) == "yes") {
-    cat("\n",
-        "================== ELEMENT INTERPRETATION ==================\n",
-        "Element      | Use/Interpretation\n",
-        "------------------------------------------------------------\n",
-        "Ca/Fe        | Biogenic/detrital clay ratio, carbonate stratigraphy\n",
-        "Ca/Ti        | Biogenic vs lithogenic sedimentation and carbonate content\n",
-        "Ca/Al        | Changes in terrigenous sediment contribution\n",
-        "Ca/K         | K-rich clay variation from varying bottom currents strength\n",
-        "Fe/K         | Climat proxy: on set of arid conditions (decrease)\n",
-        "Fe/Zr        | Climat proxy: Aridity/humidity indicator: High value more humid\n",
-        "Fe/Rb        | Grain size proxy: grain size in turbidites (High value = coarser grains)\n",
-        "Fe/Ca        | Climat proxy: Measuring terrigenous sediment fluxes, particularly as a rainfall and run- off proxy\n",
-        "Al/Si        | Chemical weathering, clay content\n",
-        "Al/Ca        | Proxy for precipitation and runoff\n",
-        "Si/Al        | Wind strength, weathering intensity, biogenic production and aluminosilicate composition\n",
-        "Si/Ca        | Aeolian dust flux, wind strength\n",
-        "Ti/Ca        | Variation in terrigenous sediment delivery and marine carbonates\n",
-        "Ti/Al        | Aeolian dust, wind strength, aridity, coarse sediment\n",
-        "Ti/K         | Variations in sediment source\n",
-        "Ti/Fe        | Wind strength, sediment provenance\n",
-        "Ti/Rb        | Heavy mineral detection (turbidites)\n",
-        "Ti/Sr        | Variation in terrigenous sediment delivery and climate variability\n",
-        "Zr/Rb        | Grain size proxy, flood events\n",
-        "Mn/Fe        | Redox proxy, diagenesis\n",
-        "Mn/Ti        | Mn enrichment, oxidation levels\n",
-        "Mn/Al        | Oxygenation changes\n",
-        "K/Ti         | Sediment provenance, weathering intensity\n",
-        "K/Ca         | Terrigenous increase (anthropogenic)\n",
-        "K/Rb         | Illite content, porosity sensitivity\n",
-        "K/Al         | Precipitation and runoff, weathering intensity\n",
-        "Cu/Ti        | Post-depositional oxidation\n",
-        "S/Cl         | Pyrite or high organic carbon\n",
-        "Br/Cl        | Marin organic matter, porosity\n",
-        "Br/Ti        | Organic productivity\n",
-        "============================================================\n"
-    )
 
-    cat("\n")
-    cat("\nList from: Micro-XRF Studies of Sediment Cores (Ian W. Croudace & R. Guy Rothwell 2015, doi:https://doi.org/10.1007/978-94-017-9849-5):\n")
-    cat("\n")
+    repeat {
 
-    # Affichage des éléments simples disponibles dans df
-    element_candidates <- colnames(df)
-    element_names <- element_candidates[!grepl("/", element_candidates) & !grepl("log_", element_candidates)]
-    cat("\n Elements available in your dataframe:\n")
-    cat("\n")
-    print(element_names)
-    cat("\n")
-    cat("\n")
-    selected <- safe_readline(prompt = "\nWhat ratios would you like to create? (separate with commas: e.g. Fe/Ti, Ca/K) : ")
-    selected_ratios <- strsplit(selected, ",")[[1]]
-    selected_ratios <- trimws(selected_ratios)
+      created_ratios <- list()
 
-    cat("\n")
+      selected <- safe_readline("\nWhat ratios would you like to create? (separate with commas: e.g. Fe/Ti, Ca/K) : ")
 
-    # for (ratio in selected_ratios) {
-    #   cat(paste0("\nCreation of the log ratio for ", ratio, "\n"))
-    #
-    #   numerator <- safe_readline(paste("Numerator of", ratio, ": "))
-    #   denominator <- safe_readline(paste("Denominator  of", ratio, ": "))
-    #
-    #   var_name <- paste0("log_", numerator, "_", denominator)
-    #
-    #   df[[var_name]] <- ifelse(
-    #     !is.na(df[[numerator]]) & !is.na(df[[denominator]]) & df[[denominator]] != 0,
-    #     log(df[[numerator]] / df[[denominator]]),
-    #     NA
-    #   )
-    #   cat("\n")
-    #   cat(paste0("Variable created: ", var_name, "\n"))
-    #   cat("\n")
-    # }
-    for (ratio in selected_ratios) {
-      cat(paste0("\nCreation of the log ratio for ", ratio, "\n"))
       cat("\n")
-      numerator <- safe_readline(paste("Numerator of", ratio, ": "))
+      cat("\n Ratios examples: Micro-XRF Studies of Sediment Cores (Ian W. Croudace & R. Guy Rothwell 2015, doi:https://doi.org/10.1007/978-94-017-9849-5):\n")
       cat("\n")
-      denominator <- safe_readline(paste("Denominator  of", ratio, ": "))
 
-      var_name <- paste0("log_", numerator, "_", denominator)
 
-      # --- Création dans df ---
-      df[[var_name]] <- ifelse(
-        !is.na(df[[numerator]]) & !is.na(df[[denominator]]) & df[[denominator]] != 0,
-        log(df[[numerator]] / df[[denominator]]),
-        NA
-      )
+      element_candidates <- colnames(df)
+      element_names <- element_candidates[!grepl("/", element_candidates) & !grepl("log_", element_candidates)]
+      cat("\n Elements available in your dataframe:\n")
+      cat("\n")
+      print(element_names)
 
-      # --- Création dans df_denoised_total si disponible ---
-      if (exists("df_denoised_total", inherits = TRUE)) {
-        df_denoised_total[[var_name]] <- ifelse(
-          !is.na(df_denoised_total[[numerator]]) &
-            !is.na(df_denoised_total[[denominator]]) &
-            df_denoised_total[[denominator]] != 0,
-          log(df_denoised_total[[numerator]] / df_denoised_total[[denominator]]),
-          NA
-        )
-      } else if (!exists("df_denoised_total")) {
-        cat("df_denoised_total not found — ratio not added to denoised dataset.\n")
-      }
-      else {
-        df[[var_name]] <- ifelse(
-        !is.na(df[[numerator]]) &
-          !is.na(df[[denominator]]) &
-          df[[denominator]] != 0,
-        log(df[[numerator]] / df[[denominator]]),
-        NA
-        )
+      cat("\n")
+
+      selected_ratios <- trimws(strsplit(selected, ",")[[1]])
+
+      cat("\n")
+
+      for (ratio in selected_ratios) {
+
+        cat(paste0("\nCreation of the log ratio for ", ratio, "\n\n"))
+        #
+        # numerator   <- safe_readline(paste("Numerator of", ratio, ": "))
+        # cat("\n")
+        # denominator <- safe_readline(paste("Denominator of", ratio, ": "))
+
+        repeat {
+          numerator <- safe_readline(paste("Numerator of", ratio, ": "))
+          if (numerator %in% element_candidates) {
+            break
+          } else {
+            cat("\n")
+            cat("Invalid entry. Please enter a valid column name from your dataframe.\n")
+            cat("\n")
+            cat("Available elements:\n")
+            cat("\n")
+            print(element_candidates)
+            cat("\n")
+            cat("\nPlease retry.\n\n")
+          }
         }
 
+        cat("\n")
+
+        # --- Choix du dénominateur ---
+        repeat {
+          denominator <- safe_readline(paste("Denominator of", ratio, ": "))
+          if (denominator %in% element_candidates) {
+            break
+          } else {
+            cat("\n")
+            cat("Invalid entry. Please enter a valid column name from your dataframe.\n")
+            cat("\n")
+            cat("Available elements:\n")
+            cat("\n")
+            print(element_candidates)
+            cat("\n")
+            cat("\nPlease retry.\n\n")
+          }
+        }
+
+        var_name <- paste0("log_", numerator, "_", denominator)
+
+        # Création dans df
+        df[[var_name]] <- ifelse(
+          !is.na(df[[numerator]]) &
+            !is.na(df[[denominator]]) &
+            df[[denominator]] != 0,
+          log(df[[numerator]] / df[[denominator]]),
+          NA
+        )
+
+        # Création dans df_denoised_total si dispo
+        if (exists("df_denoised_total", inherits = TRUE)) {
+          df_denoised_total[[var_name]] <- ifelse(
+            !is.na(df_denoised_total[[numerator]]) &
+              !is.na(df_denoised_total[[denominator]]) &
+              df_denoised_total[[denominator]] != 0,
+            log(df_denoised_total[[numerator]] / df_denoised_total[[denominator]]),
+            NA
+          )
+        }
+
+        created_ratios[[length(created_ratios) + 1]] <- c(
+          ratio = ratio,
+          numerator = numerator,
+          denominator = denominator,
+          variable = var_name
+        )
+      }
+
+      # -------- SUMMARY --------
+      cat("\n==================== SUMMARY OF CREATED RATIOS ====================\n\n")
+      for (i in seq_along(created_ratios)) {
+        r <- created_ratios[[i]]
+        cat(sprintf("[%d] %s  ->  log(%s / %s)  =>  %s\n\n",
+                    i, r["ratio"], r["numerator"], r["denominator"], r["variable"]))
+      }
+      cat("==================================================================\n\n")
+
+
+      confirm <- tolower(safe_readline("Are these ratios correct? (yes/no): "))
       cat("\n")
-      cat(paste0("Variable created: ", var_name, "\n"))
-      cat("\n")
+
+      if (confirm == "yes") {
+        cat("Ratios confirmed and kept.\n\n")
+        break
+      } else {
+        cat("Ratios will be discarded. Let's try again.\n\n")
+
+        # Nettoyage des variables créées
+        for (r in created_ratios) {
+          df[[r["variable"]]] <- NULL
+          if (exists("df_denoised_total", inherits = TRUE)) {
+            df_denoised_total[[r["variable"]]] <- NULL
+          }
+        }
+      }
     }
 
-  } else {
+  }else {
     cat("No log-transformed ratios were created.\n")
   }
   cat("\n")
@@ -402,14 +340,10 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
   set_cache("df_clean_cache", df_clean)
 
   if (exists("df_denoised_total")){
-  assign("df_denoised_total", df_denoised_total, envir=.GlobalEnv)
-  set_cache("df_denoised_total_cache", df_denoised_total)
-    }
+    assign("df_denoised_total", df_denoised_total, envir=.GlobalEnv)
+    set_cache("df_denoised_total_cache", df_denoised_total)
+  }
 
-  # if(exists("set_cache"))
-  #   {
-  #   set_cache("df_clean_cache", df_clean)
-  #   set_cache("df_denoised_total_cache", df_denoised_total)
-  # }
+
 
 }
