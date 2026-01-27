@@ -63,25 +63,91 @@ scale_data <- function(donnees=NULL) {
   colonnes_supprimees <- character(0)
 
   # Suppression éventuelle de colonnes
-  reponse <- safe_readline(prompt = "Would you like to delete certain columns before the analysis? (yes/no): ")
+  # reponse <- safe_readline(prompt = "Would you like to delete certain columns before the analysis? (yes/no): ")
+  # cat("\n")
+
+
+
+  # if (tolower(reponse) == "yes") {
+  #   colonnes_a_supprimer <- safe_readline(prompt = "Enter the names of the columns to be deleted, separated by commas: ")
+  #   colonnes_a_supprimer <- strsplit(colonnes_a_supprimer, ",")[[1]]
+  #   colonnes_a_supprimer <- trimws(colonnes_a_supprimer)
+  #
+  #   colonnes_existantes <- intersect(colonnes_a_supprimer, names(donnees))
+  #   if (length(colonnes_existantes) > 0) {
+  #     donnees <- donnees[, !(names(donnees) %in% colonnes_existantes)]
+  #     colonnes_supprimees <- colonnes_existantes
+  #     cat("\nThe subsequent columns have been removed: ", paste(colonnes_existantes, collapse = ", "), "\n")
+  #   } else {
+  #     cat("\nNone of the specified columns exist in the dataframe.\n")
+  #   }
+  # } else {
+  #   cat("No columns will be deleted.\n")
+  # }
+
+  # -------------------------------
+  # Suppression obligatoire de la colonne profondeur
+  # -------------------------------
+  repeat {
+    col_profondeur <- safe_readline("Enter the name of the depth column to remove: ")
+    cat("\n")
+
+    if (!col_profondeur %in% names(donnees)) {
+      cat("\nError: column not found. Please choose among:\n")
+     # print(names(donnees))
+      cat("\n")
+    } else {
+      donnees <- donnees[, !(names(donnees) %in% col_profondeur)]
+      colonnes_supprimees <- c(colonnes_supprimees, col_profondeur)
+      cat("\n")
+      cat("\nDepth column removed: ", col_profondeur, "\n")
+      break
+    }
+  }
+
+  # -------------------------------
+  # Suppression éventuelle d'autres colonnes
+  # -------------------------------
+  repeat {
+    reponse <- tolower(safe_readline("Would you like to delete other columns before the analysis? (yes/no): "))
+    if (reponse %in% c("yes", "no")) break
+    cat("Please enter 'yes' or 'no'.\n")
+  }
+
   cat("\n")
 
-  if (tolower(reponse) == "yes") {
-    colonnes_a_supprimer <- safe_readline(prompt = "Enter the names of the columns to be deleted, separated by commas: ")
-    colonnes_a_supprimer <- strsplit(colonnes_a_supprimer, ",")[[1]]
-    colonnes_a_supprimer <- trimws(colonnes_a_supprimer)
+  if (reponse == "yes") {
+    repeat {
+      colonnes_a_supprimer <- safe_readline("Enter the names of the columns to be deleted, separated by commas: ")
+      colonnes_a_supprimer <- strsplit(colonnes_a_supprimer, ",")[[1]]
+      colonnes_a_supprimer <- trimws(colonnes_a_supprimer)
 
-    colonnes_existantes <- intersect(colonnes_a_supprimer, names(donnees))
-    if (length(colonnes_existantes) > 0) {
-      donnees <- donnees[, !(names(donnees) %in% colonnes_existantes)]
-      colonnes_supprimees <- colonnes_existantes
-      cat("\nThe subsequent columns have been removed: ", paste(colonnes_existantes, collapse = ", "), "\n")
-    } else {
-      cat("\nNone of the specified columns exist in the dataframe.\n")
+      colonnes_existantes <- intersect(colonnes_a_supprimer, names(donnees))
+      colonnes_invalides  <- setdiff(colonnes_a_supprimer, names(donnees))
+
+      if (length(colonnes_existantes) == 0) {
+        cat("\nError: none of the specified columns exist. Try again.\n")
+        print(names(donnees))
+        cat("\n")
+      } else {
+        if (length(colonnes_invalides) > 0) {
+          cat("\nWarning: these columns do not exist and were ignored: ",
+              paste(colonnes_invalides, collapse = ", "), "\n")
+        }
+
+        donnees <- donnees[, !(names(donnees) %in% colonnes_existantes)]
+        colonnes_supprimees <- c(colonnes_supprimees, colonnes_existantes)
+
+        cat("\nThe following columns have been removed: ",
+            paste(colonnes_existantes, collapse = ", "), "\n")
+        break
+      }
     }
   } else {
-    cat("No columns will be deleted.\n")
+    cat("No additional columns will be deleted.\n")
   }
+
+
 
   if (ncol(donnees) == 0) {
     stop("The dataframe is empty after deleting the columns. Make sure you don't delete all the columns.")
