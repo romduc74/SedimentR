@@ -24,39 +24,61 @@ prop.select <- function(df_normalized=NULL) {
     return(input)
   }
 
+
+
   repeat {
-    # Check if df_normal is already in cache
     if ("df_normalized_cache" %in% list_cache()) {
       df_normalized <- get_cache("df_normalized_cache")
-      message("Using cached 'df_normalized_cache' dataframe.")
+      message("Using cached 'df_normalized_cache'.")
       break
     }
 
-    # Otherwise, show data frames available in the global environment
-    df_list <- ls(envir = .GlobalEnv)
-    df_list <- df_list[sapply(df_list, function(x) is.data.frame(get(x, envir = .GlobalEnv)))]
+    message("No normalized data found. Launching scale_data() to create df_normalized.")
+    scale_data()
 
-    if (length(df_list) == 0) {
-      stop("No data frames found in the global environment.")
-    }
-
-    cat("\nSelect the dataframe with the selected elements:\n")
-    print(df_list)
-    cat("\n")
-
-    df_name <- readline("Enter the name of the dataframe from the exit of the scale_data function: ")
-
-    # If a valid dataframe name is entered
-    if (df_name %in% df_list) {
-      df_normalized <- get(df_name, envir = .GlobalEnv)
-      set_cache("df_normalized_cache", df_normalized)
-      #message("Dataframe cached as 'df_normal' for future use.")
+    if ("df_normalized_cache" %in% list_cache()) {
+      df_normalized <- get_cache("df_normalized_cache")
       break
+    } else {
+      message("df_normalized_cache was not created. Please complete scale_data() properly.")
     }
-
-    # Otherwise, try again
-    cat("\n Dataframe not found. Try again.\n")
   }
+
+
+## OLD MAIS A GARDER
+  # repeat {
+  #   # Check if df_normal is already in cache
+  #   if ("df_normalized_cache" %in% list_cache()) {
+  #     df_normalized <- get_cache("df_normalized_cache")
+  #     message("Using cached 'df_normalized_cache' dataframe.")
+  #     break
+  #   }
+  #
+  #   # Otherwise, show data frames available in the global environment
+  #   df_list <- ls(envir = .GlobalEnv)
+  #   df_list <- df_list[sapply(df_list, function(x) is.data.frame(get(x, envir = .GlobalEnv)))]
+  #
+  #   if (length(df_list) == 0) {
+  #     stop("No data frames found in the global environment.")
+  #   }
+  #
+  #   cat("\nSelect the dataframe with the selected elements:\n")
+  #   print(df_list)
+  #   cat("\n")
+  #
+  #   df_name <- readline("Enter the name of the dataframe from the exit of the scale_data function: ")
+  #
+  #   # If a valid dataframe name is entered
+  #   if (df_name %in% df_list) {
+  #     df_normalized <- get(df_name, envir = .GlobalEnv)
+  #     set_cache("df_normalized_cache", df_normalized)
+  #     #message("Dataframe cached as 'df_normal' for future use.")
+  #     break
+  #   }
+  #
+  #   # Otherwise, try again
+  #   cat("\n Dataframe not found. Try again.\n")
+  # }
 
   repeat {
     acp <- prcomp(df_normalized, center = TRUE, scale. = FALSE)
