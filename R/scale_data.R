@@ -95,7 +95,6 @@ scale_data <- function(donnees=NULL) {
     if (!col_profondeur %in% names(donnees)) {
       cat("\nError: column not found. Please choose among:\n")
      # print(names(donnees))
-      cat("\n")
     } else {
       donnees <- donnees[, !(names(donnees) %in% col_profondeur)]
       colonnes_supprimees <- c(colonnes_supprimees, col_profondeur)
@@ -105,6 +104,7 @@ scale_data <- function(donnees=NULL) {
     }
   }
 
+  cat("\n")
   # -------------------------------
   # Suppression éventuelle d'autres colonnes
   # -------------------------------
