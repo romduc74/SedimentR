@@ -492,7 +492,7 @@ visual.clust <- function(data) {
       val <- safe_readline(prompt, default = as.character(default))
       val_num <- suppressWarnings(as.numeric(val))
       if (!is.na(val_num) && val_num > 0) return(val_num)
-      cat("Invalid input. Please enter a positive number or press Enter for default.\n")
+      cat("\nInvalid input. Please enter a positive number or press Enter for default.\n\n")
     }
   }
 
