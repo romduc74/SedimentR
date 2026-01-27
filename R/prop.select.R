@@ -26,23 +26,23 @@ prop.select <- function(df_normalized=NULL) {
 
 
 
-  repeat {
-    if ("df_normalized_cache" %in% list_cache()) {
-      df_normalized <- get_cache("df_normalized_cache")
-      message("Using cached 'df_normalized_cache'.")
-      break
-    }
-
-    message("No normalized data found. Launching scale_data() to create df_normalized.")
-    scale_data()
-
-    if ("df_normalized_cache" %in% list_cache()) {
-      df_normalized <- get_cache("df_normalized_cache")
-      break
-    } else {
-      message("df_normalized_cache was not created. Please complete scale_data() properly.")
-    }
-  }
+  # repeat {
+  #   if ("df_normalized_cache" %in% list_cache()) {
+  #     df_normalized <- get_cache("df_normalized_cache")
+  #     message("Using cached 'df_normalized_cache'.")
+  #     break
+  #   }
+  #
+  #   message("No normalized data found. Launching scale_data() to create df_normalized.")
+  #   scale_data()
+  #
+  #   if ("df_normalized_cache" %in% list_cache()) {
+  #     df_normalized <- get_cache("df_normalized_cache")
+  #     break
+  #   } else {
+  #     message("df_normalized_cache was not created. Please complete scale_data() properly.")
+  #   }
+  # }
 
 
 ## OLD MAIS A GARDER
@@ -79,6 +79,33 @@ prop.select <- function(df_normalized=NULL) {
   #   # Otherwise, try again
   #   cat("\n Dataframe not found. Try again.\n")
   # }
+
+
+  # ---  Vérifier si l'utilisateur a fourni un dataframe ---
+  if (!is.null(df_normalized)) {
+    message("Using the dataframe provided by the user.")
+  } else {
+    # --- Sinon, utiliser le cache / scale_data() comme avant ---
+    repeat {
+      if ("df_normalized_cache" %in% list_cache()) {
+        df_normalized <- get_cache("df_normalized_cache")
+        message("Using cached 'df_normalized_cache'.")
+        break
+      }
+
+      message("No normalized data found. Launching scale_data() to create df_normalized.")
+      scale_data()
+
+      if ("df_normalized_cache" %in% list_cache()) {
+        df_normalized <- get_cache("df_normalized_cache")
+        break
+      } else {
+        message("df_normalized_cache was not created. Please complete scale_data() properly.")
+      }
+    }
+  }
+
+
 
   repeat {
     acp <- prcomp(df_normalized, center = TRUE, scale. = FALSE)
