@@ -216,6 +216,68 @@ scale_data <- function(donnees=NULL) {
   } else {
     cat("Summary not saved.\n")
   }
+
+  # -------------------------------
+  # Sauvegarde optionnelle des données normalisées
+  # -------------------------------
+  repeat {
+    save_data <- tolower(safe_readline("Would you like to save the normalized data (CLR-transformed)? (yes/no): "))
+    cat("\n")
+    if (save_data %in% c("yes", "no")) break
+    cat("Please enter 'yes' or 'no'.\n\n")
+  }
+
+  if (save_data == "yes") {
+    if (!requireNamespace("rstudioapi", quietly = TRUE)) install.packages("rstudioapi")
+    library(rstudioapi)
+
+    repeat {
+      ext_choice <- tolower(safe_readline("Desired file extension: csv or xlsx: "))
+      cat("\n")
+      if (!ext_choice %in% c("csv", "xlsx")) {
+        cat("Invalid extension. Please choose 'csv' or 'xlsx'.\n\n")
+        next
+      }
+
+      if (!rstudioapi::isAvailable()) {
+        cat("Saving requires RStudio API. Cannot select file interactively.\n\n")
+        break
+      }
+
+      cat("Please select the destination file...\n")
+      path_save <- rstudioapi::selectFile(
+        caption = "Save normalized data",
+        label   = "Save",
+        path    = getwd(),
+        filter  = if (ext_choice == "csv") list("CSV files" = "csv") else list("Excel files" = "xlsx"),
+        existing = FALSE
+      )
+
+      if (!nzchar(path_save)) {
+        cat("Saving cancelled.\n\n")
+        break
+      }
+
+      # Ajout automatique de l'extension si nécessaire
+      if (!grepl(paste0("\\.", ext_choice, "$"), path_save, ignore.case = TRUE)) {
+        path_save <- paste0(path_save, ".", ext_choice)
+      }
+
+      # Écriture selon le format choisi
+      if (ext_choice == "csv") {
+        write.csv(df_normalized, path_save, row.names = FALSE)
+      } else {
+        if (!requireNamespace("writexl", quietly = TRUE)) install.packages("writexl")
+        writexl::write_xlsx(df_normalized, path = path_save)
+      }
+
+      cat("\nNormalized data successfully saved to:", path_save, "\n\n")
+      break
+    }
+  } else {
+    cat("Normalized data not saved.\n\n")
+  }
+
   assign("df_clean_normalized", df_normalized, envir = .GlobalEnv)
   return(invisible(df_normalized))
 }
