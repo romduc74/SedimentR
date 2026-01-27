@@ -97,7 +97,6 @@ scale_data <- function(donnees=NULL) {
     } else {
       donnees <- donnees[, !(names(donnees) %in% col_profondeur)]
       colonnes_supprimees <- c(colonnes_supprimees, col_profondeur)
-      cat("\n")
       cat("\nDepth column removed: ", col_profondeur, "\n")
       break
     }
