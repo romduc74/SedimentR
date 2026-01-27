@@ -19,9 +19,16 @@ xrf_clust  <- function(data = NULL) {
   }
 
   # === Safe readline wrapper ===
-  safe_readline <- function(prompt_msg) {
-    input <- readline(prompt = prompt_msg)
-    if (tolower(input) == "exit") stop("User interrupted execution via exit.")
+  # safe_readline <- function(prompt_msg) {
+  #   input <- readline(prompt = prompt_msg)
+  #   if (tolower(input) == "exit") stop("User interrupted execution via exit.")
+  #   return(input)
+  # }
+
+  safe_readline <- function(prompt = "", default = NULL) {
+    input <- tryCatch({ readline(prompt) }, error = function(e) { "" })
+    if (tolower(trimws(input)) == "exit") stop("Execution stopped by user with 'exit'.", call. = FALSE)
+    if (input == "" && !is.null(default)) return(default)
     return(input)
   }
 
@@ -638,6 +645,16 @@ xrf_clust  <- function(data = NULL) {
 
     cat("\n")
 
+    get_numeric_input <- function(prompt, default) {
+      repeat {
+        val <- safe_readline(prompt, default = as.character(default))
+        val_num <- suppressWarnings(as.numeric(val))
+        if (!is.na(val_num) && val_num > 0) return(val_num)
+        cat("Invalid input. Please enter a positive number or press Enter for default.\n")
+      }
+    }
+
+
     if (save_pdf %in% c("yes", "y")) {
       if (!requireNamespace("rstudioapi", quietly = TRUE)) install.packages("rstudioapi")
       library(rstudioapi)
@@ -658,9 +675,16 @@ xrf_clust  <- function(data = NULL) {
             pdf_path <- paste0(pdf_path, ".pdf")
 
           # Demande des dimensions personnalisées
-          pdf_width <- as.numeric(safe_readline("Enter desired PDF width (in inches, e.g., 10): "))
+          # pdf_width <- as.numeric(safe_readline("Enter desired PDF width (in inches, e.g., 10): "))
+          # cat("\n")
+          # pdf_height <- as.numeric(safe_readline("Enter desired PDF height (in inches, e.g., 8): "))
+
+
+          # Nouveau code sécurisé avec défaut et validation
+          pdf_width  <- get_numeric_input("Enter desired PDF width (in inches, [default = 10]): ", 10)
           cat("\n")
-          pdf_height <- as.numeric(safe_readline("Enter desired PDF height (in inches, e.g., 8): "))
+          pdf_height <- get_numeric_input("Enter desired PDF height (in inches, [default = 8]): ", 8)
+          cat("\n")
 
           # Crée le PDF avec les dimensions choisies
           pdf(pdf_path, width = pdf_width, height = pdf_height)
