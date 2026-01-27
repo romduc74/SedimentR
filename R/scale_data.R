@@ -90,7 +90,6 @@ scale_data <- function(donnees=NULL) {
   # -------------------------------
   repeat {
     col_profondeur <- safe_readline("Enter the name of the depth column to remove: ")
-    cat("\n")
 
     if (!col_profondeur %in% names(donnees)) {
       cat("\nError: column not found. Please choose among:\n")
