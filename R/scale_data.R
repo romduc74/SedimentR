@@ -215,6 +215,7 @@ scale_data <- function(donnees=NULL) {
     }
   } else {
     cat("Summary not saved.\n")
+    cat("\n")
   }
 
   # -------------------------------
