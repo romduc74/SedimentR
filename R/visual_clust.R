@@ -210,6 +210,52 @@ visual.clust <- function(data) {
       legend.position = "none"
     )
 
+
+  ## ============================================================
+  ## HORIZONTAL DEPTH MARKERS (OPTION)
+  ## ============================================================
+  cat("\n\n==============================\n")
+  cat("  HORIZONTAL DEPTH LINES OPTION\n")
+  cat("==============================\n\n")
+
+  depth_vals <- NULL
+
+  add_hlines <- tolower(safe_readline(
+    "Would you like to add horizontal depth lines? (yes/no): ",
+    default = "no"
+  ))
+
+  cat("\n")
+
+  if (add_hlines %in% c("yes", "y")) {
+
+    depth_vals_input <- safe_readline(
+      "Enter depths separated by commas (e.g., 12.5, 34, 56): "
+    )
+
+    depth_vals <- suppressWarnings(
+      as.numeric(strsplit(depth_vals_input, ",")[[1]])
+    )
+
+    depth_vals <- depth_vals[!is.na(depth_vals)]
+
+    if (length(depth_vals) > 0) {
+      main_plot <- main_plot +
+        geom_hline(
+          yintercept = depth_vals,
+          linetype = "dashed",
+          linewidth = 0.3,
+          color = "black"
+        )
+
+      cat("\nHorizontal dashed lines added at depths:\n")
+      cat("\n")
+      print(depth_vals)
+    } else {
+      cat("\nNo valid depths provided. No lines added.\n")
+    }
+  }
+
   if (use_clusters) {
     main_plot <- main_plot +
       scale_color_gradientn(colors = custom_palette)
@@ -273,6 +319,16 @@ visual.clust <- function(data) {
         legend.position = "right",
         text = element_text(family = "sans", face = "bold")
       )
+
+    if (!is.null(depth_vals) && length(depth_vals) > 0) {
+      core_plot <- core_plot +
+        geom_hline(
+          yintercept = depth_vals,
+          linetype   = "dashed",
+          linewidth  = 0.3,
+          color      = "black"
+        )
+    }
 
     combined_plot <- main_plot + core_plot + patchwork::plot_layout(widths = c(4, 0.25))
     print(combined_plot)
