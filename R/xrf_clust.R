@@ -788,6 +788,11 @@ xrf_clust  <- function(data = NULL) {
     db_index <- clusterCrit::intCriteria(as.matrix(data), clustering_result$cluster, "Davies_Bouldin")
     dbi <- db_index$davies_bouldin
 
+    # Calinski-Harabasz
+    ch_index <- clusterCrit::intCriteria(as.matrix(data), clustering_result$cluster, "Calinski_Harabasz")
+    ch <- ch_index$calinski_harabasz
+
+
     # Redirige la sortie temporairement pour ne rien afficher
     temp <- tempfile()
     sink(temp)
@@ -808,56 +813,149 @@ xrf_clust  <- function(data = NULL) {
     else if(dbi < 1.0) "Moderate separation"
     else "Weak separation, overlapping"
 
+    ch_text <- if(ch > 500) "Excellent structure (very compact & well separated)"
+    else if(ch > 200) "Good structure"
+    else if(ch > 100) "Moderate structure"
+    else "Weak structure (poor separation)"
+
     boot_text <- if(stab_mean > 0.8) "Very stable clusters"
     else if(stab_mean > 0.6) "Stable clusters"
     else if(stab_mean > 0.4) "Moderately stable"
     else "Unstable clusters, use caution"
 
-    overall_text <- if(sil_mean>0.6 & dbi<0.75 & stab_mean>0.65) {
-      "Clustering quality is strong → All validation indices support well-separated and stable clusters."
-    } else if(sil_mean>0.4 & dbi<1 & stab_mean>0.4) {
-      "Clustering quality is acceptable → The clustering remains interpretable, but conclusions should rely on a joint discussion of the validation indices and domain knowledge."
+    # overall_text <- if(sil_mean>0.6 & dbi<0.75 & stab_mean>0.65) {
+    #   "Clustering quality is strong → All validation indices support well-separated and stable clusters."
+    # } else if(sil_mean>0.4 & dbi<1 & stab_mean>0.4) {
+    #   "Clustering quality is acceptable → The clustering remains interpretable, but conclusions should rely on a joint discussion of the validation indices and domain knowledge."
+    # } else {
+    #   "Clustering is weak → Clusters poorly separated or unstable."
+    # }
+
+    overall_text <- if(stab_mean < 0.4) {
+      "Clustering is unreliable → Low bootstrap stability; results likely artefactual."
+    } else if(ch < 100) {
+      "No clear cluster structure → Low Calinski–Harabasz index; data weakly clusterable."
+    } else if(stab_mean > 0.8 & ch > 300 & sil_mean > 0.6 & dbi < 0.75) {
+      "Excellent clustering → Strong, stable, and well-separated clusters."
+    } else if(stab_mean > 0.75 & ch > 300 & sil_mean > 0.45) {
+      "Robust and well-structured → Clusters are stable with reasonably good separation."
+    } else if(stab_mean > 0.8 & ch > 300 & sil_mean <= 0.45) {
+      "Robust but overlapping → Cluster structure is strong and highly stable, but boundaries are fuzzy."
+    } else if(stab_mean > 0.6 & ch > 150) {
+      "Moderate structure → Clusters are interpretable but not sharply defined."
     } else {
-      "Clustering is weak → Clusters poorly separated or unstable."
+      "Weak clustering → Poor separation and/or low stability; interpret with caution."
     }
 
     cat("\n")
     # --- Summary lines with explanations ---
+    # summary_lines <- c(
+    #   "====== Clustering Analysis (K-means) ======",
+    #   "",
+    #   sprintf("Silhouette mean                : %.3f", sil_mean),
+    #   sprintf("Davies-Bouldin index           : %.3f", dbi),
+    #   sprintf("Calinski-Harabasz index        : %.1f", ch),
+    #   sprintf("Bootstrap stability (mean)     : %.3f", stab_mean),
+    #   "",
+    #   "------------------------------------------------",
+    #   "",
+    #   "Interpretation per metric:",
+    #   "",
+    #   sprintf("- Silhouette       : %.3f → %s", sil_mean, sil_text),
+    #   "",
+    #   "    → The silhouette measures cohesion and separation.",
+    #   "      Values near 1 indicate distinct, well-separated clusters.",
+    #   "      Values around 0 suggest overlap; negative values mean misclassification.",
+    #   "",
+    #   sprintf("- Davies-Bouldin   : %.3f → %s", dbi, db_text),
+    #   "",
+    #   "    → The Davies–Bouldin index measures how similar clusters are.",
+    #   "      Lower is better: values < 0.5 indicate strong separation.",
+    #   "      Values > 1 imply overlapping clusters.",
+    #   "",
+    #   sprintf("- Calinski–Harabasz : %.1f → %s", ch, ch_text),
+    #   "",
+    #   "    → The Calinski–Harabasz index measures the ratio of between-cluster",
+    #   "      dispersion to within-cluster dispersion.",
+    #   "      Higher values indicate more distinct and compact clusters.",
+    #   "",
+    #   sprintf("- Bootstrap stab.  : %.3f → %s", stab_mean, boot_text),
+    #   "",
+    #   "    → The bootstrap stability measures how reproducible clusters are.",
+    #   "      High values (>0.8) mean clusters remain stable across resampling.",
+    #   "      Low values (<0.4) mean clusters are unstable and likely artefacts.",
+    #   "",
+    #   "Overall evaluation:",
+    #   "",
+    #   overall_text,
+    #   "",
+    #   "------------------------------------------------"
+    # )
+    #
+
     summary_lines <- c(
-      "====== Clustering Analysis (K-means) ======",
+      "====== Clustering Validation Summary ======",
       "",
-      sprintf("Silhouette mean                : %.3f", sil_mean),
-      sprintf("Davies-Bouldin index           : %.3f", dbi),
-      sprintf("Bootstrap stability (mean)     : %.3f", stab_mean),
+      "Core validation metrics:",
+      "",
+      sprintf("• Bootstrap stability (credibility)   : %.3f", stab_mean),
+      sprintf("• Calinski–Harabasz (global structure): %.1f", ch),
+      sprintf("• Silhouette (boundary sharpness)     : %.3f", sil_mean),
+      sprintf("• Davies–Bouldin (overlap index)      : %.3f", dbi),
       "",
       "------------------------------------------------",
       "",
-      "Interpretation per metric:",
+      "Hierarchical interpretation of indices (with cut-offs):",
       "",
-      sprintf("- Silhouette       : %.3f → %s", sil_mean, sil_text),
+      sprintf("- Bootstrap stability   : %.3f → %s", stab_mean, boot_text),
+      "    → Question: Do the clusters really exist?",
+      "      Role: Statistical credibility filter.",
+      "      Cut-offs:",
+      "        < 0.40  = very unstable (artefactual)",
+      "        0.40–0.60 = weak stability",
+      "        0.60–0.75 = moderate stability",
+      "        0.75–0.85 = stable",
+      "        > 0.85  = very stable",
       "",
-      "    → The silhouette measures cohesion and separation.",
-      "      Values near 1 indicate distinct, well-separated clusters.",
-      "      Values around 0 suggest overlap; negative values mean misclassification.",
+      sprintf("- Calinski–Harabasz     : %.1f → %s", ch, ch_text),
+      "    → Question: Is there a real global cluster structure in the data?",
+      "      Role: Structural existence filter.",
+      "      Cut-offs (approximate, depend on n & p):",
+      "        < 100   = no clear structure",
+      "        100–200 = weak structure",
+      "        200–500 = moderate structure",
+      "        500–1000 = good structure",
+      "        > 1000  = excellent structure",
       "",
-      sprintf("- Davies-Bouldin   : %.3f → %s", dbi, db_text),
+      sprintf("- Silhouette            : %.3f → %s", sil_mean, sil_text),
+      "    → Question: Are the cluster boundaries geometrically sharp?",
+      "      Role: Refinement of separation quality.",
+      "      Cut-offs:",
+      "        < 0.20  = very poor / heavy overlap",
+      "        0.20–0.40 = weak separation",
+      "        0.40–0.60 = moderate separation",
+      "        0.60–0.75 = good separation",
+      "        > 0.75  = excellent separation",
       "",
-      "    → The Davies–Bouldin index measures how similar clusters are.",
-      "      Lower is better: values < 0.5 indicate strong separation.",
-      "      Values > 1 imply overlapping clusters.",
+      sprintf("- Davies–Bouldin        : %.3f → %s", dbi, db_text),
+      "    → Question: How much do clusters overlap?",
+      "      Role: Refinement of geometric compactness and redundancy.",
+      "      Cut-offs:",
+      "        < 0.50  = excellent (very compact, well separated)",
+      "        0.50–0.75 = good separation",
+      "        0.75–1.00 = moderate separation",
+      "        1.00–1.25 = weak separation",
+      "        > 1.25  = poor / strong overlap",
       "",
-      sprintf("- Bootstrap stab.  : %.3f → %s", stab_mean, boot_text),
+      "------------------------------------------------",
       "",
-      "    → The bootstrap stability measures how reproducible clusters are.",
-      "      High values (>0.8) mean clusters remain stable across resampling.",
-      "      Low values (<0.4) mean clusters are unstable and likely artefacts.",
-      "",
-      "Overall evaluation:",
+      "Overall hierarchical evaluation:",
       "",
       overall_text,
       "",
       "------------------------------------------------"
     )
+
 
 
     cat(paste(summary_lines, collapse="\n"), "\n")
