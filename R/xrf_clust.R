@@ -705,7 +705,7 @@ xrf_clust  <- function(data = NULL) {
 
   # --- Optional geochemical visualization ---
   cat("\n")
-  show_geo <- tolower(safe_readline("Would you like to visualize geochemical profiles by cluster? (yes/no): "))
+  show_geo <- tolower(safe_readline("Would you like to visualize geochemical profiles ? (yes/no): "))
   cat("\n")
 
 
