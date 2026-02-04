@@ -93,8 +93,9 @@ scale_data <- function(donnees=NULL) {
 
     if (!col_profondeur %in% names(donnees)) {
       cat("\nError: column not found. Please choose among:\n")
-     # print(names(donnees))
+      # print(names(donnees))
     } else {
+      depth_col <- donnees[[col_profondeur]]
       donnees <- donnees[, !(names(donnees) %in% col_profondeur)]
       colonnes_supprimees <- c(colonnes_supprimees, col_profondeur)
       cat("\nDepth column removed: ", col_profondeur, "\n")
@@ -166,6 +167,12 @@ scale_data <- function(donnees=NULL) {
 
   df_normalized <- cbind(df_clr, colonnes_log)
   set_cache("df_normalized_cache",df_normalized)
+
+  df_normalized_depth <- cbind(
+    depth = depth_col,
+    df_normalized
+  )
+
   # -------------------------------
   # Résumé des choix utilisateur
   # -------------------------------
@@ -269,7 +276,7 @@ scale_data <- function(donnees=NULL) {
         write.csv(df_normalized, path_save, row.names = FALSE)
       } else {
         if (!requireNamespace("writexl", quietly = TRUE)) install.packages("writexl")
-        writexl::write_xlsx(df_normalized, path = path_save)
+        writexl::write_xlsx(df_normalized_depth, path = path_save)
       }
 
       cat("\nNormalized data successfully saved to:", path_save, "\n\n")
