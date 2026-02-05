@@ -930,9 +930,12 @@ visual.clust <- function(data) {
 
         print(combined_age_depth_plot)
 
+        plot_to_export <- combined_age_depth_plot
+
       } else {
         print(dual_plot)
         cat("\nVirtual Core skipped for Age–Depth plot.\n")
+        plot_to_export <- dual_plot
       }
 
 
@@ -986,6 +989,66 @@ visual.clust <- function(data) {
           }
         }
       }
+
+
+      cat("\n\n==============================\n")
+      cat("  EXPORT GRAPH TO PDF OPTION\n")
+      cat("==============================\n\n")
+      save_pdf <- tolower(safe_readline("Would you like to export the figure as a PDF? (yes/no): ", default = "no"))
+
+      get_numeric_input <- function(prompt, default) {
+        repeat {
+          val <- safe_readline(prompt, default = as.character(default))
+          val_num <- suppressWarnings(as.numeric(val))
+          if (!is.na(val_num) && val_num > 0) return(val_num)
+          cat("\nInvalid input. Please enter a positive number or press Enter for default.\n\n")
+        }
+      }
+
+      if (save_pdf %in% c("yes", "y")) {
+        if (!requireNamespace("rstudioapi", quietly = TRUE)) install.packages("rstudioapi")
+        library(rstudioapi)
+
+        if (rstudioapi::isAvailable()) {
+          pdf_path <- rstudioapi::selectFile(
+            caption = "Save cluster visualization",
+            label   = "Save",
+            path    = getwd(),
+            filter  = list("PDF files" = "pdf"),
+            existing = FALSE
+          )
+
+          if (nzchar(pdf_path)) {
+            if (!grepl("\\.pdf$", pdf_path, ignore.case = TRUE))
+              pdf_path <- paste0(pdf_path, ".pdf")
+
+            pdf_width  <- get_numeric_input("Enter desired PDF width (in inches, [default = 10]): ", 10)
+            cat("\n")
+            pdf_height <- get_numeric_input("Enter desired PDF height (in inches, [default = 8]): ", 8)
+            cat("\n")
+
+            pdf(pdf_path, width = pdf_width, height = pdf_height)
+
+            if (exists("plot_to_export")) {
+              print(plot_to_export)
+            } else {
+              cat("\nNo plot available to export.\n")
+            }
+
+            dev.off()
+            cat("\n\nCluster-Depth-Age visualization saved to:", pdf_path, "\n")
+          } else {
+            cat("\nSaving cancelled.\n")
+          }
+        } else {
+          cat("\nRStudio API not available. Cannot select file interactively.\n")
+        }
+      } else {
+        cat("\nPDF export skipped.\n")
+      }
+
+
+
       cat("\n\n==============================\n")
       cat("  END OF EXECUTION\n")
       cat("==============================\n\n")
