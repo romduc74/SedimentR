@@ -21,9 +21,6 @@ visual.clust <- function(data) {
     return(input)
   }
 
-  ## ============================================================
-  ## CLUSTER OPTION
-  ## ============================================================
   cat("\n\n==============================\n")
   cat("  CLUSTER DISPLAY OPTION\n")
   cat("==============================\n\n")
@@ -33,12 +30,6 @@ visual.clust <- function(data) {
   )
 
   use_clusters <- show_clusters %in% c("yes", "y")
-
-
-  # if (!"Cluster" %in% names(data)) stop("The ‘Cluster’ column is missing from the dataframe.")
-  # data$Cluster <- as.numeric(data$Cluster)
-  # n_clusters <- length(unique(na.omit(data$Cluster)))
-
 
   if (use_clusters) {
     if (!"Cluster" %in% names(data)) {
@@ -174,10 +165,6 @@ visual.clust <- function(data) {
       legend.position = "none"
     )
 
-
-  ## ============================================================
-  ## HORIZONTAL DEPTH MARKERS (OPTION)
-  ## ============================================================
   cat("\n\n==============================\n")
   cat("  HORIZONTAL DEPTH LINES OPTION\n")
   cat("==============================\n\n")
@@ -230,8 +217,6 @@ visual.clust <- function(data) {
   cat("\n\n==============================\n")
   cat("  VIRTUAL CORE OPTION\n")
   cat("==============================\n\n")
-
-  #show_core <- tolower(safe_readline("Show Virtual Core? (yes/no): ", default = "no"))
 
   if (use_clusters) {
     show_core <- tolower(safe_readline("Show Virtual Core? (yes/no): ", default = "no"))
@@ -301,9 +286,7 @@ visual.clust <- function(data) {
     cat("\nVirtual Core skipped.\n")
   }
 
-  ## ============================================================
-  ## MODELE D'AGE (OPTIONNEL)
-  ## ============================================================
+
   cat("\n\n==============================\n")
   cat("  AGE MODEL OPTION\n")
   cat("==============================\n\n")
@@ -399,7 +382,6 @@ visual.clust <- function(data) {
         )
       ) +
         geom_path(linewidth = 0.25, color = "black") +
-        #  scale_y_reverse() +
         scale_y_reverse(limits = c(Depth_end, Depth_start))+
         labs(
           x = paste0("Age [", age_unit, "]"),
@@ -407,11 +389,6 @@ visual.clust <- function(data) {
           title = "Age model"
         ) +
         tidypaleo::theme_paleo() +
-        # theme(
-        #   axis.text.y =  element_text(family = "sans", face = "bold"),
-        #   axis.text = element_text(size = 11, color = "gray25"),
-        #   text = element_text(family = "sans", face = "bold")
-        # )
         theme(
           text = element_text(family = "sans", face = "bold"),
           axis.text = element_text(size = 11, color = "gray25"),
@@ -424,10 +401,6 @@ visual.clust <- function(data) {
   }
 
 
-
-  ## ============================================================
-  ## Photo de carotte (optionnelle)
-  ## ============================================================
   cat("\n\n==============================\n")
   cat("  SEDIMENT CORE PICTURE OPTION\n")
   cat("==============================\n\n")
@@ -476,9 +449,7 @@ visual.clust <- function(data) {
     cat("\nCore photo skipped.\n")
   }
 
-  ## ============================================================
-  ## Combinaison finale
-  ## ============================================================
+
   plots_to_combine <- list()
   if (exists("photo_plot")) plots_to_combine <- c(plots_to_combine, list(photo_plot))
   if (exists("age_plot"))   plots_to_combine <- c(plots_to_combine, list(age_plot))
@@ -531,12 +502,6 @@ visual.clust <- function(data) {
       if (nzchar(pdf_path)) {
         if (!grepl("\\.pdf$", pdf_path, ignore.case = TRUE))
           pdf_path <- paste0(pdf_path, ".pdf")
-
-        # pdf_width <- as.numeric(safe_readline("\nEnter desired PDF width (in inches, e.g., 10): "))
-        # cat("\n")
-        # pdf_height <- as.numeric(safe_readline("Enter desired PDF height (in inches, e.g., 8): "))
-        # pdf(pdf_path, width = pdf_width, height = pdf_height)
-
         pdf_width  <- get_numeric_input("Enter desired PDF width (in inches, [default = 10]): ", 10)
         cat("\n")
         pdf_height <- get_numeric_input("Enter desired PDF height (in inches, [default = 8]): ", 8)
@@ -620,11 +585,6 @@ visual.clust <- function(data) {
       age_unit <- safe_readline("Enter age unit (e.g., cal yr BP, ka, yr): ", default = "yr")
     }
 
-
-    ## ============================================================
-    ## CLUSTER OPTION
-    ## ============================================================
-    cat("\n==============================\n")
     cat("  AGE–DEPTH: CLUSTER DISPLAY OPTION\n")
     cat("==============================\n\n")
 
@@ -709,8 +669,6 @@ visual.clust <- function(data) {
     cat("  DATA PREPARATION\n")
     cat("==============================\n\n")
 
-
-
     cols_to_keep <- c(variables, depth_col)
     if (use_clusters_age) cols_to_keep <- c(cols_to_keep, "Cluster")
 
@@ -778,36 +736,7 @@ visual.clust <- function(data) {
       n_clusters <- length(levels(xrf_age$Cluster))
     }
 
-
-
-    # Profondeur inversée + couleur conditionnelle
-    # if (use_clusters_age && "Cluster" %in% names(xrf_age)) {
-    #   dual_plot <- xrf_age %>%
-    #     ggplot(aes(
-    #       x = peakarea,
-    #       y = .data[[depth_col]],
-    #       group = interaction(elements),
-    #       color = factor(Cluster)
-    #     )) +
-    #     geom_lineh(linewidth = 0.25, na.rm = TRUE) +
-    #     scale_color_manual(values = custom_palette, name = "Cluster")
-    # } else {
-    #   dual_plot <- xrf_age %>%
-    #     ggplot(aes(
-    #       x = peakarea,
-    #       y = .data[[depth_col]],
-    #       group = interaction(elements)
-    #     )) +
-    #     geom_lineh(linewidth = 0.25, color = "black", na.rm = TRUE)
-    # }
-
     dual_plot <- xrf_age %>%
-      # ggplot(aes(
-      #   x = peakarea,
-      #   y = .data[[depth_col]],
-      #   group = interaction(elements)
-      # ))
-      #
       ggplot(aes(
         x = peakarea,
         y = .data[[depth_col]],
@@ -848,9 +777,6 @@ visual.clust <- function(data) {
         legend.position = "none"
       )
 
-    ## ============================================================
-    ## HORIZONTAL AGE LINES OPTION
-    ## ============================================================
     cat("\n\n===============================\n")
     cat("  HORIZONTAL AGE LINES OPTION\n")
     cat("===================================\n\n")
@@ -925,10 +851,6 @@ visual.clust <- function(data) {
         cat("\nNo valid ages provided. No lines added.\n")
       }
     }
-
-    ## ============================================================
-    ## VIRTUAL CORE OPTION (AGE–DEPTH)
-    ## ============================================================
 
     cat("\n\n=================================\n")
     cat("  VIRTUAL CORE (AGE–DEPTH)\n")
@@ -1064,8 +986,6 @@ visual.clust <- function(data) {
           }
         }
       }
-
-
       cat("\n\n==============================\n")
       cat("  END OF EXECUTION\n")
       cat("==============================\n\n")
