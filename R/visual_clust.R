@@ -584,7 +584,7 @@ visual.clust <- function(data) {
 
       age_unit <- safe_readline("Enter age unit (e.g., cal yr BP, ka, yr): ", default = "yr")
     }
-
+    cat("\n\n==============================\n")
     cat("  AGE–DEPTH: CLUSTER DISPLAY OPTION\n")
     cat("==============================\n\n")
 
@@ -990,7 +990,6 @@ visual.clust <- function(data) {
         }
       }
 
-
       cat("\n\n==============================\n")
       cat("  EXPORT GRAPH TO PDF OPTION\n")
       cat("==============================\n\n")
@@ -1046,8 +1045,6 @@ visual.clust <- function(data) {
       } else {
         cat("\nPDF export skipped.\n")
       }
-
-
 
       cat("\n\n==============================\n")
       cat("  END OF EXECUTION\n")
