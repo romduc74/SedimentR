@@ -1137,6 +1137,7 @@ visual.clust <- function(data) {
       "Would you like to export the joined table (xrf_age_export)? (yes/no): ",
       default = "no"
     ))
+    cat("\n")
 
     if (save_table %in% c("yes", "y")) {
 
