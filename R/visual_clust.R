@@ -61,7 +61,9 @@ visual.clust <- function(data) {
     cat("\n")
     print(names(data))
     cat("\nYou can:\n\n - Enter variable names separated by commas (e.g., Fe, Ti, Ca)\n\n - Type 'all' to use all variables\n\n - Type 'pca' to use PCA-selected variables\n\n")
-    var_input <- safe_readline("Enter your choice: ")
+    #var_input <- safe_readline("Enter your choice: ")
+    var_input <- safe_readline("Enter your choice [default = pca]: ", default = "pca")
+    #var_input <- tolower(trimws(var_input))
 
     if (tolower(var_input) == "all") {
       # variables <- setdiff(names(data), c(depth_col, "Cluster"))
@@ -82,9 +84,18 @@ visual.clust <- function(data) {
       }
     }
 
+    # variables <- unlist(strsplit(var_input, ",\\s*"))
+    # if (all(variables %in% names(data))) break
+    # cat("\nSome variables are not valid. Please try again.\n")
+
     variables <- unlist(strsplit(var_input, ",\\s*"))
-    if (all(variables %in% names(data))) break
+    if (all(variables %in% names(data))) {
+      cat("\nThe following variables have been selected:\n")
+      cat(paste(variables, collapse = ", "), "\n")
+      break
+    }
     cat("\nSome variables are not valid. Please try again.\n")
+
   }
 
   ## Color palette
@@ -189,14 +200,47 @@ visual.clust <- function(data) {
     )
 
     depth_vals <- depth_vals[!is.na(depth_vals)]
+    #
+    # if (length(depth_vals) > 0) {
+    #   main_plot <- main_plot +
+    #     geom_hline(
+    #       yintercept = depth_vals,
+    #       linetype = "dashed",
+    #       linewidth = 0.3,
+    #       color = "black"
+    #     )
+
 
     if (length(depth_vals) > 0) {
+
+      # Ticks réguliers sur la profondeur
+      depth_ticks_regular <- pretty(range(xrfStrat[[depth_col]], na.rm = TRUE), n = 5)
+
+      # Fusion réguliers + utilisateur
+      all_depth_ticks <- sort(unique(c(depth_ticks_regular, depth_vals)))
+
+      # Labels profondeur pour TOUS les ticks
+      depth_labels <- sapply(all_depth_ticks, function(d) {
+        sprintf("%.0f", d)
+      })
+
+      # Écraser uniquement ceux correspondant aux profondeurs utilisateur (format + précision)
+      for (i in seq_along(depth_vals)) {
+        pos <- which.min(abs(all_depth_ticks - depth_vals[i]))
+        depth_labels[pos] <- sprintf("%.2f", depth_vals[i])
+      }
+
+      # Appliquer au plot
       main_plot <- main_plot +
         geom_hline(
           yintercept = depth_vals,
           linetype = "dashed",
           linewidth = 0.3,
           color = "black"
+        ) +
+        scale_y_reverse(
+          breaks = all_depth_ticks,
+          labels = depth_labels
         )
 
       cat("\nHorizontal dashed lines added at depths:\n")
@@ -476,7 +520,7 @@ visual.clust <- function(data) {
   cat("  EXPORT GRAPH TO PDF OPTION\n")
   cat("==============================\n\n")
   save_pdf <- tolower(safe_readline("Would you like to export the figure as a PDF? (yes/no): ", default = "no"))
-
+  cat("\n")
 
   get_numeric_input <- function(prompt, default) {
     repeat {
@@ -615,6 +659,41 @@ visual.clust <- function(data) {
     }
 
     ## Variable selection
+    # repeat {
+    #   cat("\n\n==============================\n")
+    #   cat("  VARIABLE SELECTION\n")
+    #   cat("==============================\n\n")
+    #   cat("Available columns:\n")
+    #   cat("\n")
+    #   print(names(data))
+    #   cat("\nYou can:\n\n - Enter variable names separated by commas (e.g., Fe, Ti, Ca)\n\n - Type 'all' to use all variables\n\n - Type 'pca' to use PCA-selected variables\n\n")
+    #   var_input <- safe_readline("Enter your choice: ")
+    #
+    #   if (tolower(var_input) == "all") {
+    #     # variables <- setdiff(names(data), c(depth_col, "Cluster"))
+    #     variables <- setdiff(names(data),c(depth_col, if (use_clusters_age) "Cluster"))
+    #     cat("\nAll variables selected.\n")
+    #     break
+    #   }
+    #
+    #   if (tolower(var_input) == "pca") {
+    #     if (exists("variables_cluster", envir = .GlobalEnv)) {
+    #       vars_pca <- colnames(get("variables_cluster", envir = .GlobalEnv))
+    #       variables <- intersect(vars_pca, names(data))
+    #       cat("\nVariables selected by PCA loaded.\n")
+    #       break
+    #     } else {
+    #       cat("\nNo object named 'variables_cluster' found.\n")
+    #       next
+    #     }
+    #   }
+    #
+    #   variables <- unlist(strsplit(var_input, ",\\s*"))
+    #   if (all(variables %in% names(data))) break
+    #   cat("\nSome variables are not valid. Please try again.\n")
+    # }
+
+
     repeat {
       cat("\n\n==============================\n")
       cat("  VARIABLE SELECTION\n")
@@ -623,11 +702,13 @@ visual.clust <- function(data) {
       cat("\n")
       print(names(data))
       cat("\nYou can:\n\n - Enter variable names separated by commas (e.g., Fe, Ti, Ca)\n\n - Type 'all' to use all variables\n\n - Type 'pca' to use PCA-selected variables\n\n")
-      var_input <- safe_readline("Enter your choice: ")
+      #var_input <- safe_readline("Enter your choice: ")
+      var_input <- safe_readline("Enter your choice [default = pca]: ", default = "pca")
+      #var_input <- tolower(trimws(var_input))
 
       if (tolower(var_input) == "all") {
         # variables <- setdiff(names(data), c(depth_col, "Cluster"))
-        variables <- setdiff(names(data),c(depth_col, if (use_clusters_age) "Cluster"))
+        variables <- setdiff(names(data),c(depth_col, if (use_clusters) "Cluster"))
         cat("\nAll variables selected.\n")
         break
       }
@@ -644,10 +725,20 @@ visual.clust <- function(data) {
         }
       }
 
+      # variables <- unlist(strsplit(var_input, ",\\s*"))
+      # if (all(variables %in% names(data))) break
+      # cat("\nSome variables are not valid. Please try again.\n")
+
       variables <- unlist(strsplit(var_input, ",\\s*"))
-      if (all(variables %in% names(data))) break
+      if (all(variables %in% names(data))) {
+        cat("\nThe following variables have been selected:\n")
+        cat(paste(variables, collapse = ", "), "\n")
+        break
+      }
       cat("\nSome variables are not valid. Please try again.\n")
+
     }
+
 
     ## Color palette
     if (use_clusters_age) {
@@ -852,9 +943,99 @@ visual.clust <- function(data) {
       }
     }
 
+    # cat("\n\n=================================\n")
+    # cat("  VIRTUAL CORE (AGE–DEPTH)\n")
+    # cat("=====================================\n\n")
+    #
+    # if (use_clusters_age) {
+    #   show_core_age <- tolower(
+    #     safe_readline("Show Virtual Core with Age–Depth plot? (yes/no): ", default = "no")
+    #   )
+    # } else {
+    #   show_core_age <- "no"
+    #   print(dual_plot)
+    #   cat("\nVirtual Core disabled (no clusters).\n")
+    # }
+    #
+    # if (show_core_age %in% c("yes", "y")) {
+    #
+    #   depth_vals <- sapply(age_vals, function(age) {
+    #     idx <- which.min(abs(xrf_age$Age - age))  # index du Age le plus proche
+    #     xrf_age[[depth_col]][idx]                  # profondeur correspondante
+    #   })
+    #
+    #   core_data <- xrfStrat %>%
+    #     dplyr::select(all_of(depth_col), Cluster) %>%
+    #     dplyr::distinct() %>%
+    #     arrange(.data[[depth_col]])
+    #
+    #   depth_step <- median(diff(core_data[[depth_col]]), na.rm = TRUE)
+    #
+    #   core_data <- core_data %>%
+    #     mutate(
+    #       depth_diff = .data[[depth_col]] - lag(.data[[depth_col]], default = first(.data[[depth_col]])),
+    #       is_gap = depth_diff > 1.9999999999999996 * depth_step,
+    #       Block = cumsum((Cluster != lag(Cluster, default = first(Cluster))) | is_gap)
+    #     )
+    #
+    #   blocks <- core_data %>%
+    #     group_by(Block, Cluster) %>%
+    #     summarize(
+    #       Depth_start = min(.data[[depth_col]], na.rm = TRUE),
+    #       Depth_end   = max(.data[[depth_col]], na.rm = TRUE),
+    #       .groups = "drop"
+    #     ) %>%
+    #     mutate(
+    #       Depth_mid = (Depth_start + Depth_end) / 2,
+    #       Height = Depth_end - Depth_start + depth_step
+    #     )
+    #
+    #   core_plot_age <- ggplot(blocks,
+    #                           aes(x = 1, y = Depth_mid,
+    #                               fill = factor(Cluster),
+    #                               height = Height)) +
+    #     geom_tile(width = 1) +
+    #     scale_y_reverse(position = "right") +
+    #     scale_fill_manual(values = custom_palette, name = "Clusters", na.value = "white") +
+    #     labs(x = NULL, y = NULL, title = "Virtual Core") +
+    #     tidypaleo::theme_paleo() +
+    #     theme(
+    #       axis.text.x  = element_blank(),
+    #       axis.ticks.x = element_blank(),
+    #       panel.grid   = element_blank(),
+    #       legend.position = "right",
+    #       text = element_text(family = "sans", face = "bold")
+    #     )
+    #
+    #
+    #
+    #
+    #   if (!is.null(depth_vals) && length(depth_vals) > 0) {
+    #     core_plot_age <- core_plot_age +
+    #       geom_hline(
+    #         yintercept = depth_vals,
+    #         linetype   = "dashed",
+    #         linewidth  = 0.3,
+    #         color      = "black"
+    #       )
+    #
+    #     combined_age_depth_plot <- dual_plot + core_plot_age +
+    #       patchwork::plot_layout(widths = c(4, 0.25))
+    #
+    #     print(combined_age_depth_plot)
+    #
+    #     plot_to_export <- combined_age_depth_plot
+    #
+    #   } else {
+    #     print(dual_plot)
+    #     cat("\nVirtual Core skipped for Age–Depth plot.\n")
+    #     plot_to_export <- dual_plot
+    #   }
+    #
+
     cat("\n\n=================================\n")
     cat("  VIRTUAL CORE (AGE–DEPTH)\n")
-    cat("=====================================\n\n")
+    cat("=================================\n\n")
 
     if (use_clusters_age) {
       show_core_age <- tolower(
@@ -868,10 +1049,15 @@ visual.clust <- function(data) {
 
     if (show_core_age %in% c("yes", "y")) {
 
-      depth_vals <- sapply(age_vals, function(age) {
-        idx <- which.min(abs(xrf_age$Age - age))  # index du Age le plus proche
-        xrf_age[[depth_col]][idx]                  # profondeur correspondante
-      })
+      # Convertir les âges en profondeurs
+      if (!is.null(age_vals) && length(age_vals) > 0) {
+        depth_vals <- sapply(age_vals, function(age) {
+          idx <- which.min(abs(xrf_age$Age - age))
+          xrf_age[[depth_col]][idx]
+        })
+      } else {
+        depth_vals <- NULL
+      }
 
       core_data <- xrfStrat %>%
         dplyr::select(all_of(depth_col), Cluster) %>%
@@ -924,131 +1110,132 @@ visual.clust <- function(data) {
             linewidth  = 0.3,
             color      = "black"
           )
-
-        combined_age_depth_plot <- dual_plot + core_plot_age +
-          patchwork::plot_layout(widths = c(4, 0.25))
-
-        print(combined_age_depth_plot)
-
-        plot_to_export <- combined_age_depth_plot
-
-      } else {
-        print(dual_plot)
-        cat("\nVirtual Core skipped for Age–Depth plot.\n")
-        plot_to_export <- dual_plot
       }
 
+      combined_age_depth_plot <- dual_plot + core_plot_age +
+        patchwork::plot_layout(widths = c(4, 0.25))
 
-      ## Sauvegarde dans l'environnement global
-      xrf_age_export <<- xrf_age_export
-      cat("\n")
-      cat("\nExport-ready table saved as `xrf_age_export` in Global Environment.\n")
-      cat("\n")
+      print(combined_age_depth_plot)
+      plot_to_export <- combined_age_depth_plot
 
-      ## Option export CSV / XLSX
-      save_table <- tolower(safe_readline(
-        "Would you like to export the joined table (xrf_age_export)? (yes/no): ",
-        default = "no"
+    } else {
+      # Cas utilisateur met "no"
+      print(dual_plot)
+      cat("\nVirtual Core disabled for Age–Depth plot.\n")
+      plot_to_export <- dual_plot
+    }
+
+
+    ## Sauvegarde dans l'environnement global
+    xrf_age_export <<- xrf_age_export
+    cat("\n")
+    cat("\nExport-ready table saved as `xrf_age_export` in Global Environment.\n")
+    cat("\n")
+
+    ## Option export CSV / XLSX
+    save_table <- tolower(safe_readline(
+      "Would you like to export the joined table (xrf_age_export)? (yes/no): ",
+      default = "no"
+    ))
+
+    if (save_table %in% c("yes", "y")) {
+
+      export_format <- tolower(safe_readline(
+        "Choose export format (csv/xlsx): ",
+        default = "csv"
       ))
 
-      if (save_table %in% c("yes", "y")) {
+      if (!export_format %in% c("csv", "xlsx")) {
+        cat("\nInvalid format. Export skipped.\n")
+      } else {
 
-        export_format <- tolower(safe_readline(
-          "Choose export format (csv/xlsx): ",
-          default = "csv"
-        ))
+        table_path <- rstudioapi::selectFile(
+          caption  = paste("Save joined table as", toupper(export_format)),
+          label    = "Save",
+          path     = getwd(),
+          filter   = setNames(list(export_format), toupper(export_format)),
+          existing = FALSE
+        )
 
-        if (!export_format %in% c("csv", "xlsx")) {
-          cat("\nInvalid format. Export skipped.\n")
-        } else {
+        if (nzchar(table_path)) {
 
-          table_path <- rstudioapi::selectFile(
-            caption  = paste("Save joined table as", toupper(export_format)),
-            label    = "Save",
-            path     = getwd(),
-            filter   = setNames(list(export_format), toupper(export_format)),
-            existing = FALSE
-          )
+          if (export_format == "xlsx") {
+            if (!grepl("\\.xlsx$", table_path, ignore.case = TRUE))
+              table_path <- paste0(table_path, ".xlsx")
+            writexl::write_xlsx(xrf_age_export, table_path)
 
-          if (nzchar(table_path)) {
-
-            if (export_format == "xlsx") {
-              if (!grepl("\\.xlsx$", table_path, ignore.case = TRUE))
-                table_path <- paste0(table_path, ".xlsx")
-              writexl::write_xlsx(xrf_age_export, table_path)
-
-            } else if (export_format == "csv") {
-              if (!grepl("\\.csv$", table_path, ignore.case = TRUE))
-                table_path <- paste0(table_path, ".csv")
-              write.csv(xrf_age_export, table_path, row.names = FALSE)
-            }
-
-            cat("\nTable saved to:", table_path, "\n")
-          } else {
-            cat("\nTable export cancelled.\n")
+          } else if (export_format == "csv") {
+            if (!grepl("\\.csv$", table_path, ignore.case = TRUE))
+              table_path <- paste0(table_path, ".csv")
+            write.csv(xrf_age_export, table_path, row.names = FALSE)
           }
+
+          cat("\nTable saved to:", table_path, "\n")
+        } else {
+          cat("\nTable export cancelled.\n")
         }
       }
+    }
 
-      cat("\n\n==============================\n")
-      cat("  EXPORT GRAPH TO PDF OPTION\n")
-      cat("==============================\n\n")
-      save_pdf <- tolower(safe_readline("Would you like to export the figure as a PDF? (yes/no): ", default = "no"))
+    cat("\n\n==============================\n")
+    cat("  EXPORT GRAPH TO PDF OPTION\n")
+    cat("==============================\n\n")
+    save_pdf <- tolower(safe_readline("Would you like to export the figure as a PDF? (yes/no): ", default = "no"))
+    cat("\n")
 
-      get_numeric_input <- function(prompt, default) {
-        repeat {
-          val <- safe_readline(prompt, default = as.character(default))
-          val_num <- suppressWarnings(as.numeric(val))
-          if (!is.na(val_num) && val_num > 0) return(val_num)
-          cat("\nInvalid input. Please enter a positive number or press Enter for default.\n\n")
-        }
+    get_numeric_input <- function(prompt, default) {
+      repeat {
+        val <- safe_readline(prompt, default = as.character(default))
+        val_num <- suppressWarnings(as.numeric(val))
+        if (!is.na(val_num) && val_num > 0) return(val_num)
+        cat("\nInvalid input. Please enter a positive number or press Enter for default.\n\n")
       }
+    }
 
-      if (save_pdf %in% c("yes", "y")) {
-        if (!requireNamespace("rstudioapi", quietly = TRUE)) install.packages("rstudioapi")
-        library(rstudioapi)
+    if (save_pdf %in% c("yes", "y")) {
+      if (!requireNamespace("rstudioapi", quietly = TRUE)) install.packages("rstudioapi")
+      library(rstudioapi)
 
-        if (rstudioapi::isAvailable()) {
-          pdf_path <- rstudioapi::selectFile(
-            caption = "Save cluster visualization",
-            label   = "Save",
-            path    = getwd(),
-            filter  = list("PDF files" = "pdf"),
-            existing = FALSE
-          )
+      if (rstudioapi::isAvailable()) {
+        pdf_path <- rstudioapi::selectFile(
+          caption = "Save cluster visualization",
+          label   = "Save",
+          path    = getwd(),
+          filter  = list("PDF files" = "pdf"),
+          existing = FALSE
+        )
 
-          if (nzchar(pdf_path)) {
-            if (!grepl("\\.pdf$", pdf_path, ignore.case = TRUE))
-              pdf_path <- paste0(pdf_path, ".pdf")
+        if (nzchar(pdf_path)) {
+          if (!grepl("\\.pdf$", pdf_path, ignore.case = TRUE))
+            pdf_path <- paste0(pdf_path, ".pdf")
 
-            pdf_width  <- get_numeric_input("Enter desired PDF width (in inches, [default = 10]): ", 10)
-            cat("\n")
-            pdf_height <- get_numeric_input("Enter desired PDF height (in inches, [default = 8]): ", 8)
-            cat("\n")
+          pdf_width  <- get_numeric_input("Enter desired PDF width (in inches, [default = 10]): ", 10)
+          cat("\n")
+          pdf_height <- get_numeric_input("Enter desired PDF height (in inches, [default = 8]): ", 8)
+          cat("\n")
 
-            pdf(pdf_path, width = pdf_width, height = pdf_height)
+          pdf(pdf_path, width = pdf_width, height = pdf_height)
 
-            if (exists("plot_to_export")) {
-              print(plot_to_export)
-            } else {
-              cat("\nNo plot available to export.\n")
-            }
-
-            dev.off()
-            cat("\n\nCluster-Depth-Age visualization saved to:", pdf_path, "\n")
+          if (exists("plot_to_export")) {
+            print(plot_to_export)
           } else {
-            cat("\nSaving cancelled.\n")
+            cat("\nNo plot available to export.\n")
           }
+
+          dev.off()
+          cat("\n\nCluster-Depth-Age visualization saved to:", pdf_path, "\n")
         } else {
-          cat("\nRStudio API not available. Cannot select file interactively.\n")
+          cat("\nSaving cancelled.\n")
         }
       } else {
-        cat("\nPDF export skipped.\n")
+        cat("\nRStudio API not available. Cannot select file interactively.\n")
       }
-
-      cat("\n\n==============================\n")
-      cat("  END OF EXECUTION\n")
-      cat("==============================\n\n")
+    } else {
+      cat("\nPDF export skipped.\n")
     }
+
+    cat("\n\n==============================\n")
+    cat("  END OF EXECUTION\n")
+    cat("==============================\n\n")
   }
 }
