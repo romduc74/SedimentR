@@ -52,9 +52,11 @@ scale_data <- function(donnees=NULL) {
 
 
   cat("\n====== WARNING ======\n")
+  cat("\n")
   cat("\033[4mIt is advisable to remove depth elements measured at different energies, Incoherent & Coherent and retain the least noisy elements.\033[0m\n\n")
 
   cat("Available columns:\n")
+  cat("\n")
   print(names(donnees))
   cat("\n")
 
@@ -150,7 +152,6 @@ scale_data <- function(donnees=NULL) {
 
 
   cat("\n====== POTENTIAL XRF DUPLICATES (BY NAME) ======\n")
-  cat("\n")
   col_names <- names(donnees)
   elements  <- sub("([A-Za-z]+).*", "\\1", col_names)
   dup_elements <- elements[duplicated(elements) | duplicated(elements, fromLast = TRUE)]
@@ -161,6 +162,7 @@ scale_data <- function(donnees=NULL) {
       cols <- col_names[elements == el]
       cat("\n- Element", el, "measured multiple times:", paste(cols, collapse = ", "), "\n")
     }
+    cat("\n")
 
     # Demander suppression immédiate
     repeat {
