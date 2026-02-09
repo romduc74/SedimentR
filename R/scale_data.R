@@ -107,44 +107,137 @@ scale_data <- function(donnees=NULL) {
   # -------------------------------
   # Suppression éventuelle d'autres colonnes
   # -------------------------------
-  repeat {
-    reponse <- tolower(safe_readline("Would you like to delete other columns before the analysis? (yes/no): "))
-    if (reponse %in% c("yes", "no")) break
-    cat("Please enter 'yes' or 'no'.\n")
+
+
+  #   repeat {
+  #   reponse <- tolower(safe_readline("Would you like to delete other columns before the analysis? (yes/no): "))
+  #   if (reponse %in% c("yes", "no")) break
+  #   cat("Please enter 'yes' or 'no'.\n")
+  # }
+  #
+  # cat("\n")
+  #
+  # if (reponse == "yes") {
+  #   repeat {
+  #     colonnes_a_supprimer <- safe_readline("Enter the names of the columns to be deleted, separated by commas: ")
+  #     colonnes_a_supprimer <- strsplit(colonnes_a_supprimer, ",")[[1]]
+  #     colonnes_a_supprimer <- trimws(colonnes_a_supprimer)
+  #
+  #     colonnes_existantes <- intersect(colonnes_a_supprimer, names(donnees))
+  #     colonnes_invalides  <- setdiff(colonnes_a_supprimer, names(donnees))
+  #
+  #     if (length(colonnes_existantes) == 0) {
+  #       cat("\nError: none of the specified columns exist. Try again.\n")
+  #       print(names(donnees))
+  #       cat("\n")
+  #     } else {
+  #       if (length(colonnes_invalides) > 0) {
+  #         cat("\nWarning: these columns do not exist and were ignored: ",
+  #             paste(colonnes_invalides, collapse = ", "), "\n")
+  #       }
+  #
+  #       donnees <- donnees[, !(names(donnees) %in% colonnes_existantes)]
+  #       colonnes_supprimees <- c(colonnes_supprimees, colonnes_existantes)
+  #
+  #       cat("\nThe following columns have been removed: ",
+  #           paste(colonnes_existantes, collapse = ", "), "\n")
+  #       break
+  #     }
+  #   }
+  # } else {
+  #   cat("No additional columns will be deleted.\n")
+  # }
+
+
+  cat("\n====== POTENTIAL XRF DUPLICATES (BY NAME) ======\n")
+  cat("\n")
+  col_names <- names(donnees)
+  elements  <- sub("([A-Za-z]+).*", "\\1", col_names)
+  dup_elements <- elements[duplicated(elements) | duplicated(elements, fromLast = TRUE)]
+
+  if (length(dup_elements) > 0) {
+    unique_elems <- unique(dup_elements)
+    for (el in unique_elems) {
+      cols <- col_names[elements == el]
+      cat("\n- Element", el, "measured multiple times:", paste(cols, collapse = ", "), "\n")
+    }
+
+    # Demander suppression immédiate
+    repeat {
+      rep_dup <- tolower(safe_readline(
+        "Do you want to remove some of these duplicate XRF columns now? (yes/no): "
+      ))
+      cat("\n")
+      if (!rep_dup %in% c("yes", "no")) next
+
+      if (rep_dup == "yes") {
+        cols_dup <- safe_readline("Enter duplicate column names to remove (comma-separated): ")
+        cols_dup <- trimws(strsplit(cols_dup, ",")[[1]])
+
+        valid_cols   <- intersect(cols_dup, names(donnees))
+        invalid_cols <- setdiff(cols_dup, names(donnees))
+
+        if (length(valid_cols) > 0) {
+          donnees <- donnees[, !(names(donnees) %in% valid_cols)]
+          colonnes_supprimees <- c(colonnes_supprimees, valid_cols)
+
+          cat("\nRemoved duplicate XRF columns:\n",
+              paste(valid_cols, collapse = ", "), "\n")
+        }
+
+        if (length(invalid_cols) > 0) {
+          cat("\nIgnored (not found):", paste(invalid_cols, collapse = ", "), "\n")
+        }
+      }
+
+      break
+    }
+
+  } else {
+    cat("No duplicated XRF element names detected.\n")
   }
+
 
   cat("\n")
 
-  if (reponse == "yes") {
-    repeat {
-      colonnes_a_supprimer <- safe_readline("Enter the names of the columns to be deleted, separated by commas: ")
-      colonnes_a_supprimer <- strsplit(colonnes_a_supprimer, ",")[[1]]
-      colonnes_a_supprimer <- trimws(colonnes_a_supprimer)
+  ## ===== MAINTENANT : suppression libre d’autres colonnes =====
+  repeat {
+    rep2 <- tolower(safe_readline("Do you want to remove other columns before the analysis? (yes/no): "))
+    if (!rep2 %in% c("yes", "no")) next
 
-      colonnes_existantes <- intersect(colonnes_a_supprimer, names(donnees))
-      colonnes_invalides  <- setdiff(colonnes_a_supprimer, names(donnees))
+    if (rep2 == "no") break
 
-      if (length(colonnes_existantes) == 0) {
-        cat("\nError: none of the specified columns exist. Try again.\n")
-        print(names(donnees))
-        cat("\n")
-      } else {
-        if (length(colonnes_invalides) > 0) {
-          cat("\nWarning: these columns do not exist and were ignored: ",
-              paste(colonnes_invalides, collapse = ", "), "\n")
-        }
+    cat("\n====== AVAILABLE COLUMNS ======\n")
+    cat("\n")
+    print(names(donnees))
+    cat("\n")
 
-        donnees <- donnees[, !(names(donnees) %in% colonnes_existantes)]
-        colonnes_supprimees <- c(colonnes_supprimees, colonnes_existantes)
+    colonnes_a_supprimer <- safe_readline(
+      "Enter the names of the columns to be deleted, separated by commas: "
+    )
+    colonnes_a_supprimer <- trimws(strsplit(colonnes_a_supprimer, ",")[[1]])
 
-        cat("\nThe following columns have been removed: ",
-            paste(colonnes_existantes, collapse = ", "), "\n")
-        break
-      }
+    colonnes_existantes <- intersect(colonnes_a_supprimer, names(donnees))
+    colonnes_invalides  <- setdiff(colonnes_a_supprimer, names(donnees))
+
+    if (length(colonnes_existantes) == 0) {
+      cat("\nError: none of the specified columns exist. Try again.\n")
+      next
     }
-  } else {
-    cat("No additional columns will be deleted.\n")
+
+    if (length(colonnes_invalides) > 0) {
+      cat("\nWarning: ignored:", paste(colonnes_invalides, collapse = ", "), "\n")
+    }
+
+    donnees <- donnees[, !(names(donnees) %in% colonnes_existantes)]
+    colonnes_supprimees <- c(colonnes_supprimees, colonnes_existantes)
+
+    cat("\nThe following columns have been removed:\n",
+        paste(colonnes_existantes, collapse = ", "), "\n")
+
+    break
   }
+
 
 
 
