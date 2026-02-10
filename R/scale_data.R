@@ -257,16 +257,32 @@ scale_data <- function(donnees=NULL) {
   colonnes_log <- donnees[, grepl("log", names(donnees)), drop = FALSE]
   colonnes_a_clr <- donnees[, !grepl("log", names(donnees)), drop = FALSE]
 
+  geom_mean <- apply(colonnes_a_clr, 1, function(x) exp(mean(log(x))))
+
   df_clr <- clr(colonnes_a_clr)
   df_clr <- as.data.frame(df_clr)
 
   df_normalized <- cbind(df_clr, colonnes_log)
   set_cache("df_normalized_cache",df_normalized)
 
+  # df_normalized_depth <- cbind(
+  #   depth = depth_col,
+  #   df_normalized
+  # )
+  #
+
+  names(df_clr) <- paste0("clr_", names(df_clr))
+
+  df_normalized2 <- cbind(df_clr, colonnes_log)
+
   df_normalized_depth <- cbind(
     depth = depth_col,
-    df_normalized
+    geom_mean = geom_mean,
+    colonnes_initiales_clr,
+    df_normalized2
   )
+
+
 
   # -------------------------------
   # Résumé des choix utilisateur
