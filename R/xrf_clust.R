@@ -1003,7 +1003,7 @@ xrf_clust  <- function(data = NULL) {
     }
 
     # Combiner les dataframes
-    Dataframe_Check <- cbind(df_clr_check_local, df_cluster_local)
+    Dataframe_Check <- cbind(df_cluster_local,df_clr_check_local)
 
     # Assigner dans l'environnement global
     assign("Dataframe_Check", Dataframe_Check, envir = .GlobalEnv)
