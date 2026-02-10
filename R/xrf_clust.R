@@ -1014,6 +1014,44 @@ xrf_clust  <- function(data = NULL) {
   }
 
 
+  # --- Optional save Dataframe_Check ---
+  save_check <- tolower(safe_readline("Would you like to save 'Dataframe_Check'? (yes/no): "))
+  cat("\n")
+  if (save_check %in% c("yes", "y")) {
+    repeat {
+      ext_choice <- tolower(safe_readline("Desired extension: csv or xlsx: "))
+      if (!ext_choice %in% c("csv", "xlsx")) {
+        cat("Invalid extension.\n");
+        next
+      }
+      if (!rstudioapi::isAvailable()) {
+        cat("Saving requires RStudio.\n");
+        break
+      }
+
+      cat("\nSelect the destination file...\n")
+      path_save <- rstudioapi::selectFile(
+        caption = "Save Dataframe_Check",
+        label = "Save",
+        path = getwd(),
+        filter = if (ext_choice == "csv") list("CSV files" = "csv") else list("Excel files" = "xlsx"),
+        existing = FALSE
+      )
+      if (!nzchar(path_save)) {
+        cat("Saving cancelled.\n");
+        break
+      }
+      if (!grepl(paste0("\\.", ext_choice, "$"), path_save, ignore.case = TRUE))
+        path_save <- paste0(path_save, ".", ext_choice)
+
+      if (ext_choice == "csv") write.csv(Dataframe_Check, path_save, row.names = FALSE)
+      else writexl::write_xlsx(Dataframe_Check, path = path_save)
+
+      cat("\nSaved file:", path_save, "\n\n")
+      break
+    }
+  }
+
 
 }
 
