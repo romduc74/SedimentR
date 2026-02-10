@@ -988,6 +988,32 @@ xrf_clust  <- function(data = NULL) {
 
   cat("\n")
 
+  # --- Create final check dataframe ---
+  if (exists("df_clr_check", envir = .GlobalEnv) && exists("Dataframe_Clustering", envir = .GlobalEnv)) {
+
+    df_clr_check_local <- get("df_clr_check", envir = .GlobalEnv)
+    df_cluster_local <- get("Dataframe_Clustering", envir = .GlobalEnv)
+
+    # Identifier les colonnes en doublon
+    common_cols <- intersect(colnames(df_clr_check_local), colnames(df_cluster_local))
+
+    if (length(common_cols) > 0) {
+      # Supprimer les colonnes en doublon dans df_clr_check pour garder celles de df_cluster_local
+      df_clr_check_local <- df_clr_check_local[, !(colnames(df_clr_check_local) %in% common_cols), drop = FALSE]
+    }
+
+    # Combiner les dataframes
+    Dataframe_Check <- cbind(df_clr_check_local, df_cluster_local)
+
+    # Assigner dans l'environnement global
+    assign("Dataframe_Check", Dataframe_Check, envir = .GlobalEnv)
+
+    cat("\nDataframe_Check created combining 'df_clr_check' and 'Dataframe_Clustering'.\n")
+  } else {
+    cat("\nWarning: Either 'df_clr_check' or 'Dataframe_Clustering' not found in global environment. Dataframe_Check not created.\n")
+  }
+
+
 
 }
 
