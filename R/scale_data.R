@@ -280,7 +280,7 @@ scale_data <- function(donnees=NULL) {
 
   df_normalized_depth <- cbind(
     depth = depth_col,
-    geom_mean = geom_mean,
+    "Geometric Mean" = geom_mean,
     colonnes_a_clr,
     df_normalized2
   )
