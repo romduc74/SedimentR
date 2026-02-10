@@ -400,6 +400,6 @@ scale_data <- function(donnees=NULL) {
     cat("Normalized data not saved.\n\n")
   }
 
-  assign("df_clean_normalized", df_normalized, envir = .GlobalEnv)
+  assign("df_clr_check", df_normalized_depth, envir = .GlobalEnv)
   return(invisible(df_normalized))
 }
