@@ -271,15 +271,17 @@ scale_data <- function(donnees=NULL) {
   # )
   #
 
-  names(df_clr) <- paste0("clr_", names(df_clr))
 
-  df_normalized2 <- cbind(df_clr, colonnes_log)
+  df_clr2<-df_clr
+
+  names(df_clr2) <- paste0("clr_", names(df_clr2))
+
+  df_normalized2 <- cbind(df_clr2, colonnes_log)
 
   df_normalized_depth <- cbind(
     depth = depth_col,
     geom_mean = geom_mean,
     colonnes_a_clr,
-    colonnes_log,
     df_normalized2
   )
 
