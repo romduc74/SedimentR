@@ -1013,6 +1013,7 @@ xrf_clust  <- function(data = NULL) {
     cat("\nWarning: Either 'df_clr_check' or 'Dataframe_Clustering' not found in global environment. Dataframe_Check not created.\n")
   }
 
+  cat("\n")
 
   # --- Optional save Dataframe_Check ---
   save_check <- tolower(safe_readline("Would you like to save 'Dataframe_Check'? (yes/no): "))
