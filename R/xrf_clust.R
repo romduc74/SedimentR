@@ -551,287 +551,227 @@ xrf_clust  <- function(data = NULL) {
 
 
 
-
-
-
   # --- Optional PCA visualization ---
   cat("\n=== PCA and Cluster Visualization ===\n\n")
   show_acp <- tolower(safe_readline("Would you like to visualize a PCA with the clusters? (yes/no): "))
   cat("\n")
+
+  # if (!show_acp %in% c("yes", "y")) {
+  #   cat("Skipping PCA visualization.\n")
+  #   break
+  # }
+
   if (show_acp %in% c("yes", "y")) {
 
-
-
-    # Sélection du dataframe pour df_cluster
-    if ("df_denoised_total_cache" %in% list_cache()) {
-
-      df_cluster <- get_cache("df_denoised_total_cache")
-
-    } else if ("df_clean_cache" %in% list_cache()) {
-
-      df_cluster <- get_cache("df_clean_cache")
-      cat("The dataframe 'df_denoised_total_cache' was not found. Using 'df_clean_cache' instead.\n")
-
-    } else {
-
-      cat("Neither 'df_denoised_total_cache' nor 'df_clean_cache' were found.\n")
-    }
-
-
     repeat {
-      if ("df_normalized_cache" %in% list_cache()) {
-        df_vars <- get_cache("df_normalized_cache")
-        message("Using cached 'df_normalized_cache' dataframe.")
-        break
+
+      # Sélection du dataframe pour df_cluster
+      if ("df_denoised_total_cache" %in% list_cache()) {
+
+        df_cluster <- get_cache("df_denoised_total_cache")
+
+      } else if ("df_clean_cache" %in% list_cache()) {
+
+        df_cluster <- get_cache("df_clean_cache")
+        cat("The dataframe 'df_denoised_total_cache' was not found. Using 'df_clean_cache' instead.\n")
+
+      } else {
+
+        cat("Neither 'df_denoised_total_cache' nor 'df_clean_cache' were found.\n")
       }
-      df_vars_name <- safe_readline("Enter the dataframe used for PCA (in prop.select): ")
-      if (exists(df_vars_name, envir = .GlobalEnv)) {
-        df_vars <- get(df_vars_name, envir = .GlobalEnv)
-        if (all(sapply(df_vars, is.numeric))) break
-        cat("Selected dataframe must contain only numeric columns.\n")
-      } else cat("Dataframe not found.\n")
-    }
 
 
-
-    #
-    # df_cluster$Cluster <- as.factor(df_cluster$Cluster)
-    # res.pca <- prcomp(df_vars, scale. = FALSE)
-    # n_clusters <- length(levels(df_cluster$Cluster))
-    #
-    # cat("\n")
-    #
-    # use_custom <- tolower(safe_readline("Would you like to set a custom palette? (yes/no): "))
-    # if (use_custom %in% c("yes", "y")) {
-    #   cat("Enter", n_clusters, "colors (by name or hex):\n")
-    #   user_colors <- character(n_clusters)
-    #   for (i in seq_len(n_clusters)) user_colors[i] <- safe_readline(paste("Color for cluster", i, ": "))
-    #   palette_finale <- user_colors
-    # } else {
-    #   palette_finale <- colorRampPalette(c("#35163b", "#662483", "#f39200", "#f9b233", "#ffda77"))(n_clusters)
-    # }
-    # cat("\n")
-    # cat("Palette used:", paste(palette_finale, collapse = ", "), "\n\n")
-    #
-    # eig <- (res.pca$sdev)^2 / sum((res.pca$sdev)^2) * 100
-    #
-    # # Création du graphique avec fviz_pca_biplot
-    # p <- fviz_pca_biplot(
-    #   res.pca,
-    #   geom.ind = "point", pointshape = 16, pointsize = 2.25,
-    #   alpha.ind = 0.9, col.ind = df_cluster$Cluster, palette = palette_finale,
-    #   addEllipses = TRUE, ellipse.level = 0.95, mean.point = FALSE,
-    #   label = "var", col.var = "gray35", arrowsize = 0.5, repel = TRUE,
-    #   legend.title = "Cluster"
-    # ) +
-    #   ggtitle("Cluster structure across PCA projection") +
-    #   labs(
-    #     x = paste0("Principal Component 1 (", round(eig[1], 1), "%)"),
-    #     y = paste0("Principal Component 2 (", round(eig[2], 1), "%)"),
-    #     caption = "Ellipses represent 95% confidence regions"
-    #   ) +
-    #   theme_minimal(base_family = "sans", base_size = 14) +
-    #   theme(
-    #     plot.title = element_text(size = 20, face = "bold", hjust = 0.5, color = "#222222"),
-    #     legend.title = element_text(size = 13, face = "bold", color = "#222222"),
-    #     legend.text = element_text(size = 11, color = "#444444"),
-    #     axis.title = element_text(size = 14, face = "bold", color = "#222222"),
-    #     axis.text = element_text(size = 12, color = "#333333"),
-    #     panel.grid.major = element_line(color = "gray85", linewidth = 0.4),
-    #     panel.grid.minor = element_blank(),
-    #     plot.background = element_rect(fill = "#fcfcfc", color = NA),
-    #     panel.background = element_rect(fill = "white", color = NA),
-    #     legend.background = element_rect(fill = "white", color = NA),
-    #     legend.key = element_rect(fill = "white", color = NA),
-    #     plot.caption = element_text(size = 10, hjust = 1, color = "#555555")
-    #   ) +
-    #   guides(
-    #     color = guide_legend(
-    #       override.aes = list(size = 4, alpha = 1),
-    #       title.position = "top",
-    #       title.hjust = 0.5
-    #     )
-    #   )
-    #
-    #
-    # print(p)
-
-
-
-
-    df_cluster$Cluster <- as.factor(df_cluster$Cluster)
-    res.pca <- prcomp(df_vars, scale. = FALSE)
-
-    # Nombre de composantes disponibles
-    n_comp <- ncol(res.pca$x)
-
-    cat("\nAvailable PCA dimensions:\n")
-    cat("\n")
-    for (i in 1:n_comp) {
-      var_exp <- round((res.pca$sdev[i]^2 / sum(res.pca$sdev^2)) * 100, 1)
-      cat(paste0("(", i, ") PC", i, "  →  ", var_exp, "% variance explained\n\n"))
-    }
-
-    repeat {
-      axes_input <- safe_readline("\nEnter two PCA dimensions to plot (e.g. 1-2 or 2-3): ")
-      axes_clean <- gsub(" ", "", axes_input)
-      parts <- unlist(strsplit(axes_clean, "-|,|/"))
-
-      if (length(parts) == 2 &&
-          all(suppressWarnings(!is.na(as.numeric(parts)))) ) {
-
-        axes <- as.integer(parts)
-
-        if (all(axes >= 1 & axes <= n_comp) && axes[1] != axes[2]) {
+      repeat {
+        if ("df_normalized_cache" %in% list_cache()) {
+          df_vars <- get_cache("df_normalized_cache")
+          message("Using cached 'df_normalized_cache' dataframe.")
           break
         }
+        df_vars_name <- safe_readline("Enter the dataframe used for PCA (in prop.select): ")
+        if (exists(df_vars_name, envir = .GlobalEnv)) {
+          df_vars <- get(df_vars_name, envir = .GlobalEnv)
+          if (all(sapply(df_vars, is.numeric))) break
+          cat("Selected dataframe must contain only numeric columns.\n")
+        } else cat("Dataframe not found.\n")
       }
 
-      cat("Invalid input. Please enter two different integers like 1-2, 2-3, etc.\n")
-    }
 
-    # Variance expliquée pour les axes choisis
-    eig <- (res.pca$sdev)^2 / sum((res.pca$sdev)^2) * 100
+      df_cluster$Cluster <- as.factor(df_cluster$Cluster)
+      res.pca <- prcomp(df_vars, scale. = FALSE)
 
-    x_lab <- paste0("Principal Component ", axes[1], " (", round(eig[axes[1]], 1), "%)")
-    y_lab <- paste0("Principal Component ", axes[2], " (", round(eig[axes[2]], 1), "%)")
+      # Nombre de composantes disponibles
+      n_comp <- ncol(res.pca$x)
 
-    n_clusters <- length(levels(df_cluster$Cluster))
+      cat("\nAvailable PCA dimensions:\n")
+      cat("\n")
+      for (i in 1:n_comp) {
+        var_exp <- round((res.pca$sdev[i]^2 / sum(res.pca$sdev^2)) * 100, 1)
+        cat(paste0("(", i, ") PC", i, "  →  ", var_exp, "% variance explained\n\n"))
+      }
 
-    cat("\n")
-
-    # Palette (inchangée)
-    use_custom <- tolower(safe_readline("Would you like to set a custom palette? (yes/no): "))
-    if (use_custom %in% c("yes", "y")) {
-      cat("Enter", n_clusters, "colors (by name or hex):\n")
-      user_colors <- character(n_clusters)
-      for (i in seq_len(n_clusters)) user_colors[i] <- safe_readline(paste("Color for cluster", i, ": "))
-      palette_finale <- user_colors
-    } else {
-      palette_finale <- colorRampPalette(c("#35163b", "#662483", "#f39200", "#f9b233", "#ffda77"))(n_clusters)
-    }
-
-    cat("\n")
-    cat("Palette used:", paste(palette_finale, collapse = ", "), "\n\n")
-
-    # PCA biplot avec axes choisis
-    p <- fviz_pca_biplot(
-      res.pca,
-      axes = axes,
-      geom.ind = "point", pointshape = 16, pointsize = 2.25,
-      alpha.ind = 0.9, col.ind = df_cluster$Cluster, palette = palette_finale,
-      addEllipses = TRUE, ellipse.level = 0.95, mean.point = FALSE,
-      label = "var", col.var = "gray35", arrowsize = 0.5, repel = TRUE,
-      legend.title = "Cluster"
-    ) +
-      ggtitle("Cluster structure across PCA projection") +
-      labs(
-        x = x_lab,
-        y = y_lab,
-        caption = "Ellipses represent 95% confidence regions"
-      ) +
-      theme_minimal(base_family = "sans", base_size = 14) +
-      theme(
-        plot.title = element_text(size = 20, face = "bold", hjust = 0.5, color = "#222222"),
-        legend.title = element_text(size = 13, face = "bold", color = "#222222"),
-        legend.text = element_text(size = 11, color = "#444444"),
-        axis.title = element_text(size = 14, face = "bold", color = "#222222"),
-        axis.text = element_text(size = 12, color = "#333333"),
-        panel.grid.major = element_line(color = "gray85", linewidth = 0.4),
-        panel.grid.minor = element_blank(),
-        plot.background = element_rect(fill = "#fcfcfc", color = NA),
-        panel.background = element_rect(fill = "white", color = NA),
-        legend.background = element_rect(fill = "white", color = NA),
-        legend.key = element_rect(fill = "white", color = NA),
-        plot.caption = element_text(size = 10, hjust = 1, color = "#555555")
-      ) +
-      guides(
-        color = guide_legend(
-          override.aes = list(size = 4, alpha = 1),
-          title.position = "top",
-          title.hjust = 0.5
-        )
-      )
-
-    print(p)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    cat("\n")
-
-    save_pdf <- tolower(safe_readline("Would you like to export the PCA plot as PDF? (yes/no): "))
-
-    cat("\n")
-
-    get_numeric_input <- function(prompt, default) {
       repeat {
-        val <- safe_readline(prompt, default = as.character(default))
-        val_num <- suppressWarnings(as.numeric(val))
-        if (!is.na(val_num) && val_num > 0) return(val_num)
-        cat("\nInvalid input. Please enter a positive number or press Enter for default.\n\n")
+        axes_input <- safe_readline("\nEnter two PCA dimensions to plot (e.g. 1-2 or 2-3): ")
+        axes_clean <- gsub(" ", "", axes_input)
+        parts <- unlist(strsplit(axes_clean, "-|,|/"))
+
+        if (length(parts) == 2 &&
+            all(suppressWarnings(!is.na(as.numeric(parts)))) ) {
+
+          axes <- as.integer(parts)
+
+          if (all(axes >= 1 & axes <= n_comp) && axes[1] != axes[2]) {
+            break
+          }
+        }
+
+        cat("Invalid input. Please enter two different integers like 1-2, 2-3, etc.\n")
       }
-    }
 
+      # Variance expliquée pour les axes choisis
+      eig <- (res.pca$sdev)^2 / sum((res.pca$sdev)^2) * 100
 
-    if (save_pdf %in% c("yes", "y")) {
-      if (!requireNamespace("rstudioapi", quietly = TRUE)) install.packages("rstudioapi")
-      library(rstudioapi)
+      x_lab <- paste0("Principal Component ", axes[1], " (", round(eig[axes[1]], 1), "%)")
+      y_lab <- paste0("Principal Component ", axes[2], " (", round(eig[axes[2]], 1), "%)")
 
-      if (!rstudioapi::isAvailable()) {
-        cat("RStudio API not available. Cannot select file interactively.\n")
+      n_clusters <- length(levels(df_cluster$Cluster))
+
+      cat("\n")
+
+      # Palette (inchangée)
+      use_custom <- tolower(safe_readline("Would you like to set a custom palette? (yes/no): "))
+      if (use_custom %in% c("yes", "y")) {
+        cat("Enter", n_clusters, "colors (by name or hex):\n")
+        user_colors <- character(n_clusters)
+        for (i in seq_len(n_clusters)) user_colors[i] <- safe_readline(paste("Color for cluster", i, ": "))
+        palette_finale <- user_colors
       } else {
-        pdf_path <- rstudioapi::selectFile(
-          caption = "Save PCA visualization",
-          label = "Save",
-          path = getwd(),
-          filter = list("PDF files" = "pdf"),
-          existing = FALSE
+        palette_finale <- colorRampPalette(c("#35163b", "#662483", "#f39200", "#f9b233", "#ffda77"))(n_clusters)
+      }
+
+      cat("\n")
+      cat("Palette used:", paste(palette_finale, collapse = ", "), "\n\n")
+
+      # PCA biplot avec axes choisis
+      p <- fviz_pca_biplot(
+        res.pca,
+        axes = axes,
+        geom.ind = "point", pointshape = 16, pointsize = 2.25,
+        alpha.ind = 0.9, col.ind = df_cluster$Cluster, palette = palette_finale,
+        addEllipses = TRUE, ellipse.level = 0.95, mean.point = FALSE,
+        label = "var", col.var = "gray35", arrowsize = 0.5, repel = TRUE,
+        legend.title = "Cluster"
+      ) +
+        ggtitle("Cluster structure across PCA projection") +
+        labs(
+          x = x_lab,
+          y = y_lab,
+          caption = "Ellipses represent 95% confidence regions"
+        ) +
+        theme_minimal(base_family = "sans", base_size = 14) +
+        theme(
+          plot.title = element_text(size = 20, face = "bold", hjust = 0.5, color = "#222222"),
+          legend.title = element_text(size = 13, face = "bold", color = "#222222"),
+          legend.text = element_text(size = 11, color = "#444444"),
+          axis.title = element_text(size = 14, face = "bold", color = "#222222"),
+          axis.text = element_text(size = 12, color = "#333333"),
+          panel.grid.major = element_line(color = "gray85", linewidth = 0.4),
+          panel.grid.minor = element_blank(),
+          plot.background = element_rect(fill = "#fcfcfc", color = NA),
+          panel.background = element_rect(fill = "white", color = NA),
+          legend.background = element_rect(fill = "white", color = NA),
+          legend.key = element_rect(fill = "white", color = NA),
+          plot.caption = element_text(size = 10, hjust = 1, color = "#555555")
+        ) +
+        guides(
+          color = guide_legend(
+            override.aes = list(size = 4, alpha = 1),
+            title.position = "top",
+            title.hjust = 0.5
+          )
         )
 
-        if (nzchar(pdf_path)) {
-          if (!grepl("\\.pdf$", pdf_path, ignore.case = TRUE))
-            pdf_path <- paste0(pdf_path, ".pdf")
-
-          # Demande des dimensions personnalisées
-          # pdf_width <- as.numeric(safe_readline("Enter desired PDF width (in inches, e.g., 10): "))
-          # cat("\n")
-          # pdf_height <- as.numeric(safe_readline("Enter desired PDF height (in inches, e.g., 8): "))
+      print(p)
 
 
-          # Nouveau code sécurisé avec défaut et validation
-          pdf_width  <- get_numeric_input("Enter desired PDF width (in inches, [default = 10]): ", 10)
-          cat("\n")
-          pdf_height <- get_numeric_input("Enter desired PDF height (in inches, [default = 8]): ", 8)
-          cat("\n")
 
-          # Crée le PDF avec les dimensions choisies
-          pdf(pdf_path, width = pdf_width, height = pdf_height)
-          print(p)  # <- exporte directement le plot PCA
-          dev.off()
 
-          cat("\n")
+      cat("\n")
 
-          cat("\nPCA visualization saved to:", pdf_path, "\n")
-        } else {
-          cat("Saving cancelled.\n")
+      save_pdf <- tolower(safe_readline("Would you like to export the PCA plot as PDF? (yes/no): "))
+
+      cat("\n")
+
+      get_numeric_input <- function(prompt, default) {
+        repeat {
+          val <- safe_readline(prompt, default = as.character(default))
+          val_num <- suppressWarnings(as.numeric(val))
+          if (!is.na(val_num) && val_num > 0) return(val_num)
+          cat("\nInvalid input. Please enter a positive number or press Enter for default.\n\n")
         }
       }
-    } else {
-      cat("PDF export skipped.\n")
-    }
+
+
+      if (save_pdf %in% c("yes", "y")) {
+        if (!requireNamespace("rstudioapi", quietly = TRUE)) install.packages("rstudioapi")
+        library(rstudioapi)
+
+        if (!rstudioapi::isAvailable()) {
+          cat("RStudio API not available. Cannot select file interactively.\n")
+        } else {
+          pdf_path <- rstudioapi::selectFile(
+            caption = "Save PCA visualization",
+            label = "Save",
+            path = getwd(),
+            filter = list("PDF files" = "pdf"),
+            existing = FALSE
+          )
+
+          if (nzchar(pdf_path)) {
+            if (!grepl("\\.pdf$", pdf_path, ignore.case = TRUE))
+              pdf_path <- paste0(pdf_path, ".pdf")
+
+            # Demande des dimensions personnalisées
+            # pdf_width <- as.numeric(safe_readline("Enter desired PDF width (in inches, e.g., 10): "))
+            # cat("\n")
+            # pdf_height <- as.numeric(safe_readline("Enter desired PDF height (in inches, e.g., 8): "))
+
+
+            # Nouveau code sécurisé avec défaut et validation
+            pdf_width  <- get_numeric_input("Enter desired PDF width (in inches, [default = 10]): ", 10)
+            cat("\n")
+            pdf_height <- get_numeric_input("Enter desired PDF height (in inches, [default = 8]): ", 8)
+            cat("\n")
+
+            # Crée le PDF avec les dimensions choisies
+            pdf(pdf_path, width = pdf_width, height = pdf_height)
+            print(p)  # <- exporte directement le plot PCA
+            dev.off()
+
+            cat("\n")
+
+            cat("\nPCA visualization saved to:", pdf_path, "\n")
+          } else {
+            cat("Saving cancelled.\n")
+          }
+        }
+      } else {
+        cat("PDF export skipped.\n")
+      }
+
+
+
+      # Question de relance
+      again <- tolower(safe_readline("\nWould you like to visualize another PCA projection with different components? (yes/no): "))
+      if (!again %in% c("yes", "y")) {
+        cat("\n")
+        cat("Exiting PCA visualization loop.\n")
+        break
+      }
+    }  # fin repeat
+
+  } else {
+    cat("\n")
+    cat("PCA visualization skipped.\n")
   }
 
   # --- Optional geochemical visualization ---
