@@ -540,6 +540,20 @@ xrf_clust  <- function(data = NULL) {
   }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   # --- Optional PCA visualization ---
   cat("\n=== PCA and Cluster Visualization ===\n\n")
   show_acp <- tolower(safe_readline("Would you like to visualize a PCA with the clusters? (yes/no): "))
@@ -578,12 +592,115 @@ xrf_clust  <- function(data = NULL) {
       } else cat("Dataframe not found.\n")
     }
 
+
+
+    #
+    # df_cluster$Cluster <- as.factor(df_cluster$Cluster)
+    # res.pca <- prcomp(df_vars, scale. = FALSE)
+    # n_clusters <- length(levels(df_cluster$Cluster))
+    #
+    # cat("\n")
+    #
+    # use_custom <- tolower(safe_readline("Would you like to set a custom palette? (yes/no): "))
+    # if (use_custom %in% c("yes", "y")) {
+    #   cat("Enter", n_clusters, "colors (by name or hex):\n")
+    #   user_colors <- character(n_clusters)
+    #   for (i in seq_len(n_clusters)) user_colors[i] <- safe_readline(paste("Color for cluster", i, ": "))
+    #   palette_finale <- user_colors
+    # } else {
+    #   palette_finale <- colorRampPalette(c("#35163b", "#662483", "#f39200", "#f9b233", "#ffda77"))(n_clusters)
+    # }
+    # cat("\n")
+    # cat("Palette used:", paste(palette_finale, collapse = ", "), "\n\n")
+    #
+    # eig <- (res.pca$sdev)^2 / sum((res.pca$sdev)^2) * 100
+    #
+    # # Création du graphique avec fviz_pca_biplot
+    # p <- fviz_pca_biplot(
+    #   res.pca,
+    #   geom.ind = "point", pointshape = 16, pointsize = 2.25,
+    #   alpha.ind = 0.9, col.ind = df_cluster$Cluster, palette = palette_finale,
+    #   addEllipses = TRUE, ellipse.level = 0.95, mean.point = FALSE,
+    #   label = "var", col.var = "gray35", arrowsize = 0.5, repel = TRUE,
+    #   legend.title = "Cluster"
+    # ) +
+    #   ggtitle("Cluster structure across PCA projection") +
+    #   labs(
+    #     x = paste0("Principal Component 1 (", round(eig[1], 1), "%)"),
+    #     y = paste0("Principal Component 2 (", round(eig[2], 1), "%)"),
+    #     caption = "Ellipses represent 95% confidence regions"
+    #   ) +
+    #   theme_minimal(base_family = "sans", base_size = 14) +
+    #   theme(
+    #     plot.title = element_text(size = 20, face = "bold", hjust = 0.5, color = "#222222"),
+    #     legend.title = element_text(size = 13, face = "bold", color = "#222222"),
+    #     legend.text = element_text(size = 11, color = "#444444"),
+    #     axis.title = element_text(size = 14, face = "bold", color = "#222222"),
+    #     axis.text = element_text(size = 12, color = "#333333"),
+    #     panel.grid.major = element_line(color = "gray85", linewidth = 0.4),
+    #     panel.grid.minor = element_blank(),
+    #     plot.background = element_rect(fill = "#fcfcfc", color = NA),
+    #     panel.background = element_rect(fill = "white", color = NA),
+    #     legend.background = element_rect(fill = "white", color = NA),
+    #     legend.key = element_rect(fill = "white", color = NA),
+    #     plot.caption = element_text(size = 10, hjust = 1, color = "#555555")
+    #   ) +
+    #   guides(
+    #     color = guide_legend(
+    #       override.aes = list(size = 4, alpha = 1),
+    #       title.position = "top",
+    #       title.hjust = 0.5
+    #     )
+    #   )
+    #
+    #
+    # print(p)
+
+
+
+
     df_cluster$Cluster <- as.factor(df_cluster$Cluster)
     res.pca <- prcomp(df_vars, scale. = FALSE)
+
+    # Nombre de composantes disponibles
+    n_comp <- ncol(res.pca$x)
+
+    cat("\nAvailable PCA dimensions:\n")
+    cat("\n")
+    for (i in 1:n_comp) {
+      var_exp <- round((res.pca$sdev[i]^2 / sum(res.pca$sdev^2)) * 100, 1)
+      cat(paste0("(", i, ") PC", i, "  →  ", var_exp, "% variance explained\n\n"))
+    }
+
+    repeat {
+      axes_input <- safe_readline("\nEnter two PCA dimensions to plot (e.g. 1-2 or 2-3): ")
+      axes_clean <- gsub(" ", "", axes_input)
+      parts <- unlist(strsplit(axes_clean, "-|,|/"))
+
+      if (length(parts) == 2 &&
+          all(suppressWarnings(!is.na(as.numeric(parts)))) ) {
+
+        axes <- as.integer(parts)
+
+        if (all(axes >= 1 & axes <= n_comp) && axes[1] != axes[2]) {
+          break
+        }
+      }
+
+      cat("Invalid input. Please enter two different integers like 1-2, 2-3, etc.\n")
+    }
+
+    # Variance expliquée pour les axes choisis
+    eig <- (res.pca$sdev)^2 / sum((res.pca$sdev)^2) * 100
+
+    x_lab <- paste0("Principal Component ", axes[1], " (", round(eig[axes[1]], 1), "%)")
+    y_lab <- paste0("Principal Component ", axes[2], " (", round(eig[axes[2]], 1), "%)")
+
     n_clusters <- length(levels(df_cluster$Cluster))
 
     cat("\n")
 
+    # Palette (inchangée)
     use_custom <- tolower(safe_readline("Would you like to set a custom palette? (yes/no): "))
     if (use_custom %in% c("yes", "y")) {
       cat("Enter", n_clusters, "colors (by name or hex):\n")
@@ -593,14 +710,14 @@ xrf_clust  <- function(data = NULL) {
     } else {
       palette_finale <- colorRampPalette(c("#35163b", "#662483", "#f39200", "#f9b233", "#ffda77"))(n_clusters)
     }
+
     cat("\n")
     cat("Palette used:", paste(palette_finale, collapse = ", "), "\n\n")
 
-    eig <- (res.pca$sdev)^2 / sum((res.pca$sdev)^2) * 100
-
-    # Création du graphique avec fviz_pca_biplot
+    # PCA biplot avec axes choisis
     p <- fviz_pca_biplot(
       res.pca,
+      axes = axes,
       geom.ind = "point", pointshape = 16, pointsize = 2.25,
       alpha.ind = 0.9, col.ind = df_cluster$Cluster, palette = palette_finale,
       addEllipses = TRUE, ellipse.level = 0.95, mean.point = FALSE,
@@ -609,8 +726,8 @@ xrf_clust  <- function(data = NULL) {
     ) +
       ggtitle("Cluster structure across PCA projection") +
       labs(
-        x = paste0("Principal Component 1 (", round(eig[1], 1), "%)"),
-        y = paste0("Principal Component 2 (", round(eig[2], 1), "%)"),
+        x = x_lab,
+        y = y_lab,
         caption = "Ellipses represent 95% confidence regions"
       ) +
       theme_minimal(base_family = "sans", base_size = 14) +
@@ -636,8 +753,22 @@ xrf_clust  <- function(data = NULL) {
         )
       )
 
-
     print(p)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     cat("\n")
 
@@ -1006,9 +1137,9 @@ xrf_clust  <- function(data = NULL) {
     Dataframe_Check <- cbind(df_cluster_local,df_clr_check_local)
 
     # Assigner dans l'environnement global
-    assign("Dataframe_Check", Dataframe_Check, envir = .GlobalEnv)
+    assign("Sediment_Geochem_Clusters_Analysis", Dataframe_Check, envir = .GlobalEnv)
 
-    cat("\nDataframe_Check created combining 'df_clr_check' and 'Dataframe_Clustering'.\n")
+    cat("\nDataframe (Sediment_Geochem_Clusters_Analysis) created combining 'df_clr_check' and 'Dataframe_Clustering'.\n")
   } else {
     cat("\nWarning: Either 'df_clr_check' or 'Dataframe_Clustering' not found in global environment. Dataframe_Check not created.\n")
   }
@@ -1016,7 +1147,7 @@ xrf_clust  <- function(data = NULL) {
   cat("\n")
 
   # --- Optional save Dataframe_Check ---
-  save_check <- tolower(safe_readline("Would you like to save 'Dataframe_Check'? (yes/no): "))
+  save_check <- tolower(safe_readline("Would you like to save 'Sediment_Geochem_Clusters_Analysis'? (yes/no): "))
   cat("\n")
   if (save_check %in% c("yes", "y")) {
     repeat {
