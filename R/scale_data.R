@@ -152,6 +152,7 @@ scale_data <- function(donnees=NULL) {
 
 
   cat("\n====== POTENTIAL XRF DUPLICATES (BY NAME) ======\n")
+  cat("\n")
   col_names <- names(donnees)
   elements  <- sub("([A-Za-z]+).*", "\\1", col_names)
   dup_elements <- elements[duplicated(elements) | duplicated(elements, fromLast = TRUE)]
@@ -196,6 +197,7 @@ scale_data <- function(donnees=NULL) {
     }
 
   } else {
+    cat("\n")
     cat("No duplicated XRF element names detected.\n")
   }
 
@@ -249,6 +251,7 @@ scale_data <- function(donnees=NULL) {
 
   # Normalisation
   cat("\n====== INFORMATION ======\n")
+  cat("\n")
   cat("The following steps will be performed:\n")
   cat("1. Columns containing 'log' Ratios will be left unchanged.\n")
   cat("2. All other columns will be transformed using the CLR (centered log-ratio) transformation.\n")
