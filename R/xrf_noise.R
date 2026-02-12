@@ -193,6 +193,65 @@ xrf_noise <- function(df = NULL) {
     }
   }
 
+  # ============================================================
+  # OPTIONAL: Remove additional columns before PCA/Clustering
+  # ============================================================
+
+  donnees <- df_clean
+  colonnes_supprimees <- character()
+
+  repeat {
+    rep2 <- tolower(safe_readline(
+      "Do you want to remove other columns before PCA & Clustering? (yes/no): "
+    ))
+
+    if (!rep2 %in% c("yes", "no")) {
+      cat("Please answer 'yes' or 'no'.\n\n")
+      next
+    }
+
+    if (rep2 == "no") break
+
+    cat("\n====== AVAILABLE COLUMNS ======\n\n")
+    print(names(donnees))
+    cat("\n")
+
+    colonnes_a_supprimer <- safe_readline(
+      "Enter the names of the columns to delete (comma-separated): "
+    )
+
+    colonnes_a_supprimer <- trimws(strsplit(colonnes_a_supprimer, ",")[[1]])
+
+    colonnes_existantes <- intersect(colonnes_a_supprimer, names(donnees))
+    colonnes_invalides  <- setdiff(colonnes_a_supprimer, names(donnees))
+
+    if (length(colonnes_existantes) == 0) {
+      cat("\nError: none of the specified columns exist. Try again.\n\n")
+      next
+    }
+
+    if (length(colonnes_invalides) > 0) {
+      cat("\nWarning: ignored (not found): ",
+          paste(colonnes_invalides, collapse = ", "), "\n\n")
+    }
+
+    donnees <- donnees[, !(names(donnees) %in% colonnes_existantes), drop = FALSE]
+    colonnes_supprimees <- c(colonnes_supprimees, colonnes_existantes)
+
+    cat("\nRemoved columns:\n",
+        paste(colonnes_existantes, collapse = ", "), "\n\n")
+
+    break
+  }
+
+  if (ncol(donnees) == 0) {
+    stop("The dataframe is empty after deleting columns. You removed everything.")
+  }
+
+  df_clean <- donnees
+
+
+
   df_normalized <- df_clean[, setdiff(names(df_clean), depth_col), drop = FALSE]
 
   if (exists("set_cache")) {
