@@ -264,8 +264,8 @@ prop.select <- function(df_normalized=NULL) {
 
     repeat {
       # Check if df_normal is already in cache
-      if ("df_clean_cache" %in% list_cache()) {
-        df_original <- get_cache("df_clean_cache")
+      if ("df_normalized_cache" %in% list_cache()) {
+        df_original <- get_cache("df_normalized_cache")
         message("Using cached 'df_clean_cache' dataframe.")
         break
       }

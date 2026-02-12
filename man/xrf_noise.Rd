@@ -4,7 +4,7 @@
 \alias{xrf_noise}
 \title{XRF Noise Detection and Denoising}
 \usage{
-xrf_noise(df)
+xrf_noise(df = NULL)
 }
 \arguments{
 \item{df}{data.frame containing XRF data (columns = elements, one column for depth).}

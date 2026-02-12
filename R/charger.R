@@ -174,31 +174,87 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
   cat("\n")
 
 
-  #
-  # cat("\n")
-  # run_noise <- safe_readline("Would you like to run the XRF noise detection & denoising module (EEMD-based)? (yes/no): ")
-  # cat("\n")
-  #
-  #
-  # if (tolower(run_noise) == "yes") {
-  #
-  #   if (!exists("xrf_noise")) {
-  #     stop("The function 'xrf_noise()' is not available in the current environment.")
-  #   }
-  #   cat("\nLaunching XRF noise detection...\n\n")
-  #
-  #   noise_output <- xrf_noise(df)
-  #
-  #   df <- noise_output$df_clean
-  #
-  #   cat("\nXRF noise filtering completed.\n")
-  #   cat("\n")
-  #   cat("The dataframe has been updated with denoised & filtered variables.\n\n")
-  #
-  # } else {
-  #   cat("XRF noise detection skipped.\n\n")
-  # }
-  #
+  # ============================================================
+  # STEP: Depth column selection + Negative values management
+  # ============================================================
+
+  cat("\n============================================================\n")
+  cat("Depth column identification\n")
+  cat("============================================================\n\n")
+
+  cat("Available columns in your dataframe:\n\n")
+  print(colnames(df))
+  cat("\n")
+
+  # --- Ask user to identify depth column ---
+  repeat {
+    depth_col <- safe_readline("Enter the name of the depth (or similar) column: ")
+
+    if (!(depth_col %in% colnames(df))) {
+      cat("\nERROR: Column not found. Please choose among:\n\n")
+      print(colnames(df))
+      cat("\nPlease try again.\n\n")
+    } else {
+      cat("\nDepth column selected:", depth_col, "\n\n")
+      break
+    }
+  }
+
+  # --- Identify numeric columns excluding depth ---
+  cols_to_check <- setdiff(names(df), depth_col)
+
+  # --- Detect negative values ---
+  neg_summary <- data.frame(
+    column = character(),
+    n_negative = integer(),
+    stringsAsFactors = FALSE
+  )
+
+  for (col in cols_to_check) {
+    if (is.numeric(df[[col]])) {
+      n_neg <- sum(df[[col]] < 0, na.rm = TRUE)
+      if (n_neg > 0) {
+        neg_summary <- rbind(neg_summary, data.frame(
+          column = col,
+          n_negative = n_neg
+        ))
+      }
+    }
+  }
+
+  # --- Report ---
+  if (nrow(neg_summary) == 0) {
+    cat("✔ No negative values detected in geochemical variables.\n\n")
+  } else {
+    cat("\n⚠ Negative values detected in the following columns:\n\n")
+    print(neg_summary)
+    cat("\n")
+
+    repeat {
+      action <- tolower(safe_readline(
+        "How do you want to handle them?\n  1 = Remove columns\n  2 = Remove rows\nChoose 1 or 2: "
+      ))
+
+      if (action %in% c("1", "2")) break
+      cat("Invalid choice. Please enter 1 or 2.\n\n")
+    }
+
+    if (action == "1") {
+      cat("\nRemoving columns with negative values...\n")
+      df <- df[, !(names(df) %in% neg_summary$column), drop = FALSE]
+      cat("✔ Columns removed:", paste(neg_summary$column, collapse = ", "), "\n\n")
+    }
+
+    if (action == "2") {
+      cat("\nRemoving rows with any negative values...\n")
+      rows_to_remove <- apply(df[, neg_summary$column, drop = FALSE], 1, function(x) any(x < 0, na.rm = TRUE))
+      df <- df[!rows_to_remove, ]
+      cat("✔ Rows removed:", sum(rows_to_remove), "\n\n")
+    }
+  }
+
+  cat("✔ Dataset cleaned and ready for PCA & clustering.\n")
+  cat("============================================================\n\n")
 
 
   # ========== LOG CREATION ===========
