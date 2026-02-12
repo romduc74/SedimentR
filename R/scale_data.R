@@ -249,7 +249,6 @@ scale_data <- function(donnees=NULL) {
      "\n\n--------------------------------\n",
     "Total initial columns: ", total_initial,
     "\nTotal selected columnsa: ", total_selected,
-    "\n"
     "\n\n===============================\n"
   )
 
