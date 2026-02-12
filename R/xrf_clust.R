@@ -378,10 +378,7 @@ xrf_clust  <- function(data = NULL) {
       df_denoised_total <- get_cache("df_clean_cache")
       df_denoised_total$Cluster <- clustering_result$cluster
       set_cache("df_clean_cache", df_denoised_total)
-
       assign("Dataframe_Clustering", df_denoised_total, envir = .GlobalEnv)
-
-
 
       cat("\nCluster column added to cached 'df_clean_cache'.\n\n")
       break
@@ -1062,51 +1059,30 @@ xrf_clust  <- function(data = NULL) {
 
   cat("\n")
 
+  # --- Create final check dataframe ---
+  if (exists("df_clr_check", envir = .GlobalEnv) && exists("Dataframe_Clustering", envir = .GlobalEnv)) {
 
+    df_clr_check_local <- get("df_clr_check", envir = .GlobalEnv)
+    df_cluster_local <- get("Dataframe_Clustering", envir = .GlobalEnv)
 
-  # --- Prepare list of dataframes to combine ---
-  dfs_to_use <- list()
+    # Identifier les colonnes en doublon
+    common_cols <- intersect(colnames(df_clr_check_local), colnames(df_cluster_local))
 
-  # Ajouter df_clr_check si existant
-  if (exists("df_clr_check", envir = .GlobalEnv)) {
-    df_clr_check <- get("df_clr_check", envir = .GlobalEnv)
-    dfs_to_use <- c(dfs_to_use, list(df_clr_check))
-  }
-
-  # Ajouter df_denoised_total si existant
-  if (exists("df_denoised", envir = .GlobalEnv)) {
-    df_denoised <- get("df_denoised", envir = .GlobalEnv)
-    # Supprimer les colonnes déjà présentes dans df_clr_check
-    if (length(dfs_to_use) > 0) {
-      df_denoised <- df_denoised[, !(names(df_denoised) %in% names(dfs_to_use[[1]])), drop = FALSE]
+    if (length(common_cols) > 0) {
+      # Supprimer les colonnes en doublon dans df_clr_check pour garder celles de df_cluster_local
+      df_clr_check_local <- df_clr_check_local[, !(colnames(df_clr_check_local) %in% common_cols), drop = FALSE]
     }
-    dfs_to_use <- c(dfs_to_use, list(df_denoised))
-  }
 
-  # Ajouter colonne Cluster de Dataframe_Clustering si existante
-  if (exists("Dataframe_Clustering", envir = .GlobalEnv)) {
-    df_cluster <- get("Dataframe_Clustering", envir = .GlobalEnv)
-    if ("Cluster" %in% colnames(df_cluster)) {
-      # Supprimer Cluster si elle est déjà présente dans les autres dfs
-      if (!("Cluster" %in% unlist(lapply(dfs_to_use, names)))) {
-        dfs_to_use <- c(dfs_to_use, list(df_cluster[, "Cluster", drop = FALSE]))
-      }
-    }
-  }
+    # Combiner les dataframes
+    Dataframe_Check <- cbind(df_cluster_local,df_clr_check_local)
 
-  # Vérifier qu’il y a au moins un dataframe à combiner
-  if (length(dfs_to_use) == 0) {
-    message("No dataframes found to combine.")
+    # Assigner dans l'environnement global
+    assign("Sediment_Geochem_Clusters_Analysis", Dataframe_Check, envir = .GlobalEnv)
+
+    cat("\nDataframe (Sediment_Geochem_Clusters_Analysis) created combining 'df_clr_check' and 'Dataframe_Clustering'.\n")
   } else {
-    # Combiner les colonnes dans l'ordre : df_clr_check, df_denoised, Cluster
-    Sediment_Geochem_Clusters_Analysis <- do.call(cbind, dfs_to_use)
-
-    # Sauvegarder dans le Global Environment
-    assign("Sediment_Geochem_Clusters_Analysis", Sediment_Geochem_Clusters_Analysis, envir = .GlobalEnv)
-    message("Sediment_Geochem_Clusters_Analysis created with combined columns.")
+    cat("\nWarning: Either 'df_clr_check' or 'Dataframe_Clustering' not found in global environment. Dataframe_Check not created.\n")
   }
-
-
 
   cat("\n")
 

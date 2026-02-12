@@ -174,90 +174,94 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
   cat("\n")
 
 
-  # ============================================================
-  # STEP: Depth column selection + Negative values management
-  # ============================================================
 
-  cat("\n============================================================\n")
-  cat("Depth column identification\n")
-  cat("============================================================\n\n")
-
-  cat("Available columns in your dataframe:\n\n")
-  print(colnames(df))
+  cat("\n")
+  run_noise <- safe_readline("Would you like to run the XRF noise detection & denoising module (EEMD-based)? (yes/no): ")
   cat("\n")
 
-  # --- Ask user to identify depth column ---
-  repeat {
-    depth_col <- safe_readline("Enter the name of the depth (or similar) column: ")
 
-    if (!(depth_col %in% colnames(df))) {
-      cat("\nERROR: Column not found. Please choose among:\n\n")
-      print(colnames(df))
-      cat("\nPlease try again.\n\n")
-    } else {
-      cat("\nDepth column selected:", depth_col, "\n\n")
-      break
+  if (tolower(run_noise) == "yes") {
+
+    if (!exists("xrf_noise")) {
+      stop("The function 'xrf_noise()' is not available in the current environment.")
     }
+    cat("\nLaunching XRF noise detection...\n\n")
+
+    noise_output <- xrf_noise(df)
+
+    df <- noise_output$df_clean
+
+    cat("\nXRF noise filtering completed.\n")
+    cat("\n")
+    cat("The dataframe has been updated with denoised & filtered variables.\n\n")
+
+  } else {
+    cat("XRF noise detection skipped.\n\n")
   }
 
-  # --- Identify numeric columns excluding depth ---
-  cols_to_check <- setdiff(names(df), depth_col)
+  # --- CHECK FOR NEGATIVE VALUES AFTER DENOISING / RATIOS ---
+  cat("\n\n")
+  cat("=== CHECK FOR NEGATIVE VALUES IN THE DATAFRAME ===\n\n")
 
-  # --- Detect negative values ---
-  neg_summary <- data.frame(
-    column = character(),
-    n_negative = integer(),
-    stringsAsFactors = FALSE
-  )
+  # Choose which dataframe to check: denoised if exists, otherwise final df
+  df_to_check <- if (exists("df_denoised_total")) df_denoised_total else df
 
-  for (col in cols_to_check) {
-    if (is.numeric(df[[col]])) {
-      n_neg <- sum(df[[col]] < 0, na.rm = TRUE)
-      if (n_neg > 0) {
-        neg_summary <- rbind(neg_summary, data.frame(
-          column = col,
-          n_negative = n_neg
-        ))
+  # Identify negative values
+  neg_counts <- sapply(df_to_check, function(col) sum(col < 0, na.rm = TRUE))
+  cols_with_neg <- names(neg_counts)[neg_counts > 0]
+
+  if (length(cols_with_neg) == 0) {
+    cat("No negative values detected in the dataframe.\n\n")
+  } else {
+
+    cat("The following columns contain negative values, with the number of affected rows:\n\n")
+    for (col in cols_with_neg) {
+      cat(sprintf("- %s : %d rows\n", col, neg_counts[col]))
+    }
+
+    cat("\n")
+    cat("Negative values typically indicate elements that were poorly measured during XRF analysis.\n")
+    cat("It is recommended to remove these values before CLR (Centered Log-Ratio) normalization.\n")
+    cat("If negative or zero values remain, the geometric mean cannot be calculated properly.\n\n")
+
+    # Ask user for choice
+    repeat {
+      choice <- tolower(readline(
+        "\nChoose an action to handle negative values (type exactly):\n\n 1) remove rows\n 2) remove columns\n\nYour choice: "
+      ))
+      cat("\n")
+      if (choice %in% c("remove rows", "1")) {
+        # Remove rows with any negative value
+        rows_to_remove <- apply(df_to_check[, cols_with_neg, drop = FALSE], 1, function(r) any(r < 0))
+        cat(sprintf("Removing %d rows containing negative values...\n\n", sum(rows_to_remove)))
+        df_to_check <- df_to_check[!rows_to_remove, ]
+        break
+      } else if (choice %in% c("remove columns", "2")) {
+        # Remove entire columns
+        cat(sprintf("Removing %d columns with negative values...\n\n", length(cols_with_neg)))
+        df_to_check <- df_to_check[, !(names(df_to_check) %in% cols_with_neg), drop = FALSE]
+        break
+      } else {
+        cat("Invalid choice. Please type 'remove rows' or 'remove columns' (or 1 / 2).\n\n")
       }
     }
+
+    # Assign cleaned dataframe back to global environment
+    if (exists("df_denoised_total")) {
+      df_denoised_total <- df_to_check
+      assign("df_denoised_total", df_denoised_total, envir = .GlobalEnv)
+      set_cache("df_denoised_total_cache", df_denoised_total)
+    } else {
+      df <- df_to_check
+      assign("df_clean", df, envir = .GlobalEnv)
+      set_cache("df_clean_cache", df)
+    }
+
+    cat("Negative value handling completed.\n\n")
   }
 
-  # --- Report ---
-  if (nrow(neg_summary) == 0) {
-    cat("No negative values detected in geochemical variables.\n\n")
-  } else {
-    cat("\nWARNING: Negative values detected in the following columns:\n\n")
-    print(neg_summary)
-    cat("\n")
-
-    repeat {
-      action <- tolower(safe_readline(
-        "How do you want to handle them?\n  1 = Remove columns\n\n  2 = Remove rows\nChoose 1 or 2: "
-      ))
-
-      if (action %in% c("1", "2")) break
-      cat("Invalid choice. Please enter 1 or 2.\n\n")
-    }
-
-    if (action == "1") {
-      cat("\nRemoving columns with negative values...\n")
-      df <- df[, !(names(df) %in% neg_summary$column), drop = FALSE]
-      cat("✔ Columns removed:", paste(neg_summary$column, collapse = ", "), "\n\n")
-    }
-
-    if (action == "2") {
-      cat("\nRemoving rows with any negative values...\n")
-      rows_to_remove <- apply(df[, neg_summary$column, drop = FALSE], 1, function(x) any(x < 0, na.rm = TRUE))
-      df <- df[!rows_to_remove, ]
-      cat("✔ Rows removed:", sum(rows_to_remove), "\n\n")
-    }
-  }
-
-  cat("✔ Dataset cleaned and ready for PCA & clustering.\n")
-  cat("============================================================\n\n")
 
 
-  # ========== LOG CREATION ===========
 
   # --- Bloc création ratios log-transformés ---
   answer <- safe_readline("Would you like to create log-transformed ratios? (yes/no) : ")
@@ -396,11 +400,8 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
   cat("\n")
 
   # --- Save globally & optional caching ---
-  # assign("df_clean", df, envir=.GlobalEnv)
-  df_clean<-df
-  assign("User Dataframe", df, envir=.GlobalEnv)
+  assign("df_clean", df, envir=.GlobalEnv)
   set_cache("df_clean_cache", df_clean)
-  set_cache("df_base_cluster", df)
 
   if (exists("df_denoised_total")){
     assign("df_denoised_total", df_denoised_total, envir=.GlobalEnv)

@@ -208,16 +208,16 @@ scale_data <- function(donnees=NULL) {
     df_clr,
     colonnes_log
   )
-
-  df_normalized3 <- cbind(
-    depth = depth_col,
-    df_clr,
-    colonnes_log
-  )
+#
+#   df_normalized3 <- cbind(
+#     depth = depth_col,
+#     df_clr,
+#     colonnes_log
+#   )
 
   set_cache("df_normalized_cache", df_normalized)
 
-  set_cache("df_clean_cache", df_normalized3)
+  #set_cache("df_clean_cache", df_normalized3)
 
   df_clr2<-df_clr
 
@@ -246,10 +246,10 @@ scale_data <- function(donnees=NULL) {
     "\n\nDeleted Columns:\n", ifelse(length(colonnes_supprimees) > 0, paste(colonnes_supprimees, collapse = ", "), "None"),
     "\n\nCLR Transformed Columns:\n", ifelse(ncol(df_clr) > 0, paste(names(df_clr), collapse = ", "), "None"),
     "\n\nLog Columns Retained:\n", ifelse(ncol(colonnes_log) > 0, paste(names(colonnes_log), collapse = ", "), "None"),
-    #  "\n\n--------------------------------\n",
-    #"Total initial columns: ", total_initial,
-    # "\nTotal selected columnsa: ", total_selected,
-    # "\n"
+     "\n\n--------------------------------\n",
+    "Total initial columns: ", total_initial,
+    "\nTotal selected columnsa: ", total_selected,
+    "\n"
     "\n\n===============================\n"
   )
 
