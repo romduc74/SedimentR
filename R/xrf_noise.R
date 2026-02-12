@@ -11,7 +11,7 @@
 #'   - df_denoised: data.frame with denoised XRF data (first IMFs removed)
 #' @export
 #'
-xrf_noise <- function(df) {
+xrf_noise <- function(df = NULL) {
   if (!requireNamespace("Rlibeemd", quietly = TRUE)) install.packages("Rlibeemd")
   library(Rlibeemd)
 
@@ -24,6 +24,17 @@ xrf_noise <- function(df) {
     return(input)
   }
 
+  # --- Retrieve dataframe from cache if not provided ---
+  if (is.null(df)) {
+
+    if (exists("list_cache") && "df_normalized_cache" %in% list_cache()) {
+      df <- get_cache("df_normalized_cache")
+      message("Using cached 'df_normalized_cache' dataframe.")
+    } else {
+      stop("No dataframe provided and 'df_normalized_cache' not found in cache.")
+    }
+  }
+  cat("\n")
   # --- EEMD parameters ---
   cat("EEMD parameters:\n\n")
   noise_strength <- as.numeric(safe_readline("1) Noise amplitude [default = 0.2]: ", default = "0.2"))
@@ -144,12 +155,8 @@ xrf_noise <- function(df) {
   if(length(clean_vars) > 0) df_clean <- df_clean[, c(depth_col, clean_vars), drop=FALSE]
 
   # --- Save globally & optional caching ---
-  assign("df_clean", df_clean, envir=.GlobalEnv)
-  assign("df_denoised_total", df_denoised_total, envir=.GlobalEnv)
-  # if(exists("set_cache")) {
-  #   set_cache("df_clean_cache", df_clean)
-  #   set_cache("df_denoised_total_cache", df_denoised_total)
-  # }
+  # assign("df_clean", df_clean, envir=.GlobalEnv)
+  #  assign("df_denoised_total", df_denoised_total, envir=.GlobalEnv)
 
   # --- Summary ---
   summary_text <- paste0(
@@ -186,20 +193,25 @@ xrf_noise <- function(df) {
     }
   }
 
-  # --- Remove rows with negative values in the denoised dataset ---
-  # neg_rows <- apply(df_denoised_total[, setdiff(names(df_denoised_total), depth_col), drop=FALSE],
-  #                   1, function(r) any(r < 0, na.rm=TRUE))
-  # if(any(neg_rows)) {
-  #   removed_indices <- which(neg_rows)
-  #   df_denoised_total <- df_denoised_total[!neg_rows, , drop=FALSE]
-  #   df_clean <- df_clean[!neg_rows, , drop=FALSE]
-  #
-  #   cat("\n====================\n")
-  #   cat(sprintf("WARNING: %d rows containing negative values have been removed (including depth values).\n", length(removed_indices)))
-  #   cat(sprintf("Original row indices: %s\n", paste(removed_indices, collapse=", ")))
-  #   cat("====================\n\n")
-  # }
-  #
+  df_normalized <- df_clean[, setdiff(names(df_clean), depth_col), drop = FALSE]
+
+  if (exists("set_cache")) {
+    set_cache("df_normalized_cache", df_normalized)
+    set_cache("df_denoised_total_cache", df_denoised_total)
+  }
+
+
+  # Retirer la colonne depth
+  df_denoised_total_no_depth <- df_denoised_total[, setdiff(names(df_denoised_total), depth_col), drop = FALSE]
+
+  # Renommer toutes les colonnes avec suffixe "_denoised"
+  names(df_denoised_total_no_depth) <- paste0(names(df_denoised_total_no_depth), "_denoised")
+
+  # Ajouter la colonne depth au début (avec les vraies valeurs)
+  df_denoised_total_final <- cbind(depth = df_denoised_total[[depth_col]], df_denoised_total_no_depth)
+
+  # Assigner dans le global environment
+  assign("df_denoised", df_denoised_total_final, envir = .GlobalEnv)
 
 
   invisible(list(results=results, df_clean=df_clean, df_denoised_total=df_denoised_total, depth_col=depth_col))

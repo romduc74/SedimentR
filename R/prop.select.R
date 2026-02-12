@@ -25,62 +25,6 @@ prop.select <- function(df_normalized=NULL) {
   }
 
 
-
-  # repeat {
-  #   if ("df_normalized_cache" %in% list_cache()) {
-  #     df_normalized <- get_cache("df_normalized_cache")
-  #     message("Using cached 'df_normalized_cache'.")
-  #     break
-  #   }
-  #
-  #   message("No normalized data found. Launching scale_data() to create df_normalized.")
-  #   scale_data()
-  #
-  #   if ("df_normalized_cache" %in% list_cache()) {
-  #     df_normalized <- get_cache("df_normalized_cache")
-  #     break
-  #   } else {
-  #     message("df_normalized_cache was not created. Please complete scale_data() properly.")
-  #   }
-  # }
-
-
-## OLD MAIS A GARDER
-  # repeat {
-  #   # Check if df_normal is already in cache
-  #   if ("df_normalized_cache" %in% list_cache()) {
-  #     df_normalized <- get_cache("df_normalized_cache")
-  #     message("Using cached 'df_normalized_cache' dataframe.")
-  #     break
-  #   }
-  #
-  #   # Otherwise, show data frames available in the global environment
-  #   df_list <- ls(envir = .GlobalEnv)
-  #   df_list <- df_list[sapply(df_list, function(x) is.data.frame(get(x, envir = .GlobalEnv)))]
-  #
-  #   if (length(df_list) == 0) {
-  #     stop("No data frames found in the global environment.")
-  #   }
-  #
-  #   cat("\nSelect the dataframe with the selected elements:\n")
-  #   print(df_list)
-  #   cat("\n")
-  #
-  #   df_name <- readline("Enter the name of the dataframe from the exit of the scale_data function: ")
-  #
-  #   # If a valid dataframe name is entered
-  #   if (df_name %in% df_list) {
-  #     df_normalized <- get(df_name, envir = .GlobalEnv)
-  #     set_cache("df_normalized_cache", df_normalized)
-  #     #message("Dataframe cached as 'df_normal' for future use.")
-  #     break
-  #   }
-  #
-  #   # Otherwise, try again
-  #   cat("\n Dataframe not found. Try again.\n")
-  # }
-
-
   # ---  Vérifier si l'utilisateur a fourni un dataframe ---
   if (!is.null(df_normalized)) {
     message("Using the dataframe provided by the user.")
@@ -351,17 +295,6 @@ prop.select <- function(df_normalized=NULL) {
       # Otherwise, try again
       cat("\n Dataframe not found. Try again.\n")
     }
-    # repeat {
-    #   cat("\nSelect the dataframe used in the function (scale_data):\n")
-    #   print(df_list)
-    #   cat("\n")
-    #   df_name <- safe_readline("Enter the name of the dataframe: ")
-    #   if (df_name %in% df_list) {
-    #     df_original <- get(df_name, envir = .GlobalEnv)
-    #     break
-    #   }
-    #   cat("\nDataframe not found. Try again.\n")
-    # }
 
     variables_cluster_original <- df_original[, colnames(variables_cluster), drop = FALSE]
     variables_cluster <- as.data.frame(variables_cluster_original)

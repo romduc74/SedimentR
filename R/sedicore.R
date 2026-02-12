@@ -81,23 +81,12 @@ sedicore <- function(file_path = NULL, sheet = "data") {
     return(input)
   }
 
-  # # --- Prepare arguments for 'charger' ---
-  # sep <- ","
-  # fileEncoding <- "UTF-8"
-  #
-  # if (tolower(extension) == "csv") {
-  #   cat("\n--- CSV file detected --------------------\n\n")
-  #   sep <- safe_readline("Enter separator used in CSV (default ','): ")
-  #   if (sep == "") sep <- ","
-  #   cat("\n")
-  #   fileEncoding <- safe_readline("Enter file encoding (default 'UTF-8'): ")
-  #   if (fileEncoding == "") fileEncoding <- "UTF-8"
-  # }
-  #
+
   if (tolower(extension) == "xlsx") {
     cat("\n--- Excel file detected ------------------\n\n")
     sheets <- readxl::excel_sheets(file_path)
     cat("Available sheets:\n")
+    cat("\n")
     print(sheets)
     cat("\n")
 
@@ -111,43 +100,98 @@ sedicore <- function(file_path = NULL, sheet = "data") {
   }
 
   # --- Step 1: Data loading ---
-  cat("\n==========================================\n")
+  cat("\n=======================================================================================\n")
   cat("\n--- Step 1 : Loading data for Clustering Analysis -----------------\n")
-#  df <- charger(file_path, sheet = sheet, sep = sep, fileEncoding = fileEncoding)
+  #  df <- charger(file_path, sheet = sheet, sep = sep, fileEncoding = fileEncoding)
   df <- charger(file_path, sheet = sheet)
   cat("\nData successfully loaded.\n")
-  cat("\n==========================================\n")
+  cat("\n=======================================================================================\n")
 
-  # --- Step 2: Noise reduction ---
-  # cat("\n==========================================\n")
-  # cat("\n--- Step 2 : Noise reduction (EEMD and IMF method) --------------\n")
-  # cat("\n")
-  # xrf_noise(df)
-  # cat("\nNoise reduction completed.\n")
-  # cat("\n==========================================\n")
 
   # --- Step 3: Scaling data ---
-  cat("\n==========================================\n")
+  cat("\n=======================================================================================\n")
   cat("\n--- Step 3 : Scaling data (CLR and/or Log for ratio)-----------------\n")
   cat("\n")
   scale_data()
   cat("\nData scaling completed.\n")
-  cat("\n==========================================\n")
+  cat("\n=======================================================================================\n")
+
+  # --- Step 4: Noise detection & denoising module (EEMD-based) ---
+  cat("\n=======================================================================================\n")
+  cat("\n--- Step 4 : Noise detection & denoising module (EEMD-based)-----------------\n")
+  cat("\n")
+
+  repeat {
+    run_noise <- tolower(safe_readline("Do you want to perform XRF denoising? (yes/no): "))
+    if (run_noise %in% c("yes", "no")) break
+    cat("Please enter 'yes' or 'no'.\n")
+  }
+
+  cat("\n")
+
+  if (run_noise == "yes") {
+    xrf_noise()
+    cat("\nData denoising completed.\n")
+  } else {
+    repeat {
+      if ("df_normalized_cache" %in% list_cache()) {
+        df_normalized <- get_cache("df_normalized_cache")
+        message("Using cached 'df_normalized' dataframe.")
+        break
+      } else {
+        stop("Cache 'df_normalized_cache' not found. Please run the scaling step first.")
+      }
+    }
+
+    # --- Explication pour l'utilisateur ---
+    cat("\nNOTE: You need to remove the depth (or similar) column from the dataset.\n")
+    cat("This column is not used for PCA and clustering analyses, so it should be excluded.\n\n")
+
+    # --- Afficher les colonnes disponibles ---
+    cat("Available columns in df_normalized:\n")
+    cat("\n")
+    print(names(df_normalized))
+    cat("\n")
+
+    # --- Demander le nom de la colonne à supprimer ---
+    repeat {
+      col_profondeur <- safe_readline(
+        "Enter the name of the depth (or similar) column to remove: "
+      )
+      cat("\n")
+      if (!col_profondeur %in% names(df_normalized)) {
+        cat("\nError: column not found. Please choose among:\n")
+        print(names(df_normalized))
+        cat("\n")
+      } else {
+        df_normalized <- df_normalized[, !(names(df_normalized) %in% col_profondeur), drop = FALSE]
+        message("Removed column for PCA/Clustering: ", col_profondeur)
+        break
+      }
+    }
+
+    # --- Mettre à jour le cache ---
+    set_cache("df_normalized_cache", df_normalized)
+    message("The dataset is now ready for PCA and clustering analyses.")
+  }
+
+  cat("\n=======================================================================================\n")
+
 
   # --- Step 4: Selecting variables ---
-  cat("\n==========================================\n")
-  cat("\n--- Step 4 : Selecting variables (PCA and loadings threeshold) ----------\n")
+  cat("\n=======================================================================================\n")
+  cat("\n--- Step 5 : Selecting variables (PCA and loadings threeshold) ----------\n")
   cat("\n")
   prop.select()
   cat("\nVariable selection completed.\n")
-  cat("\n==========================================\n")
+  cat("\n=======================================================================================\n")
 
   # --- Step 5: Running clustering ---
-  cat("\n==========================================\n")
-  cat("\n--- Step 5 : Running clustering (K-means method) -----------\n")
+  cat("\n=======================================================================================\n")
+  cat("\n--- Step 6 : Running clustering (K-means method) -----------\n")
   cat("\n")
   xrf_clust()
-  cat("\n==========================================\n")
+  cat("\n=======================================================================================\n")
 
   cat("\n=== SedimentR workflow completed successfully ===\n")
 
