@@ -224,15 +224,15 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
 
   # --- Report ---
   if (nrow(neg_summary) == 0) {
-    cat("✔ No negative values detected in geochemical variables.\n\n")
+    cat("No negative values detected in geochemical variables.\n\n")
   } else {
-    cat("\n⚠ Negative values detected in the following columns:\n\n")
+    cat("\nWARNING: Negative values detected in the following columns:\n\n")
     print(neg_summary)
     cat("\n")
 
     repeat {
       action <- tolower(safe_readline(
-        "How do you want to handle them?\n  1 = Remove columns\n  2 = Remove rows\nChoose 1 or 2: "
+        "How do you want to handle them?\n  1 = Remove columns\n\n  2 = Remove rows\nChoose 1 or 2: "
       ))
 
       if (action %in% c("1", "2")) break
@@ -400,6 +400,7 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
   df_clean<-df
   assign("User Dataframe", df, envir=.GlobalEnv)
   set_cache("df_clean_cache", df_clean)
+  set_cache("df_base_cluster", df)
 
   if (exists("df_denoised_total")){
     assign("df_denoised_total", df_denoised_total, envir=.GlobalEnv)

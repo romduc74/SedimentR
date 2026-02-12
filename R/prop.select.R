@@ -264,9 +264,9 @@ prop.select <- function(df_normalized=NULL) {
 
     repeat {
       # Check if df_normal is already in cache
-      if ("df_normalized_cache" %in% list_cache()) {
-        df_original <- get_cache("df_normalized_cache")
-        message("Using cached 'df_clean_cache' dataframe.")
+      if ("df_base_cluster" %in% list_cache()) {
+        df_original <- get_cache("df_base_cluster")
+        message("Using cached 'df_base_cluster' dataframe.")
         break
       }
 
@@ -287,8 +287,8 @@ prop.select <- function(df_normalized=NULL) {
       # If a valid dataframe name is entered
       if (df_name %in% df_list) {
         df_original <- get(df_name, envir = .GlobalEnv)
-        set_cache("df_clean_cache", df_original)
-        message("Dataframe cached as 'df_normal' for future use.")
+        set_cache("df_base_cluster", df_original)
+        message("Dataframe cached as 'df_base_cluster' for future use.")
         break
       }
 
