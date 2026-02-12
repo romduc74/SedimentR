@@ -15,8 +15,25 @@ If not provided, an interactive file selection dialog will be displayed (require
 \value{
 Invisibly returns \code{NULL}. All intermediate steps are printed to the console,
 and functions like \code{xrf_clust()} may modify dataframes in the global environment.
+
+Invisibly returns \code{NULL}. All intermediate steps are printed to the console,
+and functions like \code{xrf_clust()} may modify dataframes in the global environment.
 }
 \description{
+Executes the full SedimentR workflow on a geochemical dataset:
+\enumerate{
+\item Loads the data (CSV or Excel) interactively if \code{file_path} is NULL.
+Uses the helper function \code{charger()} to import the data with user-specified
+separator (for CSV) or sheet (for Excel), and encoding.
+\item Performs noise reduction (EEMD and IMF methods) via \code{xrf_noise()}.
+\item Scales the data (CLR or log ratio) via \code{scale_data()}.
+\item Selects variables using PCA and loading thresholds via \code{prop.select()}.
+\item Performs clustering (K-means) via \code{xrf_clust()}.
+}
+
+The workflow guides the user interactively through file selection,
+encoding, sheet selection (for Excel), and parameters for each step.
+
 Executes the full SedimentR workflow on a geochemical dataset:
 \enumerate{
 \item Loads the data (CSV or Excel) interactively if \code{file_path} is NULL.
@@ -39,8 +56,24 @@ encoding, sheet selection (for Excel), and parameters for each step.
 \item The clustering step integrates variable selection, K-means clustering,
 cluster driver analysis, and optional PCA visualization.
 }
+
+\itemize{
+\item CSV files: the user can specify the separator and file encoding.
+\item Excel files: the user selects the sheet to import.
+\item Each step prints informative messages and confirms completion.
+\item The clustering step integrates variable selection, K-means clustering,
+cluster driver analysis, and optional PCA visualization.
+}
 }
 \examples{
+\dontrun{
+# Run workflow interactively, select file through dialog
+sedicore()
+
+# Provide file path directly
+sedicore(file_path = "path/to/my_data.xlsx", sheet = "Sheet1")
+}
+
 \dontrun{
 # Run workflow interactively, select file through dialog
 sedicore()
