@@ -367,33 +367,40 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
     # ------------------------
     for (col in cols_with_neg) {
       repeat {
+        cat("\n")  # espace avant chaque colonne
         cat(sprintf("Column '%s' has %d negative values.\n", col, neg_counts[col]))
+        cat("\n")
+
         action <- tolower(readline(
-          paste0("Choose action for this column:\n",
-                 "  1) Remove rows containing negative values\n",
-                 "  2) Remove the entire column\n",
-                 "Your choice (1/2): ")
+          paste0(
+            "Choose action for this column:\n\n",
+            "  1) Remove rows containing negative values\n",
+            "  2) Remove the entire column\n\n",
+            "Your choice (1/2): "
+          )
         ))
         cat("\n")
 
         if (action %in% c("1", "remove rows")) {
           # Remove rows where this column is negative
           rows_to_remove <- which(df_to_check[[col]] < 0)
-          cat(sprintf("Removing %d rows in column '%s'...\n\n", length(rows_to_remove), col))
+          cat(sprintf("\nRemoving %d rows in column '%s'...\n\n", length(rows_to_remove), col))
           if (length(rows_to_remove) > 0) {
             df_to_check <- df_to_check[-rows_to_remove, , drop = FALSE]
           }
           break
         } else if (action %in% c("2", "remove column")) {
           # Remove entire column
-          cat(sprintf("Removing column '%s'...\n\n", col))
+          cat(sprintf("\nRemoving column '%s'...\n\n", col))
           df_to_check <- df_to_check[, !(names(df_to_check) %in% col), drop = FALSE]
           break
         } else {
-          cat("Invalid choice. Please enter 1 or 2.\n\n")
+          cat("\nInvalid choice. Please enter 1 or 2.\n\n")
         }
       }
+      cat("\n")  # espace après chaque colonne
     }
+
 
     # Assign cleaned dataframe back to global environment
     if (exists("df_denoised_total")) {
