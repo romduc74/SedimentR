@@ -204,7 +204,7 @@ scale_data <- function(donnees=NULL) {
   df_clr <- as.data.frame(df_clr)
 
   df_normalized <- cbind(
-    depth = depth_col,
+    #depth = depth_col,
     df_clr,
     colonnes_log
   )
