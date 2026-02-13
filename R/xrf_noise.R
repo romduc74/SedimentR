@@ -186,21 +186,5 @@ xrf_noise <- function(df) {
     }
   }
 
-  # --- Remove rows with negative values in the denoised dataset ---
-  # neg_rows <- apply(df_denoised_total[, setdiff(names(df_denoised_total), depth_col), drop=FALSE],
-  #                   1, function(r) any(r < 0, na.rm=TRUE))
-  # if(any(neg_rows)) {
-  #   removed_indices <- which(neg_rows)
-  #   df_denoised_total <- df_denoised_total[!neg_rows, , drop=FALSE]
-  #   df_clean <- df_clean[!neg_rows, , drop=FALSE]
-  #
-  #   cat("\n====================\n")
-  #   cat(sprintf("WARNING: %d rows containing negative values have been removed (including depth values).\n", length(removed_indices)))
-  #   cat(sprintf("Original row indices: %s\n", paste(removed_indices, collapse=", ")))
-  #   cat("====================\n\n")
-  # }
-  #
-
-
   invisible(list(results=results, df_clean=df_clean, df_denoised_total=df_denoised_total, depth_col=depth_col))
 }

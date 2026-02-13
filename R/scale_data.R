@@ -64,6 +64,28 @@ scale_data <- function(donnees=NULL) {
   colonnes_initiales <- names(donnees)
   colonnes_supprimees <- character(0)
 
+  # Suppression éventuelle de colonnes
+  # reponse <- safe_readline(prompt = "Would you like to delete certain columns before the analysis? (yes/no): ")
+  # cat("\n")
+
+
+
+  # if (tolower(reponse) == "yes") {
+  #   colonnes_a_supprimer <- safe_readline(prompt = "Enter the names of the columns to be deleted, separated by commas: ")
+  #   colonnes_a_supprimer <- strsplit(colonnes_a_supprimer, ",")[[1]]
+  #   colonnes_a_supprimer <- trimws(colonnes_a_supprimer)
+  #
+  #   colonnes_existantes <- intersect(colonnes_a_supprimer, names(donnees))
+  #   if (length(colonnes_existantes) > 0) {
+  #     donnees <- donnees[, !(names(donnees) %in% colonnes_existantes)]
+  #     colonnes_supprimees <- colonnes_existantes
+  #     cat("\nThe subsequent columns have been removed: ", paste(colonnes_existantes, collapse = ", "), "\n")
+  #   } else {
+  #     cat("\nNone of the specified columns exist in the dataframe.\n")
+  #   }
+  # } else {
+  #   cat("No columns will be deleted.\n")
+  # }
 
   # -------------------------------
   # Suppression obligatoire de la colonne profondeur
@@ -84,6 +106,49 @@ scale_data <- function(donnees=NULL) {
   }
 
   cat("\n")
+  # -------------------------------
+  # Suppression éventuelle d'autres colonnes
+  # -------------------------------
+
+
+  #   repeat {
+  #   reponse <- tolower(safe_readline("Would you like to delete other columns before the analysis? (yes/no): "))
+  #   if (reponse %in% c("yes", "no")) break
+  #   cat("Please enter 'yes' or 'no'.\n")
+  # }
+  #
+  # cat("\n")
+  #
+  # if (reponse == "yes") {
+  #   repeat {
+  #     colonnes_a_supprimer <- safe_readline("Enter the names of the columns to be deleted, separated by commas: ")
+  #     colonnes_a_supprimer <- strsplit(colonnes_a_supprimer, ",")[[1]]
+  #     colonnes_a_supprimer <- trimws(colonnes_a_supprimer)
+  #
+  #     colonnes_existantes <- intersect(colonnes_a_supprimer, names(donnees))
+  #     colonnes_invalides  <- setdiff(colonnes_a_supprimer, names(donnees))
+  #
+  #     if (length(colonnes_existantes) == 0) {
+  #       cat("\nError: none of the specified columns exist. Try again.\n")
+  #       print(names(donnees))
+  #       cat("\n")
+  #     } else {
+  #       if (length(colonnes_invalides) > 0) {
+  #         cat("\nWarning: these columns do not exist and were ignored: ",
+  #             paste(colonnes_invalides, collapse = ", "), "\n")
+  #       }
+  #
+  #       donnees <- donnees[, !(names(donnees) %in% colonnes_existantes)]
+  #       colonnes_supprimees <- c(colonnes_supprimees, colonnes_existantes)
+  #
+  #       cat("\nThe following columns have been removed: ",
+  #           paste(colonnes_existantes, collapse = ", "), "\n")
+  #       break
+  #     }
+  #   }
+  # } else {
+  #   cat("No additional columns will be deleted.\n")
+  # }
 
 
   cat("\n====== POTENTIAL XRF DUPLICATES (BY NAME) ======\n")
@@ -138,9 +203,6 @@ scale_data <- function(donnees=NULL) {
 
 
   cat("\n")
-
-
-
 
   ## ===== MAINTENANT : suppression libre d’autres colonnes =====
   repeat {
@@ -203,21 +265,15 @@ scale_data <- function(donnees=NULL) {
   df_clr <- clr(colonnes_a_clr)
   df_clr <- as.data.frame(df_clr)
 
-  df_normalized <- cbind(
-    #depth = depth_col,
-    df_clr,
-    colonnes_log
-  )
-#
-#   df_normalized3 <- cbind(
-#     depth = depth_col,
-#     df_clr,
-#     colonnes_log
-#   )
+  df_normalized <- cbind(df_clr, colonnes_log)
+  set_cache("df_normalized_cache",df_normalized)
 
-  set_cache("df_normalized_cache", df_normalized)
+  # df_normalized_depth <- cbind(
+  #   depth = depth_col,
+  #   df_normalized
+  # )
+  #
 
-  #set_cache("df_clean_cache", df_normalized3)
 
   df_clr2<-df_clr
 
@@ -246,10 +302,10 @@ scale_data <- function(donnees=NULL) {
     "\n\nDeleted Columns:\n", ifelse(length(colonnes_supprimees) > 0, paste(colonnes_supprimees, collapse = ", "), "None"),
     "\n\nCLR Transformed Columns:\n", ifelse(ncol(df_clr) > 0, paste(names(df_clr), collapse = ", "), "None"),
     "\n\nLog Columns Retained:\n", ifelse(ncol(colonnes_log) > 0, paste(names(colonnes_log), collapse = ", "), "None"),
-     "\n\n--------------------------------\n",
+    "\n\n--------------------------------\n",
     "Total initial columns: ", total_initial,
-    "\nTotal selected columnsa: ", total_selected,
-    "\n\n===============================\n"
+    "\nTotal selected columns for PCA: ", total_selected,
+    "\n===============================\n"
   )
 
   # Affichage dans la console
@@ -348,7 +404,5 @@ scale_data <- function(donnees=NULL) {
   }
 
   assign("df_clr_check", df_normalized_depth, envir = .GlobalEnv)
-
-
   return(invisible(df_normalized))
 }

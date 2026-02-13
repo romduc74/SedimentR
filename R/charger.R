@@ -335,136 +335,15 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
   cat("\n")
   cat("\n")
 
-
-
-
-  # --- CHECK FOR NEGATIVE VALUES AFTER DENOISING / RATIOS ---
-  cat("=== CHECK FOR NEGATIVE VALUES IN THE DATAFRAME ===\n\n")
-
-  # Choose which dataframe to check: denoised if exists, otherwise final df
-  df_to_check <- if (exists("df_denoised_total")) df_denoised_total else df
-
-  # Identify negative values
-  neg_counts <- sapply(df_to_check, function(col) sum(col < 0, na.rm = TRUE))
-  cols_with_neg <- names(neg_counts)[neg_counts > 0]
-
-  if (length(cols_with_neg) == 0) {
-    cat("No negative values detected in the dataframe.\n\n")
-  } else {
-
-    cat("The following columns contain negative values, with the number of affected rows:\n\n")
-    for (col in cols_with_neg) {
-      cat(sprintf("- %s : %d rows\n", col, neg_counts[col]))
-    }
-
-    cat("\n")
-    cat("Negative values typically indicate elements that were poorly measured during XRF analysis.\n")
-    cat("It is recommended to remove these values before CLR (Centered Log-Ratio) normalization.\n")
-    cat("If negative or zero values remain, the geometric mean cannot be calculated properly.\n\n")
-
-    # ------------------------
-    # Cas par cas
-    # ------------------------
-    for (col in cols_with_neg) {
-      repeat {
-        cat("\n")  # espace avant chaque colonne
-        cat(sprintf("Column '%s' has %d negative values.\n", col, neg_counts[col]))
-        cat("\n")
-
-        action <- tolower(readline(
-          paste0(
-            "Choose action for this column:\n\n",
-            "  1) Remove rows containing negative values\n",
-            "  2) Remove the entire column\n\n",
-            "Your choice (1/2): "
-          )
-        ))
-        cat("\n")
-
-        if (action %in% c("1", "remove rows")) {
-          # Remove rows where this column is negative
-          rows_to_remove <- which(df_to_check[[col]] < 0)
-          cat(sprintf("\nRemoving %d rows in column '%s'...\n\n", length(rows_to_remove), col))
-          if (length(rows_to_remove) > 0) {
-            df_to_check <- df_to_check[-rows_to_remove, , drop = FALSE]
-          }
-          break
-        } else if (action %in% c("2", "remove column")) {
-          # Remove entire column
-          cat(sprintf("\nRemoving column '%s'...\n\n", col))
-          df_to_check <- df_to_check[, !(names(df_to_check) %in% col), drop = FALSE]
-          break
-        } else {
-          cat("\nInvalid choice. Please enter 1 or 2.\n\n")
-        }
-      }
-      cat("\n")  # espace après chaque colonne
-    }
-
-
-    # Assign cleaned dataframe back to global environment
-    if (exists("df_denoised_total")) {
-      df_denoised_total <- df_to_check
-      assign("df_denoised_total", df_denoised_total, envir = .GlobalEnv)
-      set_cache("df_denoised_total_cache", df_denoised_total)
-    } else {
-      df <- df_to_check
-      assign("df_clean", df, envir = .GlobalEnv)
-      set_cache("df_clean_cache", df)
-    }
-
-    cat("Negative value handling completed.\n\n")
-  }
-
-  cat("\n")
-
-  # ---- SUMMARY TABLE FOR NEGATIVE VALUE HANDLING ----
-  if (length(cols_with_neg) > 0) {
-
-    summary_neg <- data.frame(
-      Column = cols_with_neg,
-      Negative_Rows = neg_counts[cols_with_neg],
-      Action_Taken = NA_character_,
-      stringsAsFactors = FALSE
-    )
-
-    # Fill in the actions taken
-    for (i in seq_along(cols_with_neg)) {
-      col <- cols_with_neg[i]
-      if (!col %in% names(df_to_check)) {
-        summary_neg$Action_Taken[i] <- "Column removed"
-        summary_neg$Negative_Rows[i] <- neg_counts[col]  # keep original count
-      } else {
-        # Count how many rows were removed for this column
-        removed_rows <- neg_counts[col] - sum(df_to_check[[col]] < 0, na.rm = TRUE)
-        summary_neg$Action_Taken[i] <- paste0("Removed ", removed_rows, " rows")
-        summary_neg$Negative_Rows[i] <- neg_counts[col]
-      }
-    }
-
-    # Print a nicely formatted table
-    cat("\n====== SUMMARY OF NEGATIVE VALUE HANDLING ======\n\n")
-    print(summary_neg, row.names = FALSE)
-    cat("\n================================================\n\n")
-  }
-
-
-
-
-
-
   # --- Save globally & optional caching ---
-  # assign("df_clean", df, envir=.GlobalEnv)
-  # set_cache("df_clean_cache", df_clean)
+  assign("df_clean", df, envir=.GlobalEnv)
+  set_cache("df_clean_cache", df_clean)
 
   if (exists("df_denoised_total")){
     assign("df_denoised_total", df_denoised_total, envir=.GlobalEnv)
     set_cache("df_denoised_total_cache", df_denoised_total)
   }
-  final_df <- if (exists("df_denoised_total")) df_denoised_total else df
 
-  assign("df_clean", final_df, envir = .GlobalEnv)
-  set_cache("df_clean_cache", final_df)
 
 
 }
