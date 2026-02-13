@@ -454,14 +454,17 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
 
 
   # --- Save globally & optional caching ---
-  assign("df_clean", df, envir=.GlobalEnv)
-  set_cache("df_clean_cache", df_clean)
+  # assign("df_clean", df, envir=.GlobalEnv)
+  # set_cache("df_clean_cache", df_clean)
 
   if (exists("df_denoised_total")){
     assign("df_denoised_total", df_denoised_total, envir=.GlobalEnv)
     set_cache("df_denoised_total_cache", df_denoised_total)
   }
+  final_df <- if (exists("df_denoised_total")) df_denoised_total else df
 
+  assign("df_clean", final_df, envir = .GlobalEnv)
+  set_cache("df_clean_cache", final_df)
 
 
 }
