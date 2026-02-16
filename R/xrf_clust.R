@@ -1096,66 +1096,68 @@ xrf_clust  <- function(data = NULL) {
   #
 
   # --- Create final dataframe based on User Dataframe ---
-  if (
-    exists("User Dataframe", envir = .GlobalEnv) &&
-    "Dataframe_Denoised_cache" %in% list_cache() &&
-    "Dataframe_CLR_cache" %in% list_cache() &&
-    exists("Dataframe_Clustering")
-  ) {
 
-    # Récupérer les données
-    df_user     <- get("User Dataframe", envir = .GlobalEnv)
-    df_denoised <- get_cache("Dataframe_Denoised_cache")
-    df_clr      <- get_cache("Dataframe_CLR_cache")
-    df_cluster  <- Dataframe_Clustering
+  if (exists("User Dataframe", envir = .GlobalEnv)) {
 
-    # Vérifier présence colonne Cluster
-    if (!"Cluster" %in% colnames(df_cluster)) {
-      stop("Column 'Cluster' not found in Dataframe_Clustering.")
-    }
+    # Récupérer User Dataframe
+    df_user <- get("User Dataframe", envir = .GlobalEnv)
+    max_rows <- nrow(df_user)
 
-    # Vérification du nombre de lignes
-    n_user <- nrow(df_user)
-    n_denoised <- nrow(df_denoised)
-    n_clr <- nrow(df_clr)
-    n_cluster <- nrow(df_cluster)
+    # Initialiser listes pour colonnes supplémentaires
+    extra_cols <- list()
 
-    # Si les tailles diffèrent, créer des NAs pour combler
-    pad_na <- function(df, n_rows) {
-      n_missing <- n_rows - nrow(df)
-      if (n_missing > 0) {
-        df[(nrow(df)+1):n_rows, ] <- NA
+    # --- Récupérer df_denoised si existant ---
+    if ("Dataframe_Denoised_cache" %in% list_cache()) {
+      df_denoised <- get_cache("Dataframe_Denoised_cache")
+      # Ajouter suffixe _denoised
+      colnames(df_denoised) <- paste0(colnames(df_denoised), "_denoised")
+      # Remplir NA si nécessaire
+      if (nrow(df_denoised) < max_rows) {
+        df_denoised[(nrow(df_denoised)+1):max_rows, ] <- NA
       }
-      return(df)
+      extra_cols <- c(extra_cols, list(df_denoised))
     }
 
-    max_rows <- n_user  # on prend les lignes de User Dataframe comme référence
+    # --- Récupérer df_clr si existant ---
+    if ("Dataframe_CLR_cache" %in% list_cache()) {
+      df_clr <- get_cache("Dataframe_CLR_cache")
+      # Ajouter suffixe _clr
+      colnames(df_clr) <- paste0(colnames(df_clr), "_clr")
+      # Remplir NA si nécessaire
+      if (nrow(df_clr) < max_rows) {
+        df_clr[(nrow(df_clr)+1):max_rows, ] <- NA
+      }
+      extra_cols <- c(extra_cols, list(df_clr))
+    }
 
-    df_denoised <- pad_na(df_denoised, max_rows)
-    df_clr      <- pad_na(df_clr, max_rows)
-    cluster_col <- pad_na(df_cluster["Cluster"], max_rows)
+    # --- Ajouter la colonne Cluster si Dataframe_Clustering existe ---
+    if (exists("Dataframe_Clustering")) {
+      df_cluster <- Dataframe_Clustering
+      if ("Cluster" %in% colnames(df_cluster)) {
+        cluster_col <- df_cluster["Cluster"]
+        if (nrow(cluster_col) < max_rows) {
+          cluster_col[(nrow(cluster_col)+1):max_rows, ] <- NA
+        }
+        extra_cols <- c(extra_cols, list(cluster_col))
+      }
+    }
 
-    # Combinaison finale
-    Dataframe_Check <- cbind(
-      df_user,
-      df_denoised,
-      df_clr,
-      cluster_col
-    )
+    # --- Combinaison finale ---
+    if (length(extra_cols) > 0) {
+      Dataframe_Check <- cbind(df_user, do.call(cbind, extra_cols))
+    } else {
+      Dataframe_Check <- df_user
+    }
 
     # Assignation globale et mise en cache
     assign("Sediment_Geochem_Clusters_Analysis", Dataframe_Check, envir = .GlobalEnv)
     set_cache("Dataframe_Check_cache", Dataframe_Check)
 
-    cat("\nDataframe 'Sediment_Geochem_Clusters_Analysis' created with User Dataframe as reference, Cluster added, and cached as 'Dataframe_Check_cache'.\n")
+    cat("\nDataframe 'Sediment_Geochem_Clusters_Analysis' created with User Dataframe as reference, available additional data added, and cached as 'Dataframe_Check_cache'.\n")
 
   } else {
-    cat("\nWarning: Required objects or cache entries not found. Dataframe not created.\n")
+    cat("\nWarning: 'User Dataframe' not found. Dataframe not created.\n")
   }
-
-
-
-
 
 
 

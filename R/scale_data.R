@@ -410,10 +410,10 @@ scale_data <- function(donnees=NULL) {
     df_clr_only <- get("Dataframe CLR", envir = .GlobalEnv)
 
     # Sélection des colonnes contenant '_clr'
-    clr_cols <- grep("_clr", colnames(df_clr_only), value = TRUE)
+    clr_cols <- grep("clr_", colnames(df_clr_only), value = TRUE)
 
     if (length(clr_cols) == 0) {
-      warning("No columns containing '_clr' were found.")
+      warning("No columns containing 'clr_' were found.")
     } else {
       df_clr_only <- df_clr_only[, clr_cols, drop = FALSE]
 
