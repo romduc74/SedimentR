@@ -405,15 +405,21 @@ scale_data <- function(donnees=NULL) {
   assign("Dataframe CLR", df_normalized_depth, envir = .GlobalEnv)
 
   # --- Extraction des colonnes CLR uniquement ---
+  # --- Extraction des colonnes CLR uniquement + Geometric Mean ---
   if (exists("Dataframe CLR", envir = .GlobalEnv)) {
 
     df_clr_only <- get("Dataframe CLR", envir = .GlobalEnv)
 
-    # Sélection des colonnes contenant '_clr'
+    # Sélection des colonnes contenant 'clr_'
     clr_cols <- grep("clr_", colnames(df_clr_only), value = TRUE)
 
+    # Ajouter 'Geometric Mean' si elle existe
+    if ("Geometric Mean" %in% colnames(df_clr_only)) {
+      clr_cols <- c(clr_cols, "Geometric Mean")
+    }
+
     if (length(clr_cols) == 0) {
-      warning("No columns containing 'clr_' were found.")
+      warning("No columns containing 'clr_' or 'Geometric Mean' were found.")
     } else {
       df_clr_only <- df_clr_only[, clr_cols, drop = FALSE]
 
@@ -421,6 +427,7 @@ scale_data <- function(donnees=NULL) {
       set_cache("Dataframe_CLR_cache", df_clr_only)
     }
   }
+
 
 
   return(invisible(df_normalized))
