@@ -381,8 +381,8 @@ xrf_clust  <- function(data = NULL) {
       df_denoised_total <- get_cache("df_clean_cache")
       df_denoised_total$Cluster <- clustering_result$cluster
       set_cache("df_clean_cache", df_denoised_total)
-      #assign("Dataframe_Clustering", df_denoised_total, envir = .GlobalEnv)
-      Dataframe_Clustering<-df_denoised_total
+      assign("Dataframe_Clustering", df_denoised_total, envir = .GlobalEnv)
+      invisible(Dataframe_Clustering)
       cat("\nCluster column added to cached 'df_clean_cache'.\n\n")
       break
 
@@ -1122,7 +1122,7 @@ xrf_clust  <- function(data = NULL) {
     if ("Dataframe_CLR_cache" %in% list_cache()) {
       df_clr <- get_cache("Dataframe_CLR_cache")
       # Ajouter suffixe _clr
-      colnames(df_clr) <- paste0(colnames(df_clr), "_clr")
+      colnames(df_clr) <- paste0(colnames(df_clr), "clr_")
       # Remplir NA si nécessaire
       if (nrow(df_clr) < max_rows) {
         df_clr[(nrow(df_clr)+1):max_rows, ] <- NA
@@ -1131,15 +1131,24 @@ xrf_clust  <- function(data = NULL) {
     }
 
     # --- Ajouter la colonne Cluster si Dataframe_Clustering existe ---
-    if (exists("Dataframe_Clustering")) {
-      df_cluster <- Dataframe_Clustering
+    # --- Récupération de la colonne Cluster depuis Dataframe_Clustering ---
+    cluster_col <- NULL
+
+    if (exists("Dataframe_Clustering", envir = .GlobalEnv)) {
+      df_cluster <- get("Dataframe_Clustering", envir = .GlobalEnv)
+
       if ("Cluster" %in% colnames(df_cluster)) {
-        cluster_col <- df_cluster["Cluster"]
+        cluster_col <- df_cluster["Cluster", drop = FALSE]
+
+        # Remplir NA si moins de lignes que max_rows
         if (nrow(cluster_col) < max_rows) {
           cluster_col[(nrow(cluster_col)+1):max_rows, ] <- NA
         }
-        extra_cols <- c(extra_cols, list(cluster_col))
+      } else {
+        cat("\nWarning: Column 'Cluster' not found in Dataframe_Clustering.\n")
       }
+    } else {
+      cat("\nWarning: Dataframe_Clustering does not exist in GlobalEnv.\n")
     }
 
     # --- Combinaison finale ---
