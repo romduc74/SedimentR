@@ -1145,6 +1145,7 @@ xrf_clust  <- function(data = NULL) {
         if (nrow(cluster_col) < max_rows) {
           cluster_col[(nrow(cluster_col)+1):max_rows, ] <- NA
         }
+        extra_cols <- c(extra_cols, list(cluster_col))
       } else {
         cat("\nWarning: Column 'Cluster' not found in Dataframe_Clustering.\n")
       }
