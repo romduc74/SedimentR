@@ -1110,7 +1110,7 @@ xrf_clust  <- function(data = NULL) {
     if ("Dataframe_Denoised_cache" %in% list_cache()) {
       df_denoised <- get_cache("Dataframe_Denoised_cache")
       # Ajouter suffixe _denoised
-      colnames(df_denoised) <- paste0(colnames(df_denoised), "_denoised")
+     # colnames(df_denoised) <- paste0(colnames(df_denoised), "_denoised")
       # Remplir NA si nécessaire
       if (nrow(df_denoised) < max_rows) {
         df_denoised[(nrow(df_denoised)+1):max_rows, ] <- NA
@@ -1122,7 +1122,7 @@ xrf_clust  <- function(data = NULL) {
     if ("Dataframe_CLR_cache" %in% list_cache()) {
       df_clr <- get_cache("Dataframe_CLR_cache")
       # Ajouter suffixe _clr
-      colnames(df_clr) <- paste0(colnames(df_clr), "clr_")
+    #  colnames(df_clr) <- paste0(colnames(df_clr), "clr_")
       # Remplir NA si nécessaire
       if (nrow(df_clr) < max_rows) {
         df_clr[(nrow(df_clr)+1):max_rows, ] <- NA
