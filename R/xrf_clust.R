@@ -1138,7 +1138,8 @@ xrf_clust  <- function(data = NULL) {
       df_cluster <- get("Dataframe_Clustering", envir = .GlobalEnv)
 
       if ("Cluster" %in% colnames(df_cluster)) {
-        cluster_col <- df_cluster["Cluster", drop = FALSE]
+        # Sélection correcte de la colonne
+        cluster_col <- df_cluster[, "Cluster", drop = FALSE]
 
         # Remplir NA si moins de lignes que max_rows
         if (nrow(cluster_col) < max_rows) {
