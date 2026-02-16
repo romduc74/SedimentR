@@ -144,8 +144,11 @@ xrf_noise <- function(df) {
   if(length(clean_vars) > 0) df_clean <- df_clean[, c(depth_col, clean_vars), drop=FALSE]
 
   # --- Save globally & optional caching ---
-  assign("df_clean", df_clean, envir=.GlobalEnv)
-  assign("df_denoised_total", df_denoised_total, envir=.GlobalEnv)
+  #assign("df_clean", df_clean, envir=.GlobalEnv)
+  # assign("df_denoised_total", df_denoised_total, envir=.GlobalEnv)
+
+  df_denoised_total<-df_denoised_total
+
   # if(exists("set_cache")) {
   #   set_cache("df_clean_cache", df_clean)
   #   set_cache("df_denoised_total_cache", df_denoised_total)

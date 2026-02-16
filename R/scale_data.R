@@ -284,7 +284,6 @@ scale_data <- function(donnees=NULL) {
   df_normalized_depth <- cbind(
     depth = depth_col,
     "Geometric Mean" = geom_mean,
-    colonnes_a_clr,
     df_normalized2
   )
 
@@ -403,6 +402,26 @@ scale_data <- function(donnees=NULL) {
     cat("Normalized data not saved.\n\n")
   }
 
-  assign("df_clr_check", df_normalized_depth, envir = .GlobalEnv)
+  assign("Dataframe CLR", df_normalized_depth, envir = .GlobalEnv)
+
+  # --- Extraction des colonnes CLR uniquement ---
+  if (exists("Dataframe CLR", envir = .GlobalEnv)) {
+
+    df_clr_only <- get("Dataframe CLR", envir = .GlobalEnv)
+
+    # Sélection des colonnes contenant '_clr'
+    clr_cols <- grep("_clr", colnames(df_clr_only), value = TRUE)
+
+    if (length(clr_cols) == 0) {
+      warning("No columns containing '_clr' were found.")
+    } else {
+      df_clr_only <- df_clr_only[, clr_cols, drop = FALSE]
+
+      # Mise en cache
+      set_cache("Dataframe_CLR_cache", df_clr_only)
+    }
+  }
+
+
   return(invisible(df_normalized))
 }

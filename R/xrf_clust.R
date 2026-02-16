@@ -367,7 +367,10 @@ xrf_clust  <- function(data = NULL) {
       df_denoised_total <- get_cache("df_denoised_total_cache")
       df_denoised_total$Cluster <- clustering_result$cluster
       set_cache("df_denoised_total_cache", df_denoised_total)
-      assign("Dataframe_Clustering", df_denoised_total, envir = .GlobalEnv)
+     # assign("Dataframe_Clustering", df_denoised_total, envir = .GlobalEnv)
+
+      Dataframe_Clustering<-df_denoised_total
+
 
       cat("\nCluster column added to cached 'df_denoised_total'.\n\n")
       break
@@ -378,8 +381,8 @@ xrf_clust  <- function(data = NULL) {
       df_denoised_total <- get_cache("df_clean_cache")
       df_denoised_total$Cluster <- clustering_result$cluster
       set_cache("df_clean_cache", df_denoised_total)
-      assign("Dataframe_Clustering", df_denoised_total, envir = .GlobalEnv)
-
+      #assign("Dataframe_Clustering", df_denoised_total, envir = .GlobalEnv)
+      Dataframe_Clustering<-df_denoised_total
       cat("\nCluster column added to cached 'df_clean_cache'.\n\n")
       break
 
@@ -1059,32 +1062,102 @@ xrf_clust  <- function(data = NULL) {
 
   cat("\n")
 
-  # --- Create final check dataframe ---
-  if (exists("df_clr_check", envir = .GlobalEnv) && exists("Dataframe_Clustering", envir = .GlobalEnv)) {
 
-    df_clr_check_local <- get("df_clr_check", envir = .GlobalEnv)
-    df_cluster_local <- get("Dataframe_Clustering", envir = .GlobalEnv)
 
-    # Identifier les colonnes en doublon
-    common_cols <- intersect(colnames(df_clr_check_local), colnames(df_cluster_local))
 
-    if (length(common_cols) > 0) {
-      # Supprimer les colonnes en doublon dans df_clr_check pour garder celles de df_cluster_local
-      df_clr_check_local <- df_clr_check_local[, !(colnames(df_clr_check_local) %in% common_cols), drop = FALSE]
+
+
+  # # --- Create final check dataframe ---
+  # if (exists("df_clr_check", envir = .GlobalEnv) && exists("Dataframe_Clustering", envir = .GlobalEnv)) {
+  #
+  #   df_clr_check_local <- get("df_clr_check", envir = .GlobalEnv)
+  #   df_cluster_local <- get("Dataframe_Clustering", envir = .GlobalEnv)
+  #
+  #   # Identifier les colonnes en doublon
+  #   common_cols <- intersect(colnames(df_clr_check_local), colnames(df_cluster_local))
+  #
+  #   if (length(common_cols) > 0) {
+  #     # Supprimer les colonnes en doublon dans df_clr_check pour garder celles de df_cluster_local
+  #     df_clr_check_local <- df_clr_check_local[, !(colnames(df_clr_check_local) %in% common_cols), drop = FALSE]
+  #   }
+  #
+  #   # Combiner les dataframes
+  #   Dataframe_Check <- cbind(df_cluster_local,df_clr_check_local)
+  #
+  #   # Assigner dans l'environnement global
+  #   assign("Sediment_Geochem_Clusters_Analysis", Dataframe_Check, envir = .GlobalEnv)
+  #
+  #   cat("\nDataframe (Sediment_Geochem_Clusters_Analysis) created combining 'df_clr_check' and 'Dataframe_Clustering'.\n")
+  # } else {
+  #   cat("\nWarning: Either 'df_clr_check' or 'Dataframe_Clustering' not found in global environment. Dataframe_Check not created.\n")
+  # }
+  #
+  # cat("\n")
+  #
+
+  # --- Create final dataframe based on User Dataframe ---
+  if (
+    exists("User Dataframe", envir = .GlobalEnv) &&
+    "Dataframe_Denoised_cache" %in% list_cache() &&
+    "Dataframe_CLR_cache" %in% list_cache() &&
+    exists("Dataframe_Clustering")
+  ) {
+
+    # Récupérer les données
+    df_user     <- get("User Dataframe", envir = .GlobalEnv)
+    df_denoised <- get_cache("Dataframe_Denoised_cache")
+    df_clr      <- get_cache("Dataframe_CLR_cache")
+    df_cluster  <- Dataframe_Clustering
+
+    # Vérifier présence colonne Cluster
+    if (!"Cluster" %in% colnames(df_cluster)) {
+      stop("Column 'Cluster' not found in Dataframe_Clustering.")
     }
 
-    # Combiner les dataframes
-    Dataframe_Check <- cbind(df_cluster_local,df_clr_check_local)
+    # Vérification du nombre de lignes
+    n_user <- nrow(df_user)
+    n_denoised <- nrow(df_denoised)
+    n_clr <- nrow(df_clr)
+    n_cluster <- nrow(df_cluster)
 
-    # Assigner dans l'environnement global
+    # Si les tailles diffèrent, créer des NAs pour combler
+    pad_na <- function(df, n_rows) {
+      n_missing <- n_rows - nrow(df)
+      if (n_missing > 0) {
+        df[(nrow(df)+1):n_rows, ] <- NA
+      }
+      return(df)
+    }
+
+    max_rows <- n_user  # on prend les lignes de User Dataframe comme référence
+
+    df_denoised <- pad_na(df_denoised, max_rows)
+    df_clr      <- pad_na(df_clr, max_rows)
+    cluster_col <- pad_na(df_cluster["Cluster"], max_rows)
+
+    # Combinaison finale
+    Dataframe_Check <- cbind(
+      df_user,
+      df_denoised,
+      df_clr,
+      cluster_col
+    )
+
+    # Assignation globale et mise en cache
     assign("Sediment_Geochem_Clusters_Analysis", Dataframe_Check, envir = .GlobalEnv)
+    set_cache("Dataframe_Check_cache", Dataframe_Check)
 
-    cat("\nDataframe (Sediment_Geochem_Clusters_Analysis) created combining 'df_clr_check' and 'Dataframe_Clustering'.\n")
+    cat("\nDataframe 'Sediment_Geochem_Clusters_Analysis' created with User Dataframe as reference, Cluster added, and cached as 'Dataframe_Check_cache'.\n")
+
   } else {
-    cat("\nWarning: Either 'df_clr_check' or 'Dataframe_Clustering' not found in global environment. Dataframe_Check not created.\n")
+    cat("\nWarning: Required objects or cache entries not found. Dataframe not created.\n")
   }
 
-  cat("\n")
+
+
+
+
+
 
   # --- Optional save Dataframe_Check ---
   save_check <- tolower(safe_readline("Would you like to save 'Sediment_Geochem_Clusters_Analysis'? (yes/no): "))
