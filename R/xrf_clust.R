@@ -367,9 +367,9 @@ xrf_clust  <- function(data = NULL) {
       df_denoised_total <- get_cache("df_denoised_total_cache")
       df_denoised_total$Cluster <- clustering_result$cluster
       set_cache("df_denoised_total_cache", df_denoised_total)
-     # assign("Dataframe_Clustering", df_denoised_total, envir = .GlobalEnv)
+      assign("Dataframe_Clustering", df_denoised_total, envir = .GlobalEnv)
+      invisible(Dataframe_Clustering)
 
-      Dataframe_Clustering<-df_denoised_total
 
 
       cat("\nCluster column added to cached 'df_denoised_total'.\n\n")
