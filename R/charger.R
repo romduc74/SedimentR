@@ -370,114 +370,172 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
   cat("\n=============================================================================================================\n")
 
 
-  # --- Toujours créer df_clean si pas encore ---
+  # ==========================================================
+  # Negative Values Handling (Robust Version)
+  # ==========================================================
   if (!exists("df_clean", inherits = TRUE)) df_clean <- df
 
-  # --- Colonnes numériques normales (exclure log_) ---
-  numeric_cols <- colnames(df_clean)[sapply(df_clean, is.numeric)]
-  normal_cols <- setdiff(numeric_cols, grep("^log_", numeric_cols, value = TRUE))
 
-  # --- Pour garder trace des suppressions ---
+  if (!exists("depth_col")) {
+
+    numeric_cols <- names(df_clean)[sapply(df_clean, is.numeric)]
+
+    cat("\nNumeric columns detected:\n")
+    cat("\n")
+    print(numeric_cols)
+
+    repeat {
+      depth_input <- readline("\nEnter the depth column name: ")
+      if (depth_input %in% colnames(df_clean)) {
+        depth_col <- depth_input
+        break
+      }
+      cat("Invalid column name. Try again.\n")
+    }
+
+    cat(sprintf("\nDepth column selected: %s\n\n", depth_col))
+  }
+
   removed_columns <- c()
   removed_rows <- list()
 
-  # --- Vérification des négatifs par colonne (pré-stockage) ---
+  # ----------------------------------------------------------
+  # 1️⃣ Identification des colonnes contenant des valeurs négatives
+  # ----------------------------------------------------------
+
   negative_info <- list()
+  numeric_cols <- names(df_clean)[sapply(df_clean, is.numeric)]
+  normal_cols <- setdiff(numeric_cols, grep("^log_", numeric_cols, value = TRUE))
+
+  if (length(normal_cols) == 0) {
+    cat("\nNo numeric columns found to check for negative values.\n")
+  }
+
   for (col_name in normal_cols) {
+
+    if (!col_name %in% colnames(df_clean)) next
+
     neg_rows <- which(df_clean[[col_name]] < 0)
+
     if (length(neg_rows) > 0) {
       negative_info[[col_name]] <- neg_rows
     }
   }
 
-  # --- Afficher les colonnes contenant des négatifs ---
-  if (length(negative_info) > 0) {
-    cat("Columns containing negative values:\n\n")
-    cat(paste("-", names(negative_info)), sep = "\n")
+  # Si aucune valeur négative → sortie
+  if (length(negative_info) == 0) {
+    cat("\nNo negative values detected.\n")
   } else {
-    cat("No negative values detected in numeric columns.\n")
-  }
 
-  # --- Suivi des suppressions ---
-  removed_columns <- c()
-  removed_rows <- list()
+    # ----------------------------------------------------------
+    # 2️⃣ Collecte globale des lignes à supprimer
+    # ----------------------------------------------------------
 
-  all_removed_rows <- c()
+    rows_to_remove <- c()
 
-  # --- Demander la colonne depth ---
-  depth_col <- NULL
-  numeric_candidates <- colnames(df_clean)[sapply(df_clean, is.numeric)]
-  if (length(numeric_candidates) > 0) {
-    cat("\nAvailable numeric columns (potential depth columns):\n\n")
-    print(numeric_candidates)
-    cat("\n")
-    repeat {
-      depth_input <- readline(prompt = "Enter the name of the depth column: ")
-      if (depth_input == "" || depth_input %in% colnames(df_clean)) {
-        depth_col <- ifelse(depth_input == "", NULL, depth_input)
-        break
+    for (col_name in names(negative_info)) {
+
+      neg_rows <- negative_info[[col_name]]
+
+      repeat {
+        cat("\n--------------------------------------------------\n")
+        cat(sprintf("Column: %s\n", col_name))
+        cat(sprintf("Number of negative values: %d\n", length(neg_rows)))
+        cat("Options:\n  [1] Remove the entire column\n  [2] Remove only the rows containing negative values\n")
+        cat("--------------------------------------------------\n")
+        cat("\n")
+
+        choice <- readline(prompt="Enter 1 or 2: ")
+        if (choice %in% c("1","2")) break
+        cat("Invalid input. Please enter 1 or 2.\n")
       }
-      cat("Invalid column name. Try again.\n")
-    }
-  }
 
+      # ------------------------------------------------------
+      # Option 1 : suppression colonne
+      # ------------------------------------------------------
 
+      if (choice == "1") {
 
-  # --- Traitement des colonnes une par une ---
-  for (col_name in names(negative_info)) {
-    neg_rows <- negative_info[[col_name]]
+        df[[col_name]] <- NULL
+        df_clean[[col_name]] <- NULL
 
-    repeat {
-      cat("\n--------------------------------------------------\n")
-      cat(sprintf("Column: %s\n", col_name))
-      cat(sprintf("Number of negative values: %d\n", length(neg_rows)))
-      cat("Options:\n  [1] Remove the entire column\n  [2] Remove only the rows containing negative values\n")
-      cat("--------------------------------------------------\n")
+        if (exists("df_denoised_total", inherits = TRUE) &&
+            col_name %in% colnames(df_denoised_total)) {
+          df_denoised_total[[col_name]] <- NULL
+        }
 
-      choice <- readline(prompt="Enter 1 or 2: ")
-      if (choice %in% c("1","2")) break
-      cat("Invalid input. Please enter 1 or 2.\n")
-    }
+        removed_columns <- c(removed_columns, col_name)
 
-    if (choice == "1") {
-      df[[col_name]] <- NULL
-      df_clean[[col_name]] <- NULL
-      if (exists("df_denoised_total")) df_denoised_total[[col_name]] <- NULL
-      removed_columns <- c(removed_columns, col_name)
-      cat(sprintf("Column '%s' removed.\n", col_name))
+        # ------------------------------------------------------
+        # Option 2 : suppression lignes (stockage uniquement)
+        # ------------------------------------------------------
 
-    } else {
-      # --- Stocker toutes les lignes avant suppression ---
-      new_rows <- setdiff(neg_rows, all_removed_rows)
-      already_removed <- intersect(neg_rows, all_removed_rows)
-
-      if (!is.null(depth_col)) {
-        removed_rows[[col_name]] <- data.frame(
-          row_index = neg_rows,
-          depth = df[[depth_col]][neg_rows]
-        )
       } else {
-        removed_rows[[col_name]] <- data.frame(
-          row_index = neg_rows
-        )
+
+        rows_to_remove <- union(rows_to_remove, neg_rows)
+
+        if (!is.null(depth_col) && depth_col %in% colnames(df_clean)) {
+          removed_rows[[col_name]] <- data.frame(
+            row_index = neg_rows,
+            depth = df_clean[[depth_col]][neg_rows]
+          )
+        } else {
+          removed_rows[[col_name]] <- data.frame(
+            row_index = neg_rows
+          )
+        }
+      }
+    }
+
+    # ----------------------------------------------------------
+    # 3️⃣ Suppression finale unique des lignes
+    # ----------------------------------------------------------
+
+    if (length(rows_to_remove) > 0) {
+
+      rows_to_remove <- sort(unique(rows_to_remove))
+
+      df <- df[-rows_to_remove, , drop = FALSE]
+      df_clean <- df_clean[-rows_to_remove, , drop = FALSE]
+
+      if (exists("df_denoised_total", inherits = TRUE)) {
+        df_denoised_total <- df_denoised_total[-rows_to_remove, , drop = FALSE]
       }
 
-      # Supprimer les nouvelles lignes
-      if (length(new_rows) > 0) {
-        df <- df[-new_rows, , drop = FALSE]
-        df_clean <- df_clean[-new_rows, , drop = FALSE]
-        if (exists("df_denoised_total")) df_denoised_total <- df_denoised_total[-new_rows, , drop = FALSE]
-      }
-
-      all_removed_rows <- union(all_removed_rows, neg_rows)
-
-      cat(sprintf("%d rows removed from '%s'\n", length(new_rows), col_name))
-      if (length(already_removed) > 0) {
-        cat(sprintf("  Note: %d rows also have negative values in other columns.\n", length(already_removed)))
-      }
+      cat(sprintf("\nTotal unique rows removed: %d\n", length(rows_to_remove)))
     }
   }
 
+  cat("\n==================== NEGATIVE VALUES SUMMARY ====================\n\n")
+
+  # Colonnes supprimées
+  if (length(removed_columns) > 0) {
+    cat("Columns removed due to negative values:\n")
+    for (col in removed_columns) {
+      cat("-", col, "\n")
+    }
+    cat(sprintf("Total columns removed: %d\n\n", length(removed_columns)))
+  } else {
+    cat("No columns removed.\n\n")
+  }
+
+  # Lignes supprimées avec profondeurs
+  if (length(removed_rows) > 0) {
+    cat("Rows removed due to negative values (by column, showing depth):\n\n")
+    for (col in names(removed_rows)) {
+      depths <- removed_rows[[col]]$depth
+      depths <- depths[!is.na(depths)] # sécurité
+      if (length(depths) > 0) {
+        cat(sprintf("Column '%s': depths removed → %s\n", col, paste(depths, collapse = ", ")))
+      } else {
+        cat(sprintf("Column '%s': no valid depth info\n", col))
+      }
+    }
+  } else {
+    cat("No rows removed due to negative values.\n")
+  }
+
+  cat("\n==================================================================\n\n")
 
 
 
@@ -644,17 +702,29 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
 
     df_denoised_export <- get("Denoised Dataframe", envir = .GlobalEnv)
 
-    # --- Supprimer la colonne depth choisie par l'utilisateur ---
+    # Vérifier que la colonne depth existe
     if (!is.null(depth_col) && depth_col %in% colnames(df_denoised_export)) {
-      df_denoised_export[[depth_col]] <- NULL
+
+      # Identifier les colonnes à renommer (toutes sauf depth)
+      cols_to_rename <- setdiff(colnames(df_denoised_export), depth_col)
+
+      # Renommer uniquement celles-ci
+      colnames(df_denoised_export)[
+        colnames(df_denoised_export) %in% cols_to_rename
+      ] <- paste0("denoised_", cols_to_rename)
+
+    } else {
+      # Si aucune depth définie → renommer toutes les colonnes
+      colnames(df_denoised_export) <- paste0("denoised_", colnames(df_denoised_export))
     }
 
-    # --- Ajouter suffixe _denoised à toutes les colonnes restantes ---
-    colnames(df_denoised_export) <- paste0(colnames(df_denoised_export), "_denoised")
-
-    # --- Mise en cache ---
+    # Mise en cache
     set_cache("Dataframe_Denoised_cache", df_denoised_export)
+
+    # Réassigner proprement
+    assign("Denoised Dataframe", df_denoised_export, envir = .GlobalEnv)
   }
+
 
 
 }

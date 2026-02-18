@@ -1097,80 +1097,142 @@ xrf_clust  <- function(data = NULL) {
 
   # --- Create final dataframe based on User Dataframe ---
 
-  if (exists("User Dataframe", envir = .GlobalEnv)) {
+  # ==========================================================
+  # ROBUST GLOBAL MERGE (User as reference)
+  # ==========================================================
+  cat("\n=========================================================\n")
+  cat("Integrated Geochemical Dataset Construction\n")
+  cat("\n=========================================================\n")
 
-    # Récupérer User Dataframe
-    df_user <- get("User Dataframe", envir = .GlobalEnv)
-    max_rows <- nrow(df_user)
-
-    # Initialiser listes pour colonnes supplémentaires
-    extra_cols <- list()
-
-    # --- Récupérer df_denoised si existant ---
-    if ("Dataframe_Denoised_cache" %in% list_cache()) {
-      df_denoised <- get_cache("Dataframe_Denoised_cache")
-      # Ajouter suffixe _denoised
-     # colnames(df_denoised) <- paste0(colnames(df_denoised), "_denoised")
-      # Remplir NA si nécessaire
-      if (nrow(df_denoised) < max_rows) {
-        df_denoised[(nrow(df_denoised)+1):max_rows, ] <- NA
-      }
-      extra_cols <- c(extra_cols, list(df_denoised))
-    }
-
-    # --- Récupérer df_clr si existant ---
-    if ("Dataframe_CLR_cache" %in% list_cache()) {
-      df_clr <- get_cache("Dataframe_CLR_cache")
-      # Ajouter suffixe _clr
-    #  colnames(df_clr) <- paste0(colnames(df_clr), "clr_")
-      # Remplir NA si nécessaire
-      if (nrow(df_clr) < max_rows) {
-        df_clr[(nrow(df_clr)+1):max_rows, ] <- NA
-      }
-      extra_cols <- c(extra_cols, list(df_clr))
-    }
-
-    # --- Ajouter la colonne Cluster si Dataframe_Clustering existe ---
-    # --- Récupération de la colonne Cluster depuis Dataframe_Clustering ---
-    cluster_col <- NULL
-
-    if (exists("Dataframe_Clustering", envir = .GlobalEnv)) {
-      df_cluster <- get("Dataframe_Clustering", envir = .GlobalEnv)
-
-      if ("Cluster" %in% colnames(df_cluster)) {
-        # Sélection correcte de la colonne
-        cluster_col <- df_cluster[, "Cluster", drop = FALSE]
-
-        # Remplir NA si moins de lignes que max_rows
-        if (nrow(cluster_col) < max_rows) {
-          cluster_col[(nrow(cluster_col)+1):max_rows, ] <- NA
-        }
-        extra_cols <- c(extra_cols, list(cluster_col))
-      } else {
-        cat("\nWarning: Column 'Cluster' not found in Dataframe_Clustering.\n")
-      }
-    } else {
-      cat("\nWarning: Dataframe_Clustering does not exist in GlobalEnv.\n")
-    }
-
-    # --- Combinaison finale ---
-    if (length(extra_cols) > 0) {
-      Dataframe_Check <- cbind(df_user, do.call(cbind, extra_cols))
-    } else {
-      Dataframe_Check <- df_user
-    }
-
-    # Assignation globale et mise en cache
-    assign("Sediment_Geochem_Clusters_Analysis", Dataframe_Check, envir = .GlobalEnv)
-    set_cache("Dataframe_Check_cache", Dataframe_Check)
-
-    cat("\nDataframe 'Sediment_Geochem_Clusters_Analysis' created with User Dataframe as reference, available additional data added, and cached as 'Dataframe_Check_cache'.\n")
-
-  } else {
-    cat("\nWarning: 'User Dataframe' not found. Dataframe not created.\n")
+  if (!exists("User Dataframe", envir = .GlobalEnv)) {
+    stop("User Dataframe is required but not found in GlobalEnv.")
   }
 
+  df_user <- get("User Dataframe", envir = .GlobalEnv)
+  df_final <- df_user
 
+  cat("\nUser Dataframe loaded as base reference.\n")
+
+  # ==========================================================
+  # Détection dynamique des colonnes communes
+  # ==========================================================
+
+  available_dfs <- list(df_user)
+  names_available <- c("User")
+
+  if (exists("Denoised Dataframe", envir = .GlobalEnv)) {
+    df_denoised <- get("Denoised Dataframe", envir = .GlobalEnv)
+    available_dfs <- c(available_dfs, list(df_denoised))
+    names_available <- c(names_available, "Denoised")
+    cat("Denoised Dataframe detected.\n")
+  }
+
+  if (exists("Dataframe CLR", envir = .GlobalEnv)) {
+    df_clr <- get("Dataframe CLR", envir = .GlobalEnv)
+    available_dfs <- c(available_dfs, list(df_clr))
+    names_available <- c(names_available, "CLR")
+    cat("Dataframe CLR detected.\n")
+  }
+
+  # Détection colonne profondeur commune à tous les dataframes présents
+  common_cols <- Reduce(intersect, lapply(available_dfs, colnames))
+
+  if (length(common_cols) == 0) {
+    stop("No common column found between available dataframes.")
+  }
+
+  cat("\nCommon columns detected:\n\n")
+  print(common_cols)
+
+  repeat {
+    depth_col <- readline("\nEnter depth column for joining: ")
+    if (depth_col %in% common_cols) break
+    cat("Invalid column. Please choose from detected common columns.\n")
+  }
+
+  cat("\nDepth column selected:", depth_col, "\n\n")
+
+  # ==========================================================
+  # LEFT JOIN progressif
+  # ==========================================================
+
+  if (exists("Denoised Dataframe", envir = .GlobalEnv)) {
+    df_final <- merge(
+      df_final,
+      df_denoised,
+      by = depth_col,
+      all.x = TRUE,
+      sort = FALSE
+    )
+    cat("Denoised Dataframe merged.\n")
+  }
+
+  if (exists("Dataframe CLR", envir = .GlobalEnv)) {
+    df_final <- merge(
+      df_final,
+      df_clr,
+      by = depth_col,
+      all.x = TRUE,
+      sort = FALSE
+    )
+    cat("CLR Dataframe merged.\n")
+  }
+
+  # ==========================================================
+  # Gestion Cluster (indépendant de Denoised)
+  # ==========================================================
+
+  if (exists("Dataframe_Clustering", envir = .GlobalEnv)) {
+
+    df_cluster <- get("Dataframe_Clustering", envir = .GlobalEnv)
+
+    if ("Cluster" %in% colnames(df_cluster) &&
+        depth_col %in% colnames(df_cluster)) {
+
+      cluster_df <- df_cluster[, c(depth_col, "Cluster"), drop = FALSE]
+
+      df_final <- merge(
+        df_final,
+        cluster_df,
+        by = depth_col,
+        all.x = TRUE,
+        sort = FALSE
+      )
+
+      cat("Cluster column successfully merged.\n")
+
+    } else {
+      cat("Cluster column or depth column not found in Dataframe_Clustering.\n")
+    }
+
+  } else {
+    cat("Dataframe_Clustering not found. Cluster not added.\n")
+  }
+
+  # ==========================================================
+  # Mettre Cluster en dernière position si présent
+  # ==========================================================
+
+  if ("Cluster" %in% colnames(df_final)) {
+    cluster_vec <- df_final$Cluster
+    df_final$Cluster <- NULL
+    df_final$Cluster <- cluster_vec
+  }
+
+  # ==========================================================
+  # Assignation finale
+  # ==========================================================
+
+  df_final <- df_final[order(df_final[[depth_col]]), ]
+
+  assign("Sediment_Geochem_Clusters_Analysis", df_final, envir = .GlobalEnv)
+
+  cat("\n=========================================================\n")
+  cat("Sediment_Geochem_Clusters_Analysis successfully created.\n")
+  cat("Join type: LEFT JOIN using User Dataframe as reference.\n")
+  cat("Missing rows automatically filled with NA where necessary.\n")
+  cat("Data sorted by depth column.\n")
+  cat("=========================================================\n\n")
 
   # --- Optional save Dataframe_Check ---
   save_check <- tolower(safe_readline("Would you like to save 'Sediment_Geochem_Clusters_Analysis'? (yes/no): "))
