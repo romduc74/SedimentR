@@ -1097,6 +1097,29 @@ xrf_clust  <- function(data = NULL) {
 
   # --- Create final dataframe based on User Dataframe ---
 
+  cat("\n=========================================================\n")
+  cat("Confirmation before integrated dataset construction\n")
+  cat("\n=========================================================\n")
+
+
+  cat("\n")
+
+  compile_choice <- tolower(trimws(
+    safe_readline("Would you like to compile all available dataframes into a single integrated dataset? (yes/no): ")
+  ))
+
+  cat("\n")
+
+  if (!compile_choice %in% c("yes", "y")) {
+    cat("Integrated dataset construction skipped.\n")
+    cat("\n")
+    cat("Analysis completed.\n\n")
+    return(invisible(NULL))
+  }
+
+  cat("Integrated dataset construction started.\n")
+
+
   # ==========================================================
   # ROBUST GLOBAL MERGE (User as reference)
   # ==========================================================
