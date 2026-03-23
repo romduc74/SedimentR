@@ -1274,7 +1274,7 @@ xrf_clust  <- function(data = NULL) {
 
       cat("\nSelect the destination file...\n")
       path_save <- rstudioapi::selectFile(
-        caption = "Save Dataframe_Check",
+        caption = "Save Sediment_Geochem_Clusters_Analysis",
         label = "Save",
         path = getwd(),
         filter = if (ext_choice == "csv") list("CSV files" = "csv") else list("Excel files" = "xlsx"),
@@ -1287,8 +1287,8 @@ xrf_clust  <- function(data = NULL) {
       if (!grepl(paste0("\\.", ext_choice, "$"), path_save, ignore.case = TRUE))
         path_save <- paste0(path_save, ".", ext_choice)
 
-      if (ext_choice == "csv") write.csv(Dataframe_Check, path_save, row.names = FALSE)
-      else writexl::write_xlsx(Dataframe_Check, path = path_save)
+      if (ext_choice == "csv") write.csv(Sediment_Geochem_Clusters_Analysis, path_save, row.names = FALSE)
+      else writexl::write_xlsx(Sediment_Geochem_Clusters_Analysis, path = path_save)
 
       cat("\nSaved file:", path_save, "\n\n")
       break
