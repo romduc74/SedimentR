@@ -7,15 +7,7 @@
 #' @param data Le dataframe original avec la colonne "Cluster" déjà ajoutée
 #' @return Un graphique ggplot2 avec les profils géochimiques colorés par cluster
 #' @export
-visual.clust <- #' @title Visualisation des clusters géochimiques
-  #'
-  #' @description
-  #' Crée des profils géochimiques en fonction de la profondeur, colorés selon les clusters assignés.
-  #' L'utilisateur peut définir une palette personnalisée en fournissant une couleur par cluster.
-  #'
-  #' @param data Le dataframe original avec la colonne "Cluster" déjà ajoutée
-  #' @return Un graphique ggplot2 avec les profils géochimiques colorés par cluster
-  #' @export
+
   visual.clust <- function(data) {
     packages <- c("ggplot2", "tidypaleo", "dplyr", "tidyr", "tibble", "scales", "patchwork", "grid", "png", "jpeg", "tiff","cowplot")
     for (pkg in packages) {
@@ -492,10 +484,32 @@ visual.clust <- #' @title Visualisation des clusters géochimiques
           stop("Format non supporté.")
         }
 
-        photo_plot <- ggdraw() +
-          draw_image(img, scale = 0.91) +
-          ggtitle("Sediment Core") +
-          theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+        # photo_plot <- ggdraw() +
+        #   draw_image(img, scale = 0.91) +
+        #   ggtitle("Sediment Core") +
+        #   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+        Depth_start <- min(xrfStrat[[depth_col]], na.rm = TRUE)
+        Depth_end   <- max(xrfStrat[[depth_col]], na.rm = TRUE)
+
+        photo_plot <- ggplot() +
+          annotation_raster(
+            img,
+            xmin = 0,
+            xmax = 1,
+            ymin = Depth_start,
+            ymax = Depth_end
+          ) +
+          scale_y_reverse(limits = c(Depth_end, Depth_start))+
+          #scale_y_reverse(expand = c(0,0)) +
+          labs(title = "Sediment Core") +
+          tidypaleo::theme_paleo() +
+          theme(
+            axis.text.x = element_text(size = 11, color = "gray25"),
+            axis.ticks.x = element_blank(),
+            panel.grid = element_blank(),
+            legend.position = "right",
+            text = element_text(family = "sans", face = "bold")
+          )
       }
 
     } else {
@@ -518,63 +532,143 @@ visual.clust <- #' @title Visualisation des clusters géochimiques
       if (exists("age_plot"))   widths <- c(widths, 1)
       if (exists("main_plot")) widths <- c(widths, 4)
       if (exists("core_plot")) widths <- c(widths, 0.25)
-      combined_plot <- patchwork::wrap_plots(plots_to_combine, nrow = 1) + patchwork::plot_layout(widths = widths)
+      combined_plot <- patchwork::wrap_plots(
+        plots_to_combine,
+        nrow = 1
+      ) +
+        patchwork::plot_layout(widths = widths)
     }
 
     print(combined_plot)
     combined_plot <<- combined_plot
 
-    ## PDF Export
+
     cat("\n\n==============================\n")
-    cat("  EXPORT GRAPH TO PDF OPTION\n")
+    cat("  EXPORT GRAPH OPTION\n")
     cat("==============================\n\n")
-    save_pdf <- tolower(safe_readline("Would you like to export the figure as a PDF? (yes/no): ", default = "no"))
-    cat("\n")
 
-    get_numeric_input <- function(prompt, default) {
-      repeat {
-        val <- safe_readline(prompt, default = as.character(default))
-        val_num <- suppressWarnings(as.numeric(val))
-        if (!is.na(val_num) && val_num > 0) return(val_num)
-        cat("\nInvalid input. Please enter a positive number or press Enter for default.\n\n")
-      }
-    }
+    save_with_photo <- tolower(
+      safe_readline("Do you want to save the graph with the photo? (yes/no) [default = yes]: ", default = "yes")
+    )
 
+    if (save_with_photo %in% c("yes", "y")) {
 
-    if (save_pdf %in% c("yes", "y")) {
-      if (!requireNamespace("rstudioapi", quietly = TRUE)) install.packages("rstudioapi")
-      library(rstudioapi)
-      if (rstudioapi::isAvailable()) {
-        pdf_path <- rstudioapi::selectFile(
-          caption = "Save cluster visualization",
-          label = "Save",
-          path = getwd(),
-          filter = list("PDF files" = "pdf"),
-          existing = FALSE
+      # Détection automatique si une image est présente
+      export_format_default <- if (exists("photo_plot")) "png" else "pdf"
+
+      cat("\n")
+
+      cat("Suggested export format:", toupper(export_format_default), "\n\n")
+
+      export_choice <- tolower(
+        safe_readline(
+          paste0("Choose export format (png/pdf) [default = ", export_format_default, "]: "),
+          default = export_format_default
         )
-        if (nzchar(pdf_path)) {
-          if (!grepl("\\.pdf$", pdf_path, ignore.case = TRUE))
-            pdf_path <- paste0(pdf_path, ".pdf")
-          pdf_width  <- get_numeric_input("Enter desired PDF width (in inches, [default = 10]): ", 10)
-          cat("\n")
-          pdf_height <- get_numeric_input("Enter desired PDF height (in inches, [default = 8]): ", 8)
-          cat("\n")
+      )
 
-          pdf(pdf_path, width = pdf_width, height = pdf_height)
-
-          if (exists("combined_plot")) print(combined_plot) else print(main_plot)
-          dev.off()
-          cat("\n\nCluster visualization saved to:", pdf_path, "\n")
-        } else {
-          cat("\nSaving cancelled.\n")
-        }
+      if (!export_choice %in% c("png", "pdf")) {
+        cat("\nInvalid choice. Export skipped.\n")
       } else {
-        cat("\nRStudio API not available. Cannot select file interactively.\n")
-      }
-    } else {
-      cat("\nPDF export skipped.\n")
-    }
 
+        get_numeric_input <- function(prompt, default) {
+          repeat {
+            val <- safe_readline(prompt, default = as.character(default))
+            val_num <- suppressWarnings(as.numeric(val))
+            if (!is.na(val_num) && val_num > 0) return(val_num)
+            cat("\nInvalid input. Enter a positive number.\n\n")
+          }
+        }
+
+        if (!requireNamespace("rstudioapi", quietly = TRUE))
+          install.packages("rstudioapi")
+
+        library(rstudioapi)
+
+        if (rstudioapi::isAvailable()) {
+
+          file_path <- rstudioapi::selectFile(
+            caption = "Save cluster visualization",
+            label = "Save",
+            path = getwd(),
+            filter = list(
+              "PNG files" = "png",
+              "PDF files" = "pdf"
+            ),
+            existing = FALSE
+          )
+
+          if (nzchar(file_path)) {
+
+            if (!grepl(paste0("\\.", export_choice, "$"),
+                       file_path,
+                       ignore.case = TRUE)) {
+              file_path <- paste0(file_path, ".", export_choice)
+            }
+
+            cat("\n")
+
+            plot_width <- get_numeric_input(
+              paste0("Enter desired ", toupper(export_choice),
+                     " width (in inches, [default = 12]): "),
+              12
+            )
+
+            cat("\n")
+
+            plot_height <- get_numeric_input(
+              paste0("Enter desired ", toupper(export_choice),
+                     " height (in inches, [default = 8]): "),
+              8
+            )
+
+            cat("\n")
+
+            if (export_choice == "png") {
+
+              png(
+                filename = file_path,
+                width = plot_width,
+                height = plot_height,
+                units = "in",
+                res = 400,
+                bg = "white"
+              )
+
+            } else {
+
+              pdf(
+                file_path,
+                width = plot_width,
+                height = plot_height
+              )
+
+            }
+
+            if (exists("combined_plot")) {
+              print(combined_plot)
+            } else {
+              print(main_plot)
+            }
+
+            dev.off()
+
+            cat("\nFigure saved to:", file_path, "\n")
+
+          } else {
+
+            cat("\nSaving cancelled.\n")
+
+          }
+
+        } else {
+
+          cat("\nRStudio API not available.\n")
+
+        }
+
+      }
+    }
 
     cat("\n\n==============================\n")
     cat("  AGE–DEPTH PLOT OPTION\n")
