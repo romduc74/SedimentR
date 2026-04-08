@@ -528,7 +528,7 @@
       combined_plot <- plots_to_combine[[1]]
     } else if (length(plots_to_combine) > 1) {
       widths <- c()
-      if (exists("photo_plot")) widths <- c(widths, 0.7)
+      if (exists("photo_plot")) widths <- c(widths, 0.25)
       if (exists("age_plot"))   widths <- c(widths, 1)
       if (exists("main_plot")) widths <- c(widths, 4)
       if (exists("core_plot")) widths <- c(widths, 0.25)
