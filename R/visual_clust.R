@@ -150,19 +150,96 @@
       ) %>%
       ungroup()
 
+    cat("\n\n==============================\n")
+    cat("  LOG SCALE DETECTION (PER ELEMENT)\n")
+    cat("==============================\n\n")
 
+    use_log_scale <- FALSE
+
+    range_by_element <- xrfStrat %>%
+      dplyr::group_by(elements) %>%
+      dplyr::summarise(
+        min_val = suppressWarnings(min(peakarea[peakarea > 0], na.rm = TRUE)),
+        max_val = suppressWarnings(max(peakarea, na.rm = TRUE)),
+        ratio = max_val / min_val,
+        .groups = "drop"
+      )
+
+    range_by_element <- range_by_element[is.finite(range_by_element$ratio), ]
+
+    if (nrow(range_by_element) > 0) {
+
+      high_ratio_elements <- range_by_element$elements[
+        range_by_element$ratio > 100
+      ]
+
+      if (length(high_ratio_elements) > 0) {
+
+        cat("Large amplitude differences detected in the following variables:\n\n")
+        cat("\n")
+        log_choice <- tolower(
+          safe_readline(
+            "Would you like to apply a log10 scale on X axis? (yes/no): ",
+            default = "yes"
+          )
+        )
+
+        use_log_scale <- log_choice %in% c("yes", "y")
+
+      } else {
+
+        cat("No strong amplitude contrast detected between variables.\n")
+
+      }
+
+    } else {
+
+      cat("Log scale detection skipped (no valid positive values).\n")
+
+    }
+
+
+    # if (use_log_scale) {
+    #
+    #   x_scale <- scale_x_log10(
+    #     breaks = scales::trans_breaks("log10", function(x) 10^x)
+    #   )
+    #
+    # } else {
+    if (use_log_scale) {
+
+      x_scale <- scale_x_log10(
+        breaks = scales::breaks_log(n = 6)
+      )
+
+    } else {
+
+      x_scale <- scale_x_continuous(
+        breaks = scales::breaks_pretty(n = 4)
+      )
+
+    }
 
     main_plot <- xrfStrat %>%
       ggplot(aes(x = peakarea, y = .data[[depth_col]],
-                 group = interaction(elements, segment))) +
+                 group = interaction(elements))) +
       geom_lineh(
         aes(color = if (use_clusters) Cluster else NULL),
         linewidth = 0.25,
         na.rm = TRUE
       ) +
+      geom_point(
+        aes(color = if (use_clusters) Cluster else NULL),
+        size = 0.25,
+        na.rm = TRUE
+      )+
       scale_y_reverse() +
-      scale_x_continuous(breaks = scales::pretty_breaks(n = 4)) +
-      tidypaleo::facet_geochem_gridh(vars(elements)) +
+      #scale_x_continuous(breaks = scales::pretty_breaks(n = 4)) +
+      x_scale+
+      tidypaleo::facet_geochem_gridh(
+        vars(elements),
+        scales = "free_x"
+      )+
       labs(
         x = "Geochemistry",
         y = paste0("Depth [", depth_unit, "]"),
@@ -528,7 +605,7 @@
       combined_plot <- plots_to_combine[[1]]
     } else if (length(plots_to_combine) > 1) {
       widths <- c()
-      if (exists("photo_plot")) widths <- c(widths, 0.25)
+      if (exists("photo_plot")) widths <- c(widths, 0.35)
       if (exists("age_plot"))   widths <- c(widths, 1)
       if (exists("main_plot")) widths <- c(widths, 4)
       if (exists("core_plot")) widths <- c(widths, 0.25)
@@ -548,7 +625,7 @@
     cat("==============================\n\n")
 
     save_with_photo <- tolower(
-      safe_readline("Do you want to save the graph with the photo? (yes/no) [default = yes]: ", default = "yes")
+      safe_readline("Do you want to save the graph? (yes/no) [default = yes]: ", default = "yes")
     )
 
     if (save_with_photo %in% c("yes", "y")) {
