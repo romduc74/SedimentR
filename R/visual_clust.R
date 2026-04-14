@@ -1016,10 +1016,20 @@
       if (use_clusters_age && "Cluster" %in% names(xrf_age)) {
         dual_plot <- dual_plot +
           geom_lineh(aes(color = factor(Cluster)), linewidth = 0.25, na.rm = TRUE) +
+          geom_point(
+            aes(color = if (use_clusters_age) Cluster else NULL),
+            size = 0.25,
+            na.rm = TRUE
+          )+
           scale_color_manual(values = custom_palette, name = "Cluster")
       } else {
         dual_plot <- dual_plot +
-          geom_lineh(color = "black", linewidth = 0.25, na.rm = TRUE)
+          geom_lineh(color = "black", linewidth = 0.25, na.rm = TRUE)+
+          geom_point(
+            aes(color = "black"),
+            size = 0.25,
+            na.rm = TRUE
+          )
       }
 
 
@@ -1123,95 +1133,7 @@
         }
       }
 
-      # cat("\n\n=================================\n")
-      # cat("  VIRTUAL CORE (AGE–DEPTH)\n")
-      # cat("=====================================\n\n")
-      #
-      # if (use_clusters_age) {
-      #   show_core_age <- tolower(
-      #     safe_readline("Show Virtual Core with Age–Depth plot? (yes/no): ", default = "no")
-      #   )
-      # } else {
-      #   show_core_age <- "no"
-      #   print(dual_plot)
-      #   cat("\nVirtual Core disabled (no clusters).\n")
-      # }
-      #
-      # if (show_core_age %in% c("yes", "y")) {
-      #
-      #   depth_vals <- sapply(age_vals, function(age) {
-      #     idx <- which.min(abs(xrf_age$Age - age))  # index du Age le plus proche
-      #     xrf_age[[depth_col]][idx]                  # profondeur correspondante
-      #   })
-      #
-      #   core_data <- xrfStrat %>%
-      #     dplyr::select(all_of(depth_col), Cluster) %>%
-      #     dplyr::distinct() %>%
-      #     arrange(.data[[depth_col]])
-      #
-      #   depth_step <- median(diff(core_data[[depth_col]]), na.rm = TRUE)
-      #
-      #   core_data <- core_data %>%
-      #     mutate(
-      #       depth_diff = .data[[depth_col]] - lag(.data[[depth_col]], default = first(.data[[depth_col]])),
-      #       is_gap = depth_diff > 1.9999999999999996 * depth_step,
-      #       Block = cumsum((Cluster != lag(Cluster, default = first(Cluster))) | is_gap)
-      #     )
-      #
-      #   blocks <- core_data %>%
-      #     group_by(Block, Cluster) %>%
-      #     summarize(
-      #       Depth_start = min(.data[[depth_col]], na.rm = TRUE),
-      #       Depth_end   = max(.data[[depth_col]], na.rm = TRUE),
-      #       .groups = "drop"
-      #     ) %>%
-      #     mutate(
-      #       Depth_mid = (Depth_start + Depth_end) / 2,
-      #       Height = Depth_end - Depth_start + depth_step
-      #     )
-      #
-      #   core_plot_age <- ggplot(blocks,
-      #                           aes(x = 1, y = Depth_mid,
-      #                               fill = factor(Cluster),
-      #                               height = Height)) +
-      #     geom_tile(width = 1) +
-      #     scale_y_reverse(position = "right") +
-      #     scale_fill_manual(values = custom_palette, name = "Clusters", na.value = "white") +
-      #     labs(x = NULL, y = NULL, title = "Virtual Core") +
-      #     tidypaleo::theme_paleo() +
-      #     theme(
-      #       axis.text.x  = element_blank(),
-      #       axis.ticks.x = element_blank(),
-      #       panel.grid   = element_blank(),
-      #       legend.position = "right",
-      #       text = element_text(family = "sans", face = "bold")
-      #     )
-      #
-      #
-      #
-      #
-      #   if (!is.null(depth_vals) && length(depth_vals) > 0) {
-      #     core_plot_age <- core_plot_age +
-      #       geom_hline(
-      #         yintercept = depth_vals,
-      #         linetype   = "dashed",
-      #         linewidth  = 0.3,
-      #         color      = "black"
-      #       )
-      #
-      #     combined_age_depth_plot <- dual_plot + core_plot_age +
-      #       patchwork::plot_layout(widths = c(4, 0.25))
-      #
-      #     print(combined_age_depth_plot)
-      #
-      #     plot_to_export <- combined_age_depth_plot
-      #
-      #   } else {
-      #     print(dual_plot)
-      #     cat("\nVirtual Core skipped for Age–Depth plot.\n")
-      #     plot_to_export <- dual_plot
-      #   }
-      #
+
 
       cat("\n\n=================================\n")
       cat("  VIRTUAL CORE (AGE–DEPTH)\n")
@@ -1305,114 +1227,234 @@
         plot_to_export <- dual_plot
       }
 
+      cat("\n\n==============================\n")
+      cat("  SEDIMENT CORE PICTURE OPTION\n")
+      cat("==============================\n\n")
 
-      ## Sauvegarde dans l'environnement global
-      xrf_age_export <<- xrf_age_export
-      cat("\n")
-      cat("\nExport-ready table saved as `xrf_age_export` in Global Environment.\n")
-      cat("\n")
+      add_photo_age <- tolower(
+        safe_readline(
+          "Would you like to add a core image to the Age–Depth plot? (yes/no): ",
+          default = "no"
+        )
+      )
 
-      ## Option export CSV / XLSX
-      save_table <- tolower(safe_readline(
-        "Would you like to export the joined table (xrf_age_export)? (yes/no): ",
-        default = "no"
-      ))
-      cat("\n")
+      if (add_photo_age %in% c("yes", "y")) {
 
-      if (save_table %in% c("yes", "y")) {
+        photo_file <- rstudioapi::selectFile(
+          caption = "Select sediment core image",
+          label = "Open",
+          path = getwd(),
+          filter = list("Images" = c("jpg","jpeg","png","tif","tiff")),
+          existing = TRUE
+        )
 
-        export_format <- tolower(safe_readline(
-          "Choose export format (csv/xlsx): ",
-          default = "csv"
-        ))
+        if (!nzchar(photo_file)) {
 
-        if (!export_format %in% c("csv", "xlsx")) {
-          cat("\nInvalid format. Export skipped.\n")
+          cat("\nNo image selected.\nCore photo skipped.\n")
+
         } else {
 
-          table_path <- rstudioapi::selectFile(
-            caption  = paste("Save joined table as", toupper(export_format)),
-            label    = "Save",
-            path     = getwd(),
-            filter   = setNames(list(export_format), toupper(export_format)),
-            existing = FALSE
-          )
+          file_ext <- tolower(tools::file_ext(photo_file))
+          temp_png <- tempfile(fileext = ".png")
 
-          if (nzchar(table_path)) {
+          if (file_ext %in% c("jpg","jpeg")) {
 
-            if (export_format == "xlsx") {
-              if (!grepl("\\.xlsx$", table_path, ignore.case = TRUE))
-                table_path <- paste0(table_path, ".xlsx")
-              writexl::write_xlsx(xrf_age_export, table_path)
+            tmp_img <- jpeg::readJPEG(photo_file)
+            png::writePNG(tmp_img, target = temp_png)
+            img <- png::readPNG(temp_png)
 
-            } else if (export_format == "csv") {
-              if (!grepl("\\.csv$", table_path, ignore.case = TRUE))
-                table_path <- paste0(table_path, ".csv")
-              write.csv(xrf_age_export, table_path, row.names = FALSE)
-            }
+          } else if (file_ext %in% c("tif","tiff")) {
 
-            cat("\nTable saved to:", table_path, "\n")
+            tmp_img <- tiff::readTIFF(photo_file)
+            png::writePNG(tmp_img, target = temp_png)
+            img <- png::readPNG(temp_png)
+
+          } else if (file_ext == "png") {
+
+            temp_png <- photo_file
+            img <- png::readPNG(temp_png)
+
           } else {
-            cat("\nTable export cancelled.\n")
+
+            stop("Unsupported image format.")
+
           }
+
+          Depth_start <- min(xrfStrat[[depth_col]], na.rm = TRUE)
+          Depth_end   <- max(xrfStrat[[depth_col]], na.rm = TRUE)
+
+          photo_plot_age <- ggplot() +
+            annotation_raster(
+              img,
+              xmin = 0,
+              xmax = 1,
+              ymin = Depth_start,
+              ymax = Depth_end
+            ) +
+            scale_y_reverse(limits = c(Depth_end, Depth_start)) +
+            labs(title = "Sediment Core") +
+            tidypaleo::theme_paleo() +
+            theme(
+              axis.text.x = element_text(size = 11, color = "gray25"),
+              axis.ticks.x = element_blank(),
+              panel.grid = element_blank(),
+              legend.position = "right",
+              text = element_text(family = "sans", face = "bold")
+            )
+
+          plot_to_export <- photo_plot_age + plot_to_export +
+            patchwork::plot_layout(widths = c(0.25, 4))
+
+          print(plot_to_export)
+
         }
+
+      } else {
+
+        print(plot_to_export)
+
       }
+
+
 
       cat("\n\n==============================\n")
-      cat("  EXPORT GRAPH TO PDF OPTION\n")
+      cat("  EXPORT GRAPH OPTION\n")
       cat("==============================\n\n")
-      save_pdf <- tolower(safe_readline("Would you like to export the figure as a PDF? (yes/no): ", default = "no"))
-      cat("\n")
 
-      get_numeric_input <- function(prompt, default) {
-        repeat {
-          val <- safe_readline(prompt, default = as.character(default))
-          val_num <- suppressWarnings(as.numeric(val))
-          if (!is.na(val_num) && val_num > 0) return(val_num)
-          cat("\nInvalid input. Please enter a positive number or press Enter for default.\n\n")
-        }
-      }
+      save_plot <- tolower(
+        safe_readline(
+          "Do you want to save the graph? (yes/no) [default = yes]: ",
+          default = "yes"
+        )
+      )
 
-      if (save_pdf %in% c("yes", "y")) {
-        if (!requireNamespace("rstudioapi", quietly = TRUE)) install.packages("rstudioapi")
-        library(rstudioapi)
+      if (save_plot %in% c("yes", "y")) {
 
-        if (rstudioapi::isAvailable()) {
-          pdf_path <- rstudioapi::selectFile(
-            caption = "Save cluster visualization",
-            label   = "Save",
-            path    = getwd(),
-            filter  = list("PDF files" = "pdf"),
+        export_format_default <- if (exists("photo_plot_age")) "png" else "pdf"
+
+        cat("\nSuggested export format:",
+            toupper(export_format_default),
+            "\n\n")
+
+        export_choice <- tolower(
+          safe_readline(
+            paste0("Choose export format (png/pdf) [default = ",
+                   export_format_default,
+                   "]: "),
+            default = export_format_default
+          )
+        )
+
+        if (!export_choice %in% c("png","pdf")) {
+
+          cat("\nInvalid choice. Export skipped.\n")
+
+        } else {
+
+          get_numeric_input <- function(prompt, default) {
+
+            repeat {
+
+              val <- safe_readline(prompt,
+                                   default = as.character(default))
+
+              val_num <- suppressWarnings(as.numeric(val))
+
+              if (!is.na(val_num) && val_num > 0)
+                return(val_num)
+
+              cat("\nInvalid input. Enter a positive number.\n\n")
+
+            }
+
+          }
+
+          file_path <- rstudioapi::selectFile(
+            caption = "Save Age–Depth visualization",
+            label = "Save",
+            path = getwd(),
+            filter = list(
+              "PNG files" = "png",
+              "PDF files" = "pdf"
+            ),
             existing = FALSE
           )
 
-          if (nzchar(pdf_path)) {
-            if (!grepl("\\.pdf$", pdf_path, ignore.case = TRUE))
-              pdf_path <- paste0(pdf_path, ".pdf")
+          if (nzchar(file_path)) {
 
-            pdf_width  <- get_numeric_input("Enter desired PDF width (in inches, [default = 10]): ", 10)
-            cat("\n")
-            pdf_height <- get_numeric_input("Enter desired PDF height (in inches, [default = 8]): ", 8)
-            cat("\n")
+            if (!grepl(
+              paste0("\\.", export_choice, "$"),
+              file_path,
+              ignore.case = TRUE
+            )) {
 
-            pdf(pdf_path, width = pdf_width, height = pdf_height)
+              file_path <- paste0(file_path,
+                                  ".",
+                                  export_choice)
 
-            if (exists("plot_to_export")) {
-              print(plot_to_export)
-            } else {
-              cat("\nNo plot available to export.\n")
             }
 
+            cat("\n")
+
+            plot_width <- get_numeric_input(
+              paste0(
+                "Enter desired ",
+                toupper(export_choice),
+                " width (in inches, [default = 12]): "
+              ),
+              12
+            )
+
+            cat("\n")
+
+            plot_height <- get_numeric_input(
+              paste0(
+                "Enter desired ",
+                toupper(export_choice),
+                " height (in inches, [default = 8]): "
+              ),
+              8
+            )
+
+            cat("\n")
+
+            if (export_choice == "png") {
+
+              png(
+                filename = file_path,
+                width = plot_width,
+                height = plot_height,
+                units = "in",
+                res = 400,
+                bg = "white"
+              )
+
+            } else {
+
+              pdf(
+                file_path,
+                width = plot_width,
+                height = plot_height
+              )
+
+            }
+
+            print(plot_to_export)
+
             dev.off()
-            cat("\n\nCluster-Depth-Age visualization saved to:", pdf_path, "\n")
+
+            cat("\nFigure saved to:",
+                file_path,
+                "\n")
+
           } else {
+
             cat("\nSaving cancelled.\n")
+
           }
-        } else {
-          cat("\nRStudio API not available. Cannot select file interactively.\n")
+
         }
-      } else {
-        cat("\nPDF export skipped.\n")
+
       }
 
       cat("\n\n==============================\n")

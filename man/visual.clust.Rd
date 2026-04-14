@@ -11,13 +11,8 @@ visual.clust(data)
 }
 \value{
 Un graphique ggplot2 avec les profils géochimiques colorés par cluster
-
-Un graphique ggplot2 avec les profils géochimiques colorés par cluster
 }
 \description{
-Crée des profils géochimiques en fonction de la profondeur, colorés selon les clusters assignés.
-L'utilisateur peut définir une palette personnalisée en fournissant une couleur par cluster.
-
 Crée des profils géochimiques en fonction de la profondeur, colorés selon les clusters assignés.
 L'utilisateur peut définir une palette personnalisée en fournissant une couleur par cluster.
 }
