@@ -506,39 +506,117 @@ charger <- function(path = NULL, sheet = NULL, sep, fileEncoding) {
     }
   }
 
-  cat("\n==================== NEGATIVE VALUES SUMMARY ====================\n\n")
+  # cat("\n==================== NEGATIVE VALUES SUMMARY ====================\n\n")
+  #
+  # # Colonnes supprimées
+  # if (length(removed_columns) > 0) {
+  #   cat("Columns removed due to negative values:\n")
+  #   for (col in removed_columns) {
+  #     cat("-", col, "\n")
+  #   }
+  #   cat(sprintf("Total columns removed: %d\n\n", length(removed_columns)))
+  # } else {
+  #   cat("No columns removed.\n\n")
+  # }
+  #
+  # # Lignes supprimées avec profondeurs
+  # if (length(removed_rows) > 0) {
+  #   cat("Rows removed due to negative values (by column, showing depth):\n\n")
+  #   for (col in names(removed_rows)) {
+  #     depths <- removed_rows[[col]]$depth
+  #     depths <- depths[!is.na(depths)] # sécurité
+  #     if (length(depths) > 0) {
+  #       cat(sprintf("Column '%s': depths removed → %s\n", col, paste(depths, collapse = ", ")))
+  #     } else {
+  #       cat(sprintf("Column '%s': no valid depth info\n", col))
+  #     }
+  #   }
+  # } else {
+  #   cat("No rows removed due to negative values.\n")
+  # }
+  #
+  # cat("\n==================================================================\n\n")
 
-  # Colonnes supprimées
-  if (length(removed_columns) > 0) {
-    cat("Columns removed due to negative values:\n")
-    for (col in removed_columns) {
-      cat("-", col, "\n")
+
+
+  #=============================================================================
+
+  negative_summary_txt <- NULL
+
+  if (length(removed_columns) > 0 || length(removed_rows) > 0) {
+
+    negative_summary_txt <- paste0(
+      "==================== NEGATIVE VALUES SUMMARY ====================\n\n"
+    )
+
+    # Colonnes supprimées
+    if (length(removed_columns) > 0) {
+
+      negative_summary_txt <- paste0(
+        negative_summary_txt,
+        "Columns removed due to negative values:\n",
+        paste("-", removed_columns, collapse = "\n"),
+        "\nTotal columns removed: ", length(removed_columns), "\n\n"
+      )
+
+    } else {
+
+      negative_summary_txt <- paste0(
+        negative_summary_txt,
+        "No columns removed.\n\n"
+      )
     }
-    cat(sprintf("Total columns removed: %d\n\n", length(removed_columns)))
-  } else {
-    cat("No columns removed.\n\n")
-  }
 
-  # Lignes supprimées avec profondeurs
-  if (length(removed_rows) > 0) {
-    cat("Rows removed due to negative values (by column, showing depth):\n\n")
-    for (col in names(removed_rows)) {
-      depths <- removed_rows[[col]]$depth
-      depths <- depths[!is.na(depths)] # sécurité
-      if (length(depths) > 0) {
-        cat(sprintf("Column '%s': depths removed → %s\n", col, paste(depths, collapse = ", ")))
-      } else {
-        cat(sprintf("Column '%s': no valid depth info\n", col))
+    # Lignes supprimées
+    if (length(removed_rows) > 0) {
+
+      negative_summary_txt <- paste0(
+        negative_summary_txt,
+        "Rows removed due to negative values (by column, showing depth):\n\n"
+      )
+
+      for (col in names(removed_rows)) {
+
+        depths <- removed_rows[[col]]$depth
+        depths <- depths[!is.na(depths)]
+
+        if (length(depths) > 0) {
+
+          negative_summary_txt <- paste0(
+            negative_summary_txt,
+            sprintf("Column '%s': depths removed → %s\n",
+                    col,
+                    paste(depths, collapse = ", "))
+          )
+
+        } else {
+
+          negative_summary_txt <- paste0(
+            negative_summary_txt,
+            sprintf("Column '%s': no valid depth info\n", col)
+          )
+        }
       }
+
+    } else {
+
+      negative_summary_txt <- paste0(
+        negative_summary_txt,
+        "No rows removed due to negative values.\n"
+      )
     }
-  } else {
-    cat("No rows removed due to negative values.\n")
+
+    negative_summary_txt <- paste0(
+      negative_summary_txt,
+      "\n==================================================================\n\n"
+    )
+
+    # Mise en cache
+    set_cache("negative_values_summary_cache", negative_summary_txt)
+
   }
 
-  cat("\n==================================================================\n\n")
-
-
-
+  #=============================================================================
 
   # --- Colonnes log_ uniquement ---
   log_cols <- grep("^log_", colnames(df_clean), value = TRUE)

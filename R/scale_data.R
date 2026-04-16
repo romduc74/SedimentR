@@ -307,6 +307,23 @@ scale_data <- function(donnees=NULL) {
     "\n===============================\n"
   )
 
+
+  # -------------------------------
+  # Ajout du résumé valeurs négatives si disponible
+  # -------------------------------
+
+  if ("negative_values_summary_cache" %in% list_cache()) {
+
+    negative_summary_txt <- get_cache("negative_values_summary_cache")
+
+    resume_txt <- paste0(
+      negative_summary_txt,
+      "\n",
+      resume_txt
+    )
+
+  }
+
   # Affichage dans la console
   cat("\n", resume_txt, "\n")
 
