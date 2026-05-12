@@ -876,49 +876,133 @@ xrf_clust  <- function(data = NULL) {
     stab_mean <- mean(boot$bootmean)
 
     # --- Interpretations ---
-    sil_text <- if(sil_mean > 0.75) "Excellent: clusters well separated"
-    else if(sil_mean > 0.6) "Good: mostly well assigned"
-    else if(sil_mean > 0.4) "Moderate: some points misassigned"
-    else if(sil_mean > 0.2) "Weak: clusters poorly defined"
-    else "Very weak: mostly overlapping"
 
-    db_text <- if(dbi < 0.5) "Excellent separation"
-    else if(dbi < 0.75) "Good separation"
-    else if(dbi < 1.0) "Moderate separation"
-    else "Weak separation, overlapping"
 
-    ch_text <- if(ch > 500) "Excellent structure (very compact & well separated)"
-    else if(ch > 200) "Good structure"
-    else if(ch > 100) "Moderate structure"
-    else "Weak structure (poor separation)"
+    # sil_text <- if(sil_mean > 0.75) "Excellent: clusters well separated"
+    # else if(sil_mean > 0.6) "Good: mostly well assigned"
+    # else if(sil_mean > 0.4) "Moderate: some points misassigned"
+    # else if(sil_mean > 0.2) "Weak: clusters poorly defined"
+    # else "Very weak: mostly overlapping"
+    #
+    # db_text <- if(dbi < 0.5) "Excellent separation"
+    # else if(dbi < 0.75) "Good separation"
+    # else if(dbi < 1.0) "Moderate separation"
+    # else "Weak separation, overlapping"
+    #
+    # ch_text <- if(ch > 500) "Excellent structure (very compact & well separated)"
+    # else if(ch > 200) "Good structure"
+    # else if(ch > 100) "Moderate structure"
+    # else "Weak structure (poor separation)"
+    #
+    # boot_text <- if(stab_mean > 0.8) "Very stable clusters"
+    # else if(stab_mean > 0.6) "Stable clusters"
+    # else if(stab_mean > 0.4) "Moderately stable"
+    # else "Unstable clusters, use caution"
 
-    boot_text <- if(stab_mean > 0.8) "Very stable clusters"
-    else if(stab_mean > 0.6) "Stable clusters"
-    else if(stab_mean > 0.4) "Moderately stable"
-    else "Unstable clusters, use caution"
+    sil_text <- if (sil_mean < 0.20) {
+      "Very poor separation"
+    } else if (sil_mean < 0.40) {
+      "Weak separation"
+    } else if (sil_mean < 0.60) {
+      "Moderate separation"
+    } else if (sil_mean < 0.75) {
+      "Good separation"
+    } else {
+      "Excellent separation"
+    }
 
-    # overall_text <- if(sil_mean>0.6 & dbi<0.75 & stab_mean>0.65) {
-    #   "Clustering quality is strong → All validation indices support well-separated and stable clusters."
-    # } else if(sil_mean>0.4 & dbi<1 & stab_mean>0.4) {
-    #   "Clustering quality is acceptable → The clustering remains interpretable, but conclusions should rely on a joint discussion of the validation indices and domain knowledge."
+    db_text <- if (dbi < 0.50) {
+      "Excellent compactness"
+    } else if (dbi < 0.75) {
+      "Good separation"
+    } else if (dbi < 1.00) {
+      "Moderate separation"
+    } else if (dbi < 1.25) {
+      "Weak separation"
+    } else {
+      "Strong overlap"
+    }
+
+    ch_text <- if (ch < 100) {
+      "No clear structure"
+    } else if (ch < 200) {
+      "Weak structure"
+    } else if (ch < 500) {
+      "Moderate structure"
+    } else if (ch < 1000) {
+      "Good structure"
+    } else {
+      "Excellent structure"
+    }
+
+    boot_text <- if (stab_mean < 0.40) {
+      "Very unstable clusters (likely artefactual)"
+    } else if (stab_mean < 0.60) {
+      "Weak stability"
+    } else if (stab_mean < 0.75) {
+      "Moderately stable clusters"
+    } else if (stab_mean < 0.85) {
+      "Stable clusters"
+    } else {
+      "Very stable clusters"
+    }
+
+
+
+
+    # overall_text <- if(stab_mean < 0.4) {
+    #   "Clustering is unreliable → Low bootstrap stability; results likely artefactual."
+    # } else if(ch < 100) {
+    #   "No clear cluster structure → Low Calinski–Harabasz index; data weakly clusterable."
+    # } else if(stab_mean > 0.8 & ch > 300 & sil_mean > 0.6 & dbi < 0.75) {
+    #   "Excellent clustering → Strong, stable, and well-separated clusters."
+    # } else if(stab_mean > 0.75 & ch > 300 & sil_mean > 0.45) {
+    #   "Robust and well-structured → Clusters are stable with reasonably good separation."
+    # } else if(stab_mean > 0.8 & ch > 300 & sil_mean <= 0.45) {
+    #   "Robust but overlapping → Cluster structure is strong and highly stable, but boundaries are fuzzy."
+    # } else if(stab_mean > 0.6 & ch > 150) {
+    #   "Moderate structure → Clusters are interpretable but not sharply defined."
     # } else {
-    #   "Clustering is weak → Clusters poorly separated or unstable."
+    #   "Weak clustering → Poor separation and/or low stability; interpret with caution."
     # }
 
-    overall_text <- if(stab_mean < 0.4) {
-      "Clustering is unreliable → Low bootstrap stability; results likely artefactual."
-    } else if(ch < 100) {
-      "No clear cluster structure → Low Calinski–Harabasz index; data weakly clusterable."
-    } else if(stab_mean > 0.8 & ch > 300 & sil_mean > 0.6 & dbi < 0.75) {
-      "Excellent clustering → Strong, stable, and well-separated clusters."
-    } else if(stab_mean > 0.75 & ch > 300 & sil_mean > 0.45) {
-      "Robust and well-structured → Clusters are stable with reasonably good separation."
-    } else if(stab_mean > 0.8 & ch > 300 & sil_mean <= 0.45) {
-      "Robust but overlapping → Cluster structure is strong and highly stable, but boundaries are fuzzy."
-    } else if(stab_mean > 0.6 & ch > 150) {
-      "Moderate structure → Clusters are interpretable but not sharply defined."
+
+    overall_text <- if (stab_mean < 0.40) {
+
+      "Clustering is unreliable → Very low bootstrap stability indicates non-reproducible structure; results are likely artefactual."
+
+    } else if (ch < 100) {
+
+      "No meaningful cluster structure → Calinski–Harabasz indicates insufficient global separation."
+
+    } else if (stab_mean >= 0.85 && ch >= 500 && sil_mean >= 0.70 && dbi <= 0.50) {
+
+      "Exceptional clustering → Highly stable, strongly separated, and geometrically compact structure across all metrics."
+
+    } else if (stab_mean >= 0.75 && ch >= 300) {
+
+      if (sil_mean >= 0.60 && dbi <= 0.75) {
+        "Strong clustering → Well-separated and stable structure with consistent geometric compactness."
+      } else if (sil_mean < 0.60 && dbi <= 0.75) {
+        "Stable but fuzzy boundaries → Structure is robust, but cluster separation is not sharp."
+      } else if (dbi > 0.75) {
+        "Stable but overlapping clusters → Good global structure but local overlap reduces interpretability."
+      } else {
+        "Stable clustering with mixed quality signals → Overall structure exists but is not uniform across metrics."
+      }
+
+    } else if (stab_mean >= 0.60 && ch >= 150) {
+
+      if (sil_mean >= 0.50) {
+        "Moderate clustering → Structure is interpretable with acceptable separation quality."
+      } else {
+        "Weakly defined structure → Clusters exist but boundaries are ambiguous."
+      }
+
     } else {
-      "Weak clustering → Poor separation and/or low stability; interpret with caution."
+
+      "Weak clustering → Low separation, limited stability, and weak global structure; results should be interpreted cautiously."
+
     }
 
     cat("\n")
