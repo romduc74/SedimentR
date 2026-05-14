@@ -256,7 +256,9 @@ xrf_clust  <- function(data = NULL) {
       } else {
         repeat {
           cat("Multiple optimal cluster numbers detected:", paste(clusters_with_max_freq, collapse = ", "), "\n")
+          cat("\n")
           user_input <- as.integer(safe_readline("Choose one of these cluster numbers: "))
+          cat("\n")
           if (user_input %in% clusters_with_max_freq) {
             optimal_clusters_max <- user_input
             break
@@ -319,7 +321,9 @@ xrf_clust  <- function(data = NULL) {
       } else {
         repeat {
           cat("Multiple optimal cluster numbers detected:", paste(clusters_with_max_freq, collapse = ", "), "\n")
+          cat("\n")
           user_input <- as.integer(safe_readline("Choose one of these cluster numbers: "))
+          cat("\n")
           if (user_input %in% clusters_with_max_freq) {
             optimal_clusters_max <- user_input
             break
@@ -848,7 +852,27 @@ xrf_clust  <- function(data = NULL) {
   }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   # --- Cluster quality and stability ---
+
+
   cat("\n=== Cluster Quality and Stability Evaluation ===\n\n")
   eval_choice <- tolower(safe_readline("Evaluate cluster stability and quality? (yes/no): "))
 
@@ -870,34 +894,41 @@ xrf_clust  <- function(data = NULL) {
     # Redirige la sortie temporairement pour ne rien afficher
     temp <- tempfile()
     sink(temp)
-    boot <- fpc::clusterboot(data, B = 50, clustermethod = fpc::kmeansCBI,
-                             k = optimal_clusters_max, seed = 123, showplots = FALSE)
+    if (method_choice == 1) {
+
+      # =========================
+      # K-means stability
+      # =========================
+      boot <- fpc::clusterboot(
+        data,
+        B = 50,
+        clustermethod = fpc::kmeansCBI,
+        k = optimal_clusters_max,
+        seed = 123,
+        showplots = FALSE
+      )
+
+    } else {
+
+      # =========================
+      # Hierarchical stability
+      # =========================
+      boot <- fpc::clusterboot(
+        data,
+        B = 50,
+        clustermethod = fpc::hclustCBI,
+        method = method_name,
+        k = optimal_clusters_max,
+        seed = 123,
+        showplots = FALSE
+      )
+
+    }
     sink()  # revient à la console
     stab_mean <- mean(boot$bootmean)
 
     # --- Interpretations ---
 
-
-    # sil_text <- if(sil_mean > 0.75) "Excellent: clusters well separated"
-    # else if(sil_mean > 0.6) "Good: mostly well assigned"
-    # else if(sil_mean > 0.4) "Moderate: some points misassigned"
-    # else if(sil_mean > 0.2) "Weak: clusters poorly defined"
-    # else "Very weak: mostly overlapping"
-    #
-    # db_text <- if(dbi < 0.5) "Excellent separation"
-    # else if(dbi < 0.75) "Good separation"
-    # else if(dbi < 1.0) "Moderate separation"
-    # else "Weak separation, overlapping"
-    #
-    # ch_text <- if(ch > 500) "Excellent structure (very compact & well separated)"
-    # else if(ch > 200) "Good structure"
-    # else if(ch > 100) "Moderate structure"
-    # else "Weak structure (poor separation)"
-    #
-    # boot_text <- if(stab_mean > 0.8) "Very stable clusters"
-    # else if(stab_mean > 0.6) "Stable clusters"
-    # else if(stab_mean > 0.4) "Moderately stable"
-    # else "Unstable clusters, use caution"
 
     sil_text <- if (sil_mean < 0.20) {
       "Very poor separation"
@@ -950,173 +981,300 @@ xrf_clust  <- function(data = NULL) {
 
 
 
-    # overall_text <- if(stab_mean < 0.4) {
-    #   "Clustering is unreliable → Low bootstrap stability; results likely artefactual."
-    # } else if(ch < 100) {
-    #   "No clear cluster structure → Low Calinski–Harabasz index; data weakly clusterable."
-    # } else if(stab_mean > 0.8 & ch > 300 & sil_mean > 0.6 & dbi < 0.75) {
-    #   "Excellent clustering → Strong, stable, and well-separated clusters."
-    # } else if(stab_mean > 0.75 & ch > 300 & sil_mean > 0.45) {
-    #   "Robust and well-structured → Clusters are stable with reasonably good separation."
-    # } else if(stab_mean > 0.8 & ch > 300 & sil_mean <= 0.45) {
-    #   "Robust but overlapping → Cluster structure is strong and highly stable, but boundaries are fuzzy."
-    # } else if(stab_mean > 0.6 & ch > 150) {
-    #   "Moderate structure → Clusters are interpretable but not sharply defined."
-    # } else {
-    #   "Weak clustering → Poor separation and/or low stability; interpret with caution."
-    # }
 
 
-    overall_text <- if (stab_mean < 0.40) {
 
-      "Clustering is unreliable → Very low bootstrap stability indicates non-reproducible structure; results are likely artefactual."
 
-    } else if (ch < 100) {
+    # =========================================================
+    # CONTEXT
+    # =========================================================
 
-      "No meaningful cluster structure → Calinski–Harabasz indicates insufficient global separation."
+    n_obs <- nrow(data)
+    small_sample <- n_obs < 100
 
-    } else if (stab_mean >= 0.85 && ch >= 500 && sil_mean >= 0.70 && dbi <= 0.50) {
+    cat("\n========================================\n")
+    cat("Cluster evaluation context\n")
+    cat("Number of observations:", n_obs, "\n")
+    cat("========================================\n\n")
 
-      "Exceptional clustering → Highly stable, strongly separated, and geometrically compact structure across all metrics."
+    # =========================================================
+    # WARNING SMALL SAMPLE
+    # =========================================================
 
-    } else if (stab_mean >= 0.75 && ch >= 300) {
+    if (small_sample) {
+      cat("WARNING: Small sample detected (<100 observations).\n")
+      cat("Interpretation regime automatically adjusted:\n\n")
+      cat("- Priority 1: Bootstrap stability (credibility)\n")
+      cat("- Priority 2: Silhouette (boundary quality)\n")
+      cat("- Priority 3: Davies–Bouldin (geometric refinement)\n")
+      cat("- Priority 4: Calinski–Harabasz (downgraded reliability)\n\n")
+    }
 
-      if (sil_mean >= 0.60 && dbi <= 0.75) {
-        "Strong clustering → Well-separated and stable structure with consistent geometric compactness."
-      } else if (sil_mean < 0.60 && dbi <= 0.75) {
-        "Stable but fuzzy boundaries → Structure is robust, but cluster separation is not sharp."
-      } else if (dbi > 0.75) {
-        "Stable but overlapping clusters → Good global structure but local overlap reduces interpretability."
+    # =========================================================
+    # OVERALL INTERPRETATION (ADAPTIVE LOGIC)
+    # =========================================================
+
+    overall_text <- if (small_sample) {
+
+      # =========================
+      # SMALL SAMPLE REGIME
+      # =========================
+
+      if (stab_mean < 0.40) {
+
+        "Clustering is unreliable → Very low bootstrap stability indicates non-reproducible structure."
+
+      } else if (stab_mean >= 0.85 && sil_mean >= 0.70 && dbi <= 0.50 && ch >= 150) {
+
+        "Exceptional clustering (small sample) → Stable, well separated, compact, and supported by global structure."
+
+      } else if (stab_mean >= 0.75) {
+
+        if (sil_mean >= 0.60 && dbi <= 0.75) {
+
+          if (ch >= 120) {
+            "Strong clustering → Stability confirmed, good separation, compactness, and supportive global structure."
+          } else {
+            "Strong local clustering → Stability and separation are strong, but global structure (CH) is limited."
+          }
+
+        } else if (sil_mean < 0.60 && dbi <= 0.75) {
+
+          "Stable but fuzzy boundaries → Structure is reproducible, but separation is not sharp."
+
+        } else if (dbi > 0.75) {
+
+          "Stable but overlapping clusters → Good reproducibility, but geometric overlap reduces interpretability."
+
+        } else {
+
+          "Stable clustering with mixed signals → Overall structure supported across indices but not uniformly."
+        }
+
+      } else if (stab_mean >= 0.60) {
+
+        if (sil_mean >= 0.50 && ch >= 100) {
+          "Moderate clustering → Reproducible structure with acceptable separation and some global support."
+        } else {
+          "Weak structure → Stability present but geometric and/or global separation remains limited."
+        }
+
       } else {
-        "Stable clustering with mixed quality signals → Overall structure exists but is not uniform across metrics."
-      }
 
-    } else if (stab_mean >= 0.60 && ch >= 150) {
-
-      if (sil_mean >= 0.50) {
-        "Moderate clustering → Structure is interpretable with acceptable separation quality."
-      } else {
-        "Weakly defined structure → Clusters exist but boundaries are ambiguous."
+        "Weak clustering → Insufficient support across stability, separation, and global structure."
       }
 
     } else {
 
-      "Weak clustering → Low separation, limited stability, and weak global structure; results should be interpreted cautiously."
+      # =========================
+      # STANDARD REGIME
+      # =========================
 
+      if (stab_mean < 0.40) {
+
+        "Clustering is unreliable → Very low bootstrap stability indicates non-reproducible structure; results are likely artefactual."
+
+      } else if (ch < 100) {
+
+        "No meaningful cluster structure → Calinski–Harabasz indicates insufficient global separation."
+
+      } else if (stab_mean >= 0.85 && ch >= 500 && sil_mean >= 0.70 && dbi <= 0.50) {
+
+        "Exceptional clustering → Highly stable, strongly separated, and geometrically compact structure across all metrics."
+
+      } else if (stab_mean >= 0.75 && ch >= 300) {
+
+        if (sil_mean >= 0.60 && dbi <= 0.75) {
+          "Strong clustering → Well-separated and stable structure with consistent geometric compactness."
+        } else if (sil_mean < 0.60 && dbi <= 0.75) {
+          "Stable but fuzzy boundaries → Structure is robust, but cluster separation is not sharp."
+        } else if (dbi > 0.75) {
+          "Stable but overlapping clusters → Good global structure but local overlap reduces interpretability."
+        } else {
+          "Stable clustering with mixed quality signals → Overall structure exists but is not uniform across metrics."
+        }
+
+      } else if (stab_mean >= 0.60 && ch >= 150) {
+
+        if (sil_mean >= 0.50) {
+          "Moderate clustering → Structure is interpretable with acceptable separation quality."
+        } else {
+          "Weakly defined structure → Clusters exist but boundaries are ambiguous."
+        }
+
+      } else {
+
+        "Weak clustering → Low separation, limited stability, and weak global structure; results should be interpreted cautiously."
+      }
     }
 
-    cat("\n")
-    # --- Summary lines with explanations ---
-    # summary_lines <- c(
-    #   "====== Clustering Analysis (K-means) ======",
-    #   "",
-    #   sprintf("Silhouette mean                : %.3f", sil_mean),
-    #   sprintf("Davies-Bouldin index           : %.3f", dbi),
-    #   sprintf("Calinski-Harabasz index        : %.1f", ch),
-    #   sprintf("Bootstrap stability (mean)     : %.3f", stab_mean),
-    #   "",
-    #   "------------------------------------------------",
-    #   "",
-    #   "Interpretation per metric:",
-    #   "",
-    #   sprintf("- Silhouette       : %.3f → %s", sil_mean, sil_text),
-    #   "",
-    #   "    → The silhouette measures cohesion and separation.",
-    #   "      Values near 1 indicate distinct, well-separated clusters.",
-    #   "      Values around 0 suggest overlap; negative values mean misclassification.",
-    #   "",
-    #   sprintf("- Davies-Bouldin   : %.3f → %s", dbi, db_text),
-    #   "",
-    #   "    → The Davies–Bouldin index measures how similar clusters are.",
-    #   "      Lower is better: values < 0.5 indicate strong separation.",
-    #   "      Values > 1 imply overlapping clusters.",
-    #   "",
-    #   sprintf("- Calinski–Harabasz : %.1f → %s", ch, ch_text),
-    #   "",
-    #   "    → The Calinski–Harabasz index measures the ratio of between-cluster",
-    #   "      dispersion to within-cluster dispersion.",
-    #   "      Higher values indicate more distinct and compact clusters.",
-    #   "",
-    #   sprintf("- Bootstrap stab.  : %.3f → %s", stab_mean, boot_text),
-    #   "",
-    #   "    → The bootstrap stability measures how reproducible clusters are.",
-    #   "      High values (>0.8) mean clusters remain stable across resampling.",
-    #   "      Low values (<0.4) mean clusters are unstable and likely artefacts.",
-    #   "",
-    #   "Overall evaluation:",
-    #   "",
-    #   overall_text,
-    #   "",
-    #   "------------------------------------------------"
-    # )
-    #
+    # =========================================================
+    # HIERARCHICAL INTERPRETATION (ORDER ADAPTIVE)
+    # =========================================================
 
-    summary_lines <- c(
-      "====== Clustering Validation Summary ======",
-      "",
-      "Core validation metrics:",
-      "",
-      sprintf("• Bootstrap stability (credibility)   : %.3f", stab_mean),
-      sprintf("• Calinski–Harabasz (global structure): %.1f", ch),
-      sprintf("• Silhouette (boundary sharpness)     : %.3f", sil_mean),
-      sprintf("• Davies–Bouldin (overlap index)      : %.3f", dbi),
-      "",
-      "------------------------------------------------",
-      "",
-      "Hierarchical interpretation of indices (with cut-offs):",
-      "",
-      sprintf("- Bootstrap stability   : %.3f → %s", stab_mean, boot_text),
-      "    → Question: Do the clusters really exist?",
-      "      Role: Statistical credibility filter.",
-      "      Cut-offs:",
-      "        < 0.40  = very unstable (artefactual)",
-      "        0.40–0.60 = weak stability",
-      "        0.60–0.75 = moderate stability",
-      "        0.75–0.85 = stable",
-      "        > 0.85  = very stable",
-      "",
-      sprintf("- Calinski–Harabasz     : %.1f → %s", ch, ch_text),
-      "    → Question: Is there a real global cluster structure in the data?",
-      "      Role: Structural existence filter.",
-      "      Cut-offs (approximate, depend on n & p):",
-      "        < 100   = no clear structure",
-      "        100–200 = weak structure",
-      "        200–500 = moderate structure",
-      "        500–1000 = good structure",
-      "        > 1000  = excellent structure",
-      "",
-      sprintf("- Silhouette            : %.3f → %s", sil_mean, sil_text),
-      "    → Question: Are the cluster boundaries geometrically sharp?",
-      "      Role: Refinement of separation quality.",
-      "      Cut-offs:",
-      "        < 0.20  = very poor / heavy overlap",
-      "        0.20–0.40 = weak separation",
-      "        0.40–0.60 = moderate separation",
-      "        0.60–0.75 = good separation",
-      "        > 0.75  = excellent separation",
-      "",
-      sprintf("- Davies–Bouldin        : %.3f → %s", dbi, db_text),
-      "    → Question: How much do clusters overlap?",
-      "      Role: Refinement of geometric compactness and redundancy.",
-      "      Cut-offs:",
-      "        < 0.50  = excellent (very compact, well separated)",
-      "        0.50–0.75 = good separation",
-      "        0.75–1.00 = moderate separation",
-      "        1.00–1.25 = weak separation",
-      "        > 1.25  = poor / strong overlap",
-      "",
-      "------------------------------------------------",
-      "",
-      "Overall hierarchical evaluation:",
-      "",
-      overall_text,
-      "",
-      "------------------------------------------------"
-    )
+    hierarchical_block <- if (small_sample) {
 
+      # SMALL SAMPLE ORDER: Stability → Silhouette → DB → CH
 
+      c(
+        "Hierarchical interpretation of indices (small sample regime):",
+        "",
+        sprintf("- Bootstrap stability   : %.3f → %s", stab_mean, boot_text),
+        "    → Question: Do the clusters really exist?",
+        "      Role: Primary credibility filter.",
+        "      Cut-offs:",
+        "        < 0.40  = very unstable (artefactual)",
+        "        0.40–0.60 = weak stability",
+        "        0.60–0.75 = moderate stability",
+        "        0.75–0.85 = stable",
+        "        > 0.85  = very stable",
+        "",
+        sprintf("- Silhouette            : %.3f → %s", sil_mean, sil_text),
+        "    → Question: Are cluster boundaries sharp?",
+        "      Role: Geometric separation quality.",
+        "      Cut-offs:",
+        "        < 0.20  = very poor / heavy overlap",
+        "        0.20–0.40 = weak separation",
+        "        0.40–0.60 = moderate separation",
+        "        0.60–0.75 = good separation",
+        "        > 0.75  = excellent separation",
+        "",
+        sprintf("- Davies–Bouldin        : %.3f → %s", dbi, db_text),
+        "    → Question: How much overlap exists?",
+        "      Role: Compactness / redundancy control.",
+        "      Cut-offs:",
+        "        < 0.50  = excellent",
+        "        0.50–0.75 = good separation",
+        "        0.75–1.00 = moderate separation",
+        "        1.00–1.25 = weak separation",
+        "        > 1.25  = strong overlap",
+        "",
+        sprintf("- Calinski–Harabasz     : %.1f → %s", ch, ch_text),
+        "    → Question: Is global structure present?",
+        "      Role: Downgraded reliability in small samples.",
+        "      Cut-offs:",
+        "        < 100   = no clear structure",
+        "        100–200 = weak structure",
+        "        200–500 = moderate structure",
+        "        500–1000 = good structure",
+        "        > 1000  = excellent structure",
+        "",
+        "------------------------------------------------",
+        ""
+      )
 
-    cat(paste(summary_lines, collapse="\n"), "\n")
+    } else {
+
+      # STANDARD ORDER: Stability → CH → Silhouette → DB
+
+      c(
+        "",
+        "Hierarchical interpretation of indices (with cut-offs):",
+        "",
+        sprintf("- Bootstrap stability   : %.3f → %s", stab_mean, boot_text),
+        "    → Question: Do the clusters really exist?",
+        "      Role: Statistical credibility filter.",
+        "      Cut-offs:",
+        "        < 0.40  = very unstable (artefactual)",
+        "        0.40–0.60 = weak stability",
+        "        0.60–0.75 = moderate stability",
+        "        0.75–0.85 = stable",
+        "        > 0.85  = very stable",
+        "",
+        sprintf("- Calinski–Harabasz     : %.1f → %s", ch, ch_text),
+        "    → Question: Is there a real global cluster structure in the data?",
+        "      Role: Structural existence filter.",
+        "      Cut-offs (approximate, depend on n & p):",
+        "        < 100   = no clear structure",
+        "        100–200 = weak structure",
+        "        200–500 = moderate structure",
+        "        500–1000 = good structure",
+        "        > 1000  = excellent structure",
+        "",
+        sprintf("- Silhouette            : %.3f → %s", sil_mean, sil_text),
+        "    → Question: Are the cluster boundaries geometrically sharp?",
+        "      Role: Refinement of separation quality.",
+        "      Cut-offs:",
+        "        < 0.20  = very poor / heavy overlap",
+        "        0.20–0.40 = weak separation",
+        "        0.40–0.60 = moderate separation",
+        "        0.60–0.75 = good separation",
+        "        > 0.75  = excellent separation",
+        "",
+        sprintf("- Davies–Bouldin        : %.3f → %s", dbi, db_text),
+        "    → Question: How much do clusters overlap?",
+        "      Role: Refinement of geometric compactness and redundancy.",
+        "      Cut-offs:",
+        "        < 0.50  = excellent (very compact, well separated)",
+        "        0.50–0.75 = good separation",
+        "        0.75–1.00 = moderate separation",
+        "        1.00–1.25 = weak separation",
+        "        > 1.25  = poor / strong overlap",
+        "",
+        "------------------------------------------------"
+      )
+    }
+
+    # =========================================================
+    # FINAL SUMMARY BLOCK
+    # =========================================================
+
+    summary_lines <- if (small_sample) {
+
+      c(
+        "====== Clustering Validation Summary (Small Sample) ======",
+        "",
+        paste0("Number of observations: ", n_obs),
+        "",
+        "Core validation metrics (priority order adjusted):",
+        "",
+        sprintf("• Bootstrap stability   : %.3f", stab_mean),
+        sprintf("• Silhouette            : %.3f", sil_mean),
+        sprintf("• Davies–Bouldin        : %.3f", dbi),
+        sprintf("• Calinski–Harabasz     : %.1f (downgraded)", ch),
+        "",
+        "------------------------------------------------",
+        "",
+        hierarchical_block,
+        "",
+        "Overall evaluation:",
+        "",
+        overall_text,
+        "",
+        "------------------------------------------------"
+      )
+
+    } else {
+
+      c(
+        "====== Clustering Validation Summary ======",
+        "",
+        paste0("Number of observations: ", n_obs),
+        "",
+        "Core validation metrics:",
+        "",
+        sprintf("• Bootstrap stability   : %.3f", stab_mean),
+        sprintf("• Calinski–Harabasz     : %.1f", ch),
+        sprintf("• Silhouette            : %.3f", sil_mean),
+        sprintf("• Davies–Bouldin        : %.3f", dbi),
+        "",
+        "------------------------------------------------",
+        "",
+        hierarchical_block,
+        "",
+        "Overall evaluation:",
+        "",
+        overall_text,
+        "",
+        "------------------------------------------------"
+      )
+    }
+
+    # =========================================================
+    # OUTPUT
+    # =========================================================
+
+    cat(paste(summary_lines, collapse = "\n"), "\n")
 
     cat("\n")
 
@@ -1151,35 +1309,19 @@ xrf_clust  <- function(data = NULL) {
 
 
 
-  # # --- Create final check dataframe ---
-  # if (exists("df_clr_check", envir = .GlobalEnv) && exists("Dataframe_Clustering", envir = .GlobalEnv)) {
-  #
-  #   df_clr_check_local <- get("df_clr_check", envir = .GlobalEnv)
-  #   df_cluster_local <- get("Dataframe_Clustering", envir = .GlobalEnv)
-  #
-  #   # Identifier les colonnes en doublon
-  #   common_cols <- intersect(colnames(df_clr_check_local), colnames(df_cluster_local))
-  #
-  #   if (length(common_cols) > 0) {
-  #     # Supprimer les colonnes en doublon dans df_clr_check pour garder celles de df_cluster_local
-  #     df_clr_check_local <- df_clr_check_local[, !(colnames(df_clr_check_local) %in% common_cols), drop = FALSE]
-  #   }
-  #
-  #   # Combiner les dataframes
-  #   Dataframe_Check <- cbind(df_cluster_local,df_clr_check_local)
-  #
-  #   # Assigner dans l'environnement global
-  #   assign("Sediment_Geochem_Clusters_Analysis", Dataframe_Check, envir = .GlobalEnv)
-  #
-  #   cat("\nDataframe (Sediment_Geochem_Clusters_Analysis) created combining 'df_clr_check' and 'Dataframe_Clustering'.\n")
-  # } else {
-  #   cat("\nWarning: Either 'df_clr_check' or 'Dataframe_Clustering' not found in global environment. Dataframe_Check not created.\n")
-  # }
-  #
-  # cat("\n")
-  #
 
-  # --- Create final dataframe based on User Dataframe ---
+
+
+
+
+
+
+
+
+
+
+
+
 
   cat("\n=========================================================\n")
   cat("Confirmation before integrated dataset construction\n")
