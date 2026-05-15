@@ -335,26 +335,39 @@
     }
 
 
-    ## Virtual Core
+
+
+
+
+
+    ## -----------------------------
+    ## VIRTUAL CORE (CLEAN VERSION)
+    ## -----------------------------
+
     cat("\n\n==============================\n")
     cat("  VIRTUAL CORE OPTION\n")
     cat("==============================\n\n")
 
     if (use_clusters) {
-      show_core <- tolower(safe_readline("Show Virtual Core? (yes/no): ", default = "no"))
+      show_core <- tolower(
+        safe_readline("Show Virtual Core? (yes/no): ", default = "no")
+      )
     } else {
       show_core <- "no"
       cat("\nVirtual Core disabled (no clusters).\n")
     }
 
-
     if (show_core %in% c("yes", "y")) {
+
       cat("\nGenerating Virtual Core...\n\n")
+
+      Depth_start <- min(xrfStrat[[depth_col]], na.rm = TRUE)
+      Depth_end   <- max(xrfStrat[[depth_col]], na.rm = TRUE)
 
       core_data <- xrfStrat %>%
         dplyr::select(all_of(depth_col), Cluster) %>%
         dplyr::distinct() %>%
-        arrange(.data[[depth_col]])
+        dplyr::arrange(.data[[depth_col]])
 
       depth_step <- median(diff(core_data[[depth_col]]), na.rm = TRUE)
 
@@ -367,26 +380,49 @@
 
       blocks <- core_data %>%
         group_by(Block, Cluster) %>%
-        summarize(
-          Depth_start = min(.data[[depth_col]], na.rm = TRUE),
-          Depth_end   = max(.data[[depth_col]], na.rm = TRUE),
+        summarise(
+          Depth_start = first(.data[[depth_col]]),
+          Depth_end   = last(.data[[depth_col]]),
           .groups = "drop"
         ) %>%
+        arrange(Depth_start) %>%
         mutate(
-          Depth_mid = (Depth_start + Depth_end) / 2,
-          Height = Depth_end - Depth_start + depth_step
+          ymin = lag(Depth_end, default = first(Depth_start)),
+          ymax = Depth_end
         )
-
-      core_plot <- ggplot(blocks, aes(x = 1, y = Depth_mid, fill = factor(Cluster), height = Height)) +
-        geom_tile(width = 1) +
-        scale_y_reverse(position = "right") +
-        scale_fill_manual(values = custom_palette, name = "Clusters", na.value = "white") +
-        labs(x = NULL, y = NULL, title = "Virtual Core") +
+      ## CORE PLOT (RECTANGLE = CONTINU)
+      core_plot <- ggplot(blocks) +
+        geom_rect(
+          aes(
+            xmin = 0,
+            xmax = 1,
+            ymin = ymin,
+            ymax = ymax,
+            fill = factor(Cluster)
+          )
+        ) +
+        scale_fill_manual(
+          values = custom_palette,
+          name = "Clusters",
+          na.value = "white"
+        ) +
+        scale_y_reverse(
+          #expand = c(0, 0),
+          position = "right"
+        ) +
+        coord_cartesian(
+          ylim = c(Depth_end, Depth_start)
+        ) +
+        labs(
+          x = NULL,
+          y = NULL,
+          title = "Virtual Core"
+        ) +
         tidypaleo::theme_paleo() +
         theme(
-          axis.text.x = element_blank(),
+          axis.text.x  = element_blank(),
           axis.ticks.x = element_blank(),
-          panel.grid = element_blank(),
+          panel.grid   = element_blank(),
           legend.position = "right",
           text = element_text(family = "sans", face = "bold")
         )
@@ -395,18 +431,27 @@
         core_plot <- core_plot +
           geom_hline(
             yintercept = depth_vals,
-            linetype   = "dashed",
-            linewidth  = 0.3,
-            color      = "black"
+            linetype = "dashed",
+            linewidth = 0.3,
+            color = "black"
           )
       }
 
-      combined_plot <- main_plot + core_plot + patchwork::plot_layout(widths = c(4, 0.25))
+      combined_plot <- main_plot +
+        core_plot +
+        patchwork::plot_layout(widths = c(4, 0.25))
+
       print(combined_plot)
+
     } else {
+
       print(main_plot)
       cat("\nVirtual Core skipped.\n")
     }
+
+
+
+
 
 
     cat("\n\n==============================\n")
@@ -561,10 +606,7 @@
           stop("Format non supporté.")
         }
 
-        # photo_plot <- ggdraw() +
-        #   draw_image(img, scale = 0.91) +
-        #   ggtitle("Sediment Core") +
-        #   theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+
         Depth_start <- min(xrfStrat[[depth_col]], na.rm = TRUE)
         Depth_end   <- max(xrfStrat[[depth_col]], na.rm = TRUE)
 
@@ -838,40 +880,6 @@
         cat("\nInvalid column name for depth. Please try again.\n\n")
       }
 
-      ## Variable selection
-      # repeat {
-      #   cat("\n\n==============================\n")
-      #   cat("  VARIABLE SELECTION\n")
-      #   cat("==============================\n\n")
-      #   cat("Available columns:\n")
-      #   cat("\n")
-      #   print(names(data))
-      #   cat("\nYou can:\n\n - Enter variable names separated by commas (e.g., Fe, Ti, Ca)\n\n - Type 'all' to use all variables\n\n - Type 'pca' to use PCA-selected variables\n\n")
-      #   var_input <- safe_readline("Enter your choice: ")
-      #
-      #   if (tolower(var_input) == "all") {
-      #     # variables <- setdiff(names(data), c(depth_col, "Cluster"))
-      #     variables <- setdiff(names(data),c(depth_col, if (use_clusters_age) "Cluster"))
-      #     cat("\nAll variables selected.\n")
-      #     break
-      #   }
-      #
-      #   if (tolower(var_input) == "pca") {
-      #     if (exists("variables_cluster", envir = .GlobalEnv)) {
-      #       vars_pca <- colnames(get("variables_cluster", envir = .GlobalEnv))
-      #       variables <- intersect(vars_pca, names(data))
-      #       cat("\nVariables selected by PCA loaded.\n")
-      #       break
-      #     } else {
-      #       cat("\nNo object named 'variables_cluster' found.\n")
-      #       next
-      #     }
-      #   }
-      #
-      #   variables <- unlist(strsplit(var_input, ",\\s*"))
-      #   if (all(variables %in% names(data))) break
-      #   cat("\nSome variables are not valid. Please try again.\n")
-      # }
 
 
       repeat {
@@ -1135,6 +1143,13 @@
 
 
 
+
+
+
+
+
+
+
       cat("\n\n=================================\n")
       cat("  VIRTUAL CORE (AGE–DEPTH)\n")
       cat("=================================\n\n")
@@ -1149,9 +1164,10 @@
         cat("\nVirtual Core disabled (no clusters).\n")
       }
 
+
       if (show_core_age %in% c("yes", "y")) {
 
-        # Convertir les âges en profondeurs
+        ## --- CONVERT AGE → DEPTH ---
         if (!is.null(age_vals) && length(age_vals) > 0) {
           depth_vals <- sapply(age_vals, function(age) {
             idx <- which.min(abs(xrf_age$Age - age))
@@ -1161,10 +1177,13 @@
           depth_vals <- NULL
         }
 
+        Depth_start <- min(xrfStrat[[depth_col]], na.rm = TRUE)
+        Depth_end   <- max(xrfStrat[[depth_col]], na.rm = TRUE)
+
         core_data <- xrfStrat %>%
           dplyr::select(all_of(depth_col), Cluster) %>%
           dplyr::distinct() %>%
-          arrange(.data[[depth_col]])
+          dplyr::arrange(.data[[depth_col]])
 
         depth_step <- median(diff(core_data[[depth_col]]), na.rm = TRUE)
 
@@ -1177,24 +1196,44 @@
 
         blocks <- core_data %>%
           group_by(Block, Cluster) %>%
-          summarize(
-            Depth_start = min(.data[[depth_col]], na.rm = TRUE),
-            Depth_end   = max(.data[[depth_col]], na.rm = TRUE),
+          summarise(
+            Depth_start = first(.data[[depth_col]]),
+            Depth_end   = last(.data[[depth_col]]),
             .groups = "drop"
           ) %>%
+          arrange(Depth_start) %>%
           mutate(
-            Depth_mid = (Depth_start + Depth_end) / 2,
-            Height = Depth_end - Depth_start + depth_step
+            ymin = lag(Depth_end, default = first(Depth_start)),
+            ymax = Depth_end
           )
-
-        core_plot_age <- ggplot(blocks,
-                                aes(x = 1, y = Depth_mid,
-                                    fill = factor(Cluster),
-                                    height = Height)) +
-          geom_tile(width = 1) +
-          scale_y_reverse(position = "right") +
-          scale_fill_manual(values = custom_palette, name = "Clusters", na.value = "white") +
-          labs(x = NULL, y = NULL, title = "Virtual Core") +
+        ## CORE PLOT (RECTANGLE = CONTINU)
+        core_plot_age <- ggplot(blocks) +
+          geom_rect(
+            aes(
+              xmin = 0,
+              xmax = 1,
+              ymin = ymin,
+              ymax = ymax,
+              fill = factor(Cluster)
+            )
+          ) +
+          scale_fill_manual(
+            values = custom_palette,
+            name = "Clusters",
+            na.value = "white"
+          ) +
+          scale_y_reverse(
+            #expand = c(0, 0),
+            position = "right"
+          ) +
+          coord_cartesian(
+            ylim = c(Depth_end, Depth_start)
+          ) +
+          labs(
+            x = NULL,
+            y = NULL,
+            title = "Virtual Core"
+          ) +
           tidypaleo::theme_paleo() +
           theme(
             axis.text.x  = element_blank(),
@@ -1204,28 +1243,42 @@
             text = element_text(family = "sans", face = "bold")
           )
 
+        ## --- HORIZON LINES ---
         if (!is.null(depth_vals) && length(depth_vals) > 0) {
           core_plot_age <- core_plot_age +
             geom_hline(
               yintercept = depth_vals,
-              linetype   = "dashed",
-              linewidth  = 0.3,
-              color      = "black"
+              linetype = "dashed",
+              linewidth = 0.3,
+              color = "black"
             )
         }
 
-        combined_age_depth_plot <- dual_plot + core_plot_age +
+        ## --- COMBINE ---
+        combined_age_depth_plot <- dual_plot +
+          core_plot_age +
           patchwork::plot_layout(widths = c(4, 0.25))
 
         print(combined_age_depth_plot)
         plot_to_export <- combined_age_depth_plot
 
       } else {
-        # Cas utilisateur met "no"
+
         print(dual_plot)
         cat("\nVirtual Core disabled for Age–Depth plot.\n")
         plot_to_export <- dual_plot
       }
+
+
+
+
+
+
+
+
+
+
+
 
       cat("\n\n==============================\n")
       cat("  SEDIMENT CORE PICTURE OPTION\n")
