@@ -1040,15 +1040,15 @@ xrf_clust  <- function(data = NULL) {
 
         } else if (sil_mean < 0.60 && dbi <= 0.75) {
 
-          "Stable but fuzzy boundaries → Structure is reproducible, but separation is not sharp."
+          "Good clustering with moderate boundary ambiguity → Strong global structure and stability, but local cluster overlap reduces sharpness."
 
         } else if (dbi > 0.75) {
 
-          "Stable but overlapping clusters → Good reproducibility, but geometric overlap reduces interpretability."
+          "Good clustering but overlapping clusters → Good reproducibility, but geometric overlap reduces interpretability."
 
         } else {
 
-          "Stable clustering with mixed signals → Overall structure supported across indices but not uniformly."
+          "Good clustering with mixed signals → Overall structure supported across indices but not uniformly."
         }
 
       } else if (stab_mean >= 0.60) {
@@ -1087,11 +1087,11 @@ xrf_clust  <- function(data = NULL) {
         if (sil_mean >= 0.60 && dbi <= 0.75) {
           "Strong clustering → Well-separated and stable structure with consistent geometric compactness."
         } else if (sil_mean < 0.60 && dbi <= 0.75) {
-          "Stable but fuzzy boundaries → Structure is robust, but cluster separation is not sharp."
+          "Good clustering with moderate boundary ambiguity → Strong global structure and stability, but local cluster overlap reduces sharpness."
         } else if (dbi > 0.75) {
-          "Stable but overlapping clusters → Good global structure but local overlap reduces interpretability."
+          "Good clustering  but overlapping clusters → Good global structure but local overlap reduces interpretability."
         } else {
-          "Stable clustering with mixed quality signals → Overall structure exists but is not uniform across metrics."
+          "Good clustering  clustering with mixed quality signals → Overall structure exists but is not uniform across metrics."
         }
 
       } else if (stab_mean >= 0.60 && ch >= 150) {
