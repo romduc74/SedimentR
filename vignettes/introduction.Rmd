@@ -302,7 +302,7 @@ The `xrf_clust()` function performs clustering analysis on a dataset of selected
 The user may also manually choose the number of clusters, for example based on the number of sedimentary facies visually identified in the core. Both approaches—automatic and manual clustering—are fully supported. However, to assess the robustness of the clustering solution, several validation metrics can be computed. Comparing the automatic and manually selected number of clusters helps determine which configuration yields the most reliable and interpretable results.
 
 
-To assess the robustness of the clusters, **three complementary indices** are calculated: Silhouette, Davies–Bouldin, and Bootstrap Stability.
+To assess the robustness of the clusters, **four complementary indices** are calculated: Silhouette, Davies–Bouldin, Bootstrap Stability and Calinski–Harabasz index.
 
 ---
 
