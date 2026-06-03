@@ -199,23 +199,23 @@ The `prop.select()` function performs a Principal Component Analysis (PCA) on a 
 
 - The proportion of variance for each component ( \(j\) ):
 
-\begin{equation}
+$$
 \lambda_j = \frac{\sigma_j^2}{\sum_{i=1}^{p} \sigma_i^2}
-\end{equation}
+$$
 
 where ( $\sigma_j^2$ ) is the eigenvalue and ( \(p\) ) the total number of components.
 
 - Cumulative variance up to component ( \(k\) ):
 
-\begin{equation}
+$$
 V_k = \sum_{j=1}^{k} \lambda_j
-\end{equation}
+$$
 
 - Component selection criterion:
 
-\begin{equation}
+$$
 V_k \geq \theta
-\end{equation}
+$$
 
 where ( $\theta$ ) is the chosen threshold (e.g., $\theta$ = 0.9 ).
 
@@ -224,15 +224,15 @@ where ( $\theta$ ) is the chosen threshold (e.g., $\theta$ = 0.9 ).
 
 The broken-stick model provides theoretical eigenvalues based on an equal partitioning of the total variance among all principal components. These values are then compared to the observed eigenvalues from Principal Component Analysis (PCA). Components are retained only when their observed variance exceeds the corresponding broken-stick expectation.
 
-\begin{equation}
+$$
 b_j = \frac{1}{p} \sum_{k=j}^{p} \frac{1}{k}
-\end{equation}
+$$
 
 where \(p\) is the total number of principal components and  \(k\) the summation index. The \(j\) principal component is considered as significative if \( \lambda_j \), the variance proportion, satisfies the following condition :  
 
-\begin{equation}
+$$
 \lambda_j > b_j
-\end{equation}
+$$
 
 That is, the explained variance of component \(j\) must be greater than the variance expected under the broken-stick model.
 
@@ -242,23 +242,23 @@ The number of principal components to be retained is then determined., the next 
 
 To this end, the following method is applied : The absolute weight of the loadings on each $j$ components is calculated :
 
-\begin{equation}
+$$
 w_{ij} = |L_{ij}|
-\end{equation}
+$$
 
 The $S_j$ threshold is determined based on the percentile of the weights.
 
-\begin{equation}
+$$
   \mathrm{S_j} = Quantile_{p}(w_{1j}, w_{2j}, \dots, w_{nj})
-\end{equation}
+$$
 
  where $p$ is the chosen percentile. For example, for the 90\textsuperscript{e} percentile of the weights, $p = 0.90$
 
 Finally, the $i$ variables are selected such as :
 
-\begin{equation}
+$$
   w_{ij} \geq S_j
-\end{equation}
+$$
 
 Thus, only variables whose contribution exceeds the chosen percentile threshold for each component are retained.
 
@@ -284,9 +284,9 @@ To assess the robustness of the clusters, **three complementary indices** are ca
 
 The silhouette measures cohesion and separation of clusters. For each point \(i\):
 
-\[
+$$
 s(i) = \frac{b(i) - a(i)}{\max(a(i), b(i))}
-\]
+$$
 
 where:  
 
@@ -295,9 +295,9 @@ where:
 
 The **mean silhouette** over all points gives an overall assessment:
 
-\[
+$$
 \bar{s} = \frac{1}{n} \sum_{i=1}^{n} s(i)
-\]
+$$
 
 **Interpretation**:  
 - Values near 1 → well-separated clusters  
@@ -310,9 +310,9 @@ The **mean silhouette** over all points gives an overall assessment:
 
 Measures cluster similarity. For each cluster pair \(i, j\):
 
-\[
+$$
 R_{ij} = \frac{S_i + S_j}{M_{ij}}
-\]
+$$
 
 where:  
 
@@ -321,15 +321,15 @@ where:
 
 For cluster \(i\), take the worst-case ratio:
 
-\[
+$$
 R_i = \max_{j \neq i} R_{ij}
-\]
+$$
 
 The Davies–Bouldin index is the mean over all clusters:
 
-\[
+$$
 DBI = \frac{1}{k} \sum_{i=1}^{k} R_i
-\]
+$$
 
 - \(k\) = number of clusters
 
@@ -344,9 +344,9 @@ DBI = \frac{1}{k} \sum_{i=1}^{k} R_i
 
 Assesses how reproducible clusters are under resampling. For cluster \(C_i\):
 
-\[
+$$
 \text{Stability}_i = \frac{1}{B} \sum_{b=1}^{B} \text{Jaccard}(C_i, C_i^{(b)})
-\]
+$$
 
 where:  
 
@@ -356,9 +356,9 @@ where:
 
 Average stability over all clusters:
 
-\[
+$$
 \bar{\text{Stability}} = \frac{1}{k} \sum_{i=1}^{k} \text{Stability}_i
-\]
+$$
 
 - \(k\) = number of clusters
 
@@ -374,9 +374,9 @@ Evaluate the quality of a clustering by comparing between-cluster dispersion to 
 
 **Calinski–Harabasz (CH) index** or \(k\) clusters is defined as:
 
-\[
+$$
 \text{CH}(k) = \frac{\text{BCSS}/(k-1)}{\text{WCSS}/(n-k)}
-\]
+$$
 
 where:
 
