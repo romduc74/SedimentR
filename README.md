@@ -1,4 +1,4 @@
-# SedimentR
+# SedimentR: An R Package for Identifying Major Stratigraphic Structures in Sediment Cores Using XRF Geochemical Data
 
 ## Overview
 
@@ -272,7 +272,7 @@ xrf_clust()
 
 ```
 
-The `xrf_clust()` function performs clustering analysis on a dataset of selected variables. It helps to determine the optimal number of clusters, to classify observations in the clusters, analyze cluster drivers, and provide multiple visualization options. The main enhancement of this approach is the coupling of variable selection from PCA analysis with the estimation of the optimal number of clusters. The best cluster number is determined using a comprehensive set of validity indices available in the \texttt{NbClust} package (Charrad et al., 2014), providing a robust, data-driven method for clustering via the k-means or hierarchical clustering method. 
+The `xrf_clust()` function performs clustering analysis on a dataset of selected variables. It helps to determine the optimal number of clusters, to classify observations in the clusters, analyze cluster drivers, and provide multiple visualization options. The main enhancement of this approach is the coupling of variable selection from PCA analysis with the estimation of the optimal number of clusters. The best cluster number is determined using a comprehensive set of validity indices available in the NbClust package (Charrad et al., 2014), providing a robust, data-driven method for clustering via the k-means or hierarchical clustering method. 
 
 The user may also manually choose the number of clusters, for example based on the number of sedimentary facies visually identified in the core. Both approaches—automatic and manual clustering—are fully supported. However, to assess the robustness of the clustering solution, several validation metrics can be computed. Comparing the automatic and manually selected number of clusters helps determine which configuration yields the most reliable and interpretable results.
 
