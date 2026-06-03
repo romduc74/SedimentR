@@ -1,5 +1,10 @@
 # SedimentR: An R Package for Identifying Major Stratigraphic Structures in Sediment Cores Using XRF Geochemical Data
 
+<div style="display:flex; justify-content:center; gap:20px;">
+  <img src="figures/LogoSedR.png" width="400" style="border:0;">
+</div>
+
+
 ## Overview
 
 The `sedimentR` package provides tools to **process**, **denoise** and **analyse** xrf datasets.  
