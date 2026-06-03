@@ -22,9 +22,7 @@ This vignette shows the core workflow, key functions, and practical examples.
 # Installation
 
 ```{r}
-install.packages("sedimentR")
-# or development version:
-# remotes::install_github("yourname/sedimentR")
+devtools::install("romduc74/SedimentR",build_vignettes = TRUE)
 ```
 
 # Workflow 
@@ -32,9 +30,7 @@ install.packages("sedimentR")
 ## Automated workflow
 
 ```{r}
-
 sedicore()
-
 ```
 
 The automated workflow reproduces these steps in a fully guided, interactive manner, ensuring consistent processing of sediment-core XRF datasets from raw import to facies interpretation.
@@ -81,7 +77,6 @@ The entire process is fully guided: each step prints informative progress messag
 ## Step-by-step workflow:
 
 ```{r}
-
 library(sedimentR)
 
 vignette("introduction", package = "sedimentR")
@@ -93,7 +88,6 @@ scale_data()
 prop.select()
 
 xrf_clust()
-
 ```
 
 ### `charger()`:
@@ -104,7 +98,14 @@ It can be used in both **interactive** and **non-interactive** modes.
 
 
 ```{r load-data, echo=TRUE, message=FALSE}
-# --- 1. Non-interactive mode: CSV file ---
+# --- 1. Interactive mode ---
+
+# If no path is provided, a file selection dialog will open
+# You will then be prompted for CSV separator or Excel sheet
+
+charger()
+
+# --- 2. Non-interactive mode: CSV file ---
 
 # Load a CSV file directly, specify separator and encoding
 
@@ -114,7 +115,7 @@ charger(
   fileEncoding = "UTF-8"
 )
 
-# --- 2. Non-interactive mode: Excel file ---
+# --- 3. Non-interactive mode: Excel file ---
 
 # Load an Excel file, specify sheet
 
@@ -122,13 +123,6 @@ charger(
   path = "data/my_data.xlsx",
   sheet = "Sheet1"
 )
-
-# --- 3. Interactive mode ---
-
-# If no path is provided, a file selection dialog will open
-# You will then be prompted for CSV separator or Excel sheet
-
-charger()
 ```
 
 ##### 1. Integration of `xrf_noise` within `charger()` function:
