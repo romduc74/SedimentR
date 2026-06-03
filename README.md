@@ -22,6 +22,8 @@ This vignette shows the core workflow, key functions, and practical examples.
 # Installation
 
 ```{r}
+install.packages("devtools")
+
 devtools::install("romduc74/SedimentR",build_vignettes = TRUE)
 ```
 
@@ -394,3 +396,11 @@ Finally, one of the key strengths of the SedimentR package and notably the `xrf_
 results with the actual sediment core photograph. This comparison is complemented by the display of elemental variations along the core depth. The integrative approach of `sedimentR` enhances the interpretability of sediment core analyses and provides a clear, comprehensive view of geochemical and sedimentological variability.
 
 ---
+
+# Data available 
+
+An example dataset is available online via Zenodo (https://doi.org/doi:10.5281/zenodo.20527130).
+
+# Getting help & contributing
+
+If you encounter a clear bug, have a question or suggestion, please either open an Issues or send an email to Romain Ducruet (romain.ducruet@gmail.com) and Amaury Bardelle (amaury.bardelle@icloud.com).
