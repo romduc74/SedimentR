@@ -1,8 +1,4 @@
-# SedimentR: An R Package for Identifying Major Stratigraphic Structures in Sediment Cores Using XRF Geochemical Data
-
-
-
-<a href="10.5281/zenodo.20527130"><img src="vignettes/figures/LogoSedR.png" align="right" height="200" /></a>
+# SedimentR: An R Package for Identifying Major Stratigraphic Structures in Sediment Cores Using XRF Geochemical Data <a href="10.5281/zenodo.20527130"><img src="vignettes/figures/LogoSedR.png" align="right" height="200" /></a>
 
 
 
