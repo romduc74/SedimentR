@@ -174,10 +174,10 @@ y_{ij} = \log\left(\frac{x_{ij}}{g_i}\right),
 g_i = \left( \prod_{j=1}^{q} x_{ij} \right)^{1/q}
 $$
 
-- \(x_{ij}\) : raw value of element \(j\) at depth \(i\)  
+- \($$x_{ij}\$$) : raw value of element \(j\) at depth \(i\)  
 - \(q\) : number of elements used in the CLR transformation at depth \(i\)  
 - \(g_i\) : geometric mean of all elements measured at depth \(i\)  
-- \(y_{ij}\) : CLR-transformed value for element \(j\) at depth \(i\)
+- \($$y_{ij}\$$) : CLR-transformed value for element \(j\) at depth \(i\)
 `
 
 ### `prop.select()`: Selection of variables 
@@ -228,7 +228,7 @@ $$
 b_j = \frac{1}{p} \sum_{k=j}^{p} \frac{1}{k}
 $$
 
-where \(p\) is the total number of principal components and  \(k\) the summation index. The \(j\) principal component is considered as significative if \( \lambda_j \), the variance proportion, satisfies the following condition :  
+where \(p\) is the total number of principal components and  \(k\) the summation index. The \(j\) principal component is considered as significative if \( $$\lambda_j \$$), the variance proportion, satisfies the following condition :  
 
 $$
 \lambda_j > b_j
@@ -316,8 +316,8 @@ $$
 
 where:  
 
-- \(S_i = \frac{1}{|C_i|} \sum_{x \in C_i} \| x - \mu_i \|\) = intra-cluster dispersion  
-- \(M_{ij} = \| \mu_i - \mu_j \|\) = distance between cluster centers  
+- $$\(S_i = \frac{1}{|C_i|} \sum_{x \in C_i} \| x - \mu_i \|\)$$ = intra-cluster dispersion  
+- $$\(M_{ij} = \| \mu_i - \mu_j \|\)$$ = distance between cluster centers  
 
 For cluster \(i\), take the worst-case ratio:
 
@@ -351,8 +351,8 @@ $$
 where:  
 
 - \(B\) = number of bootstrap resamples  
-- \(C_i^{(b)}\) = cluster obtained on the \(b^{th}\) bootstrap sample  
-- \(\text{Jaccard}(C_i, C_i^{(b)}) = \frac{|C_i \cap C_i^{(b)}|}{|C_i \cup C_i^{(b)}|}\)  
+- \($$C_i^{(b)}\$$) = cluster obtained on the \(b^{th}\) bootstrap sample  
+- \(\text{Jaccard}$$(C_i, C_i^{(b)}) = \frac{|C_i \cap C_i^{(b)}|}{|C_i \cup C_i^{(b)}|}\)$$  
 
 Average stability over all clusters:
 
@@ -380,12 +380,12 @@ $$
 
 where:
 
-- \(\text{BCSS} = \sum_{j=1}^{k} n_j \| \bar{x}_j - \bar{x} \|^2\) is the **between-cluster sum of squares**  
-- \(\text{WCSS} = \sum_{j=1}^{k} \sum_{x_i \in C_j} \| x_i - \bar{x}_j \|^2\) is the **within-cluster sum of squares**  
+- \(\text{BCSS} = $$\sum_{j=1}^{k} n_j \| \bar{x}_j - \bar{x} \|^2\)$$ is the **between-cluster sum of squares**  
+- \(\text{WCSS} = $$\sum_{j=1}^{k} \sum_{x_i \in C_j} \| x_i - \bar{x}_j \|^2\)$$ is the **within-cluster sum of squares**  
 - \(k\) = number of clusters  
 - \(n\) = total number of observations  
 - \(n_j\) = number of points in cluster \(C_j\)  
-- \(\bar{x}_j\) = centroid of cluster \(C_j\), \(\bar{x}\) = global centroid
+- \($$\bar{x}_j\$$) = centroid of cluster \(C_j\), \($$\bar{x}\$$) = global centroid
 
 **Interpretation**:  
 - Higher CH values indicate better-defined clusters (well-separated and internally cohesive)
