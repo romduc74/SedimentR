@@ -8,7 +8,7 @@ version](https://img.shields.io/github/r-package/v/romduc74/SedimentR?logo=githu
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20527130.svg)](https://doi.org/doi:10.5281/zenodo.20527130)
 
 [![GitHub
-Downloads](https://img.shields.io/github/downloads/romduc74/SedimentR/total?label=GitHub%20downloads&style=flat)](https://github.com/romduc74/SedimentR/releases)
+Downloads](https://img.shields.io/github/downloads/romduc74/SedimentR/total?label=GitHub%20downloads&style=flat]
 
 [![Zenodo
 Downloads](https://img.shields.io/badge/Zenodo%20downloads-1-blue)](https://zenodo.org/records/20527130)
