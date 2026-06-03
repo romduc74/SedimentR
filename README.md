@@ -3,7 +3,7 @@
 <!-- badges: start -->
 
 ![GitHub
-version]https://img.shields.io/github/r-package/v/romduc74/SedimentR?logo=github
+version](https://img.shields.io/github/r-package/v/romduc74/SedimentR?logo=github)
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.20527130.svg)](https://doi.org/doi:10.5281/zenodo.20527130)
 
@@ -11,7 +11,7 @@ version]https://img.shields.io/github/r-package/v/romduc74/SedimentR?logo=github
 Downloads](https://img.shields.io/github/downloads/romduc74/SedimentR/total?label=GitHub%20downloads&style=flat)](https://github.com/romduc74/SedimentR/releases)
 
 [![Zenodo
-Downloads](https://img.shields.io/badge/Zenodo%20downloads-211-blue)](https://zenodo.org/records/20527130)
+Downloads](https://img.shields.io/badge/Zenodo%20downloads-1-blue)](https://zenodo.org/records/20527130)
 ![Project Status: Active – The project has reached a stable, usable
 state and is being actively
 developed.](http://www.repostatus.org/badges/latest/active.svg)
