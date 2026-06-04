@@ -1,4 +1,4 @@
-# SedimentR: An R package for identifying major stratigraphic structures in sediment sores using XRF geochemical data <a href="10.5281/zenodo.20527130"><img src="vignettes/figures/LogoSedR.png" align="right" height="200" /></a>
+# SedimentR: A R package for identifying major stratigraphic structures in sediment sores using XRF geochemical data <a href="10.5281/zenodo.20527130"><img src="vignettes/figures/LogoSedR.png" align="right" height="200" /></a>
 
 <!-- badges: start -->
 
