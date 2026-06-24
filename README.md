@@ -40,7 +40,12 @@ This vignette shows the core workflow, key functions, and practical examples.
 ```{r}
 install.packages("devtools")
 
-devtools::install("romduc74/SedimentR",build_vignettes = TRUE)
+library(devtools)
+
+devtools::install_local("Path_to_file/sedimentR_1.0.0.tar.gz", build_vignettes = TRUE)
+# file sedimentR_1.0.0.tar.gz available at https://github.com/romduc74/SedimentR/releases/tag/1.0.0
+# Modify 'Path_to_file' accordingly to your environment.
+
 ```
 
 # Workflow 
